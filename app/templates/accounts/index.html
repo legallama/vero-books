@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="accounts-app">
+    <div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+        <div>
+            <h1 class="uk-heading-small uk-margin-remove-bottom">Chart of Accounts</h1>
+            <p class="uk-text-meta">Manage your business accounts and financial structure.</p>
+        </div>
+        <div>
+            <form id="qbImportForm" action="{{ url_for('accounts.import_qb') }}" method="POST" enctype="multipart/form-data" class="uk-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div uk-form-custom>
+                    <input type="file" name="qb_csv" accept=".csv" onchange="document.getElementById('qbImportForm').submit()">
+                    <button class="uk-button uk-button-default uk-margin-small-right" type="button" tabindex="-1"><span uk-icon="upload"></span> Import from QuickBooks</button>
+                </div>
+            </form>
+            <button @click="openCreateModal()" class="uk-button uk-button-primary">+ New Account</button>
+        </div>
+    </div>
+
+    <!-- Realistic Grouping -->
+    <div class="uk-grid-medium" uk-grid>
+        <div class="uk-width-1-1">
+            <div class="uk-card uk-card-default">
+                <div class="uk-card-header uk-flex uk-flex-between uk-flex-middle">
+                    <h3 class="uk-card-title uk-text-bold">Ledger Accounts</h3>
+                    <div class="uk-inline">
+                        <span class="uk-form-icon" uk-icon="icon: search"></span>
+                        <input class="uk-input uk-form-small uk-form-width-medium" type="text" placeholder="Search accounts..." v-model="searchQuery">
+                    </div>
+                </div>
+                <div class="uk-overflow-auto">
+                    <table class="uk-table uk-table-divider uk-table-hover uk-table-middle">
+                        <thead>
+                            <tr>
+                                <th class="uk-table-shrink">Code</th>
+                                <th>Account Name</th>
+                                <th>Type</th>
+                                <th class="uk-text-right">Balance</th>
+                                <th class="uk-table-shrink"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template v-for="type in accountTypes" :key="type">
+                                <tr class="uk-background-muted">
+                                    <td colspan="5" class="uk-text-bold uk-text-uppercase uk-text-small">[[ type ]]</td>
+                                </tr>
+                                <tr v-for="acc in filteredAccounts(type)" :key="acc.id" class="uk-visible-toggle">
+                                    <td class="uk-text-primary uk-text-bold font-mono">[[ acc.code ]]</td>
+                                    <td>
+                                        <div class="uk-text-bold">[[ acc.name ]]</div>
+                                        <div class="uk-text-meta">[[ acc.subtype ]]</div>
+                                    </td>
+                                    <td>
+                                        <span class="uk-label uk-label-muted">[[ acc.type ]]</span>
+                                    </td>
+                                    <td class="uk-text-right uk-text-bold">
+                                        [[ formatCurrency(0) ]]
+                                    </td>
+                                    <td class="uk-text-right">
+                                        <div class="uk-invisible-hover">
+                                            <button class="uk-icon-button uk-button-text" uk-icon="pencil" @click="editAccount(acc)"></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                            <tr v-if="accounts.length === 0">
+                                <td colspan="5" class="uk-text-center uk-padding-large uk-text-muted">No accounts found. Click "New Account" to begin.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Modal -->
+    <div v-if="showModal" class="uk-flex uk-flex-top uk-flex-center uk-position-fixed uk-position-z-index uk-height-viewport uk-width-1-1" style="background: rgba(0,0,0,0.6); top:0; left:0; padding-top: 50px;">
+        <div class="uk-card uk-card-default uk-card-body uk-width-xlarge uk-animation-scale-up uk-animation-fast">
+            <h3 class="uk-card-title uk-text-bold">[[ isEditing ? 'Edit Account' : 'New Ledger Account' ]]</h3>
+            <p class="uk-text-meta">Define how this account will appear in your reports and trial balance.</p>
+            
+            <form @submit.prevent="saveAccount" class="uk-form-stacked uk-margin-top">
+                <div class="uk-grid-small" uk-grid>
+                    <div class="uk-width-1-1">
+                        <label class="uk-form-label uk-text-bold">Account Name</label>
+                        <input class="uk-input" type="text" v-model="form.name" placeholder="e.g. Petty Cash" required>
+                    </div>
+                    
+                    <div class="uk-width-1-2@s">
+                        <label class="uk-form-label uk-text-bold">Account Code / Number</label>
+                        <input class="uk-input" type="text" v-model="form.code" placeholder="e.g. 1010" required>
+                    </div>
+                    
+                    <div class="uk-width-1-2@s">
+                        <label class="uk-form-label uk-text-bold">Account Category</label>
+                        <select class="uk-select" v-model="form.type" required>
+                            <option v-for="t in accountTypes" :value="t">[[ t ]]</option>
+                        </select>
+                    </div>
+
+                    <div class="uk-width-1-1">
+                        <label class="uk-form-label uk-text-bold">Detail Type / Subtype</label>
+                        <input class="uk-input" type="text" v-model="form.subtype" placeholder="e.g. Cash in Hand">
+                    </div>
+                </div>
+
+                <div class="uk-margin-large-top uk-text-right">
+                    <button type="button" class="uk-button uk-button-text uk-margin-right" @click="showModal = false">Cancel</button>
+                    <button type="submit" class="uk-button uk-button-primary">[[ isEditing ? 'Save Changes' : 'Create Account' ]]</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp, ref, computed } = Vue;
+
+    createApp({
+        delimiters: ['[[', ']]'],
+        setup() {
+            const accounts = ref([
+                {% for acc in accounts %}
+                { id: '{{ acc.id }}', code: '{{ acc.code }}', name: '{{ acc.name }}', type: '{{ acc.type }}', subtype: '{{ acc.subtype or "" }}' },
+                {% endfor %}
+            ]);
+            
+            const accountTypes = ref(['Asset', 'Liability', 'Equity', 'Income', 'Expense']);
+            const searchQuery = ref('');
+            const showModal = ref(false);
+            const isEditing = ref(false);
+            const form = ref({ id: null, name: '', code: '', type: 'Asset', subtype: '' });
+
+            const filteredAccounts = (type) => {
+                return accounts.value.filter(acc => {
+                    const matchesType = acc.type === type;
+                    const matchesSearch = acc.name.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
+                                          acc.code.toLowerCase().includes(searchQuery.value.toLowerCase());
+                    return matchesType && matchesSearch;
+                });
+            };
+
+            const openCreateModal = () => {
+                isEditing.value = false;
+                form.value = { id: null, name: '', code: '', type: 'Asset', subtype: '' };
+                showModal.value = true;
+            };
+
+            const editAccount = (acc) => {
+                isEditing.value = true;
+                form.value = { ...acc };
+                showModal.value = true;
+            };
+
+            const saveAccount = async () => {
+                const url = isEditing.value ? `/accounts/${form.value.id}/update` : '/accounts/create';
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': window.csrf_token
+                    },
+                    body: new URLSearchParams(form.value)
+                });
+
+                if (response.ok) {
+                    // Quick and dirty refresh for now
+                    window.location.reload();
+                }
+            };
+
+            const formatCurrency = (val) => {
+                return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+            };
+
+            return { 
+                accounts, accountTypes, searchQuery, showModal, isEditing, form,
+                filteredAccounts, openCreateModal, editAccount, saveAccount, formatCurrency
+            };
+        }
+    }).mount('#accounts-app');
+</script>
+{% endblock %}

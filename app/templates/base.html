@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeroBooks | Professional Accounting</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    <!-- UIkit CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.21.5/dist/css/uikit.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #1e293b;
+            --sidebar-width: 260px;
+        }
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #334155; }
+        .sidebar { 
+            width: var(--sidebar-width); 
+            position: fixed; 
+            top: 0; bottom: 0; left: 0; 
+            background: var(--primary-color); 
+            color: #fff;
+            padding: 20px 0;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        .main-content { margin-left: var(--sidebar-width); padding: 40px; min-height: 100vh; }
+        .sidebar-brand { padding: 20px 30px; font-size: 22px; font-weight: 800; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
+        .sidebar .uk-nav-default > li > a { color: #94a3b8; padding: 12px 30px; font-size: 14px; font-weight: 500; transition: all 0.2s; }
+        .sidebar .uk-nav-default > li > a:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .sidebar .uk-nav-default > li.uk-active > a { color: #fff; background: #3b82f6; }
+        .sidebar .uk-nav-header { color: #475569; padding: 20px 30px 5px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .uk-card { border: none; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border-radius: 12px; }
+        .uk-table th { font-weight: 700; text-transform: uppercase; font-size: 11px; color: #64748b; letter-spacing: 0.5px; }
+        .uk-button-primary { background: #3b82f6; border-radius: 6px; font-weight: 600; text-transform: none; }
+        .top-bar { 
+            height: 64px; 
+            background: #fff; 
+            border-bottom: 1px solid #e2e8f0; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 0 40px;
+            position: sticky;
+            top: 0;
+            z-index: 900;
+        }
+        .user-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #475569;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    {% if current_user.is_authenticated %}
+    <div class="sidebar text-white">
+        <!-- ... sidebar remains same ... -->
+        <div class="uk-padding-small">
+            <div class="uk-flex uk-flex-middle uk-margin-small-bottom">
+                <div class="uk-border-rounded uk-background-primary uk-flex uk-flex-center uk-flex-middle uk-margin-small-right" style="width: 28px; height: 28px; background: #6366f1 !important;">
+                    <span class="uk-text-bold uk-text-small text-white">V</span>
+                </div>
+                <h4 class="uk-margin-remove uk-text-bold uk-text-uppercase uk-text-small tracking-widest" style="color: #fff; letter-spacing: 1px;">VeroBooks</h4>
+            </div>
+            
+            <div class="uk-inline uk-width-1-1 uk-margin-small-top">
+                <button class="uk-button uk-button-default uk-button-small uk-width-1-1 uk-text-truncate uk-text-left" type="button" style="border-color: rgba(255,255,255,0.15); color: #94a3b8; text-transform: none; padding: 0 10px; font-size: 12px; height: 32px;">
+                    <span uk-icon="icon: home; ratio: 0.8" class="uk-margin-small-right"></span>
+                    {{ current_org.name if current_org else 'Select Business' }}
+                    <span uk-icon="icon: triangle-down; ratio: 0.8" class="uk-float-right uk-margin-small-top"></span>
+                </button>
+                <div uk-dropdown="mode: click; pos: bottom-justify;">
+                    <ul class="uk-nav uk-dropdown-nav">
+                        <li class="uk-nav-header uk-text-bold">Switch Business</li>
+                        {% for membership in current_user.memberships %}
+                        <li><a href="{{ url_for('settings.switch_organization', org_id=membership.organization.id) }}">{{ membership.organization.name }}</a></li>
+                        {% endfor %}
+                        <li class="uk-nav-divider"></li>
+                        <li><a href="{{ url_for('settings.create_organization') }}" class="uk-text-primary"><span uk-icon="plus" class="uk-margin-small-right"></span>New Business</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <ul class="uk-nav-default uk-nav uk-nav-parent-icon" uk-nav style="margin-top: 5px;">
+            <li class="{{ 'uk-active' if request.blueprint == 'dashboard' }}"><a href="{{ url_for('dashboard.index') }}"><span class="uk-margin-small-right" uk-icon="grid"></span> Dashboard</a></li>
+            
+            <li class="uk-nav-header">Transactions</li>
+            <li class="{{ 'uk-active' if request.blueprint == 'banking' }}">
+                <a href="{{ url_for('banking.index') }}"><span class="uk-margin-small-right" uk-icon="refresh"></span> Banking</a>
+                <ul class="uk-nav-sub uk-margin-small-left" style="margin-top: 0; padding-top: 2px;">
+                    <li><a href="{{ url_for('banking.rules') }}" class="uk-text-meta" style="font-size: 11px;"><span uk-icon="icon: settings; ratio: 0.6"></span> Automation Rules</a></li>
+                </ul>
+            </li>
+            <li class="{{ 'uk-active' if request.blueprint == 'invoices' }}"><a href="{{ url_for('invoices.index') }}"><span class="uk-margin-small-right" uk-icon="cart"></span> Invoices</a></li>
+            <li class="{{ 'uk-active' if request.blueprint == 'recurring' }}"><a href="{{ url_for('recurring.index') }}"><span class="uk-margin-small-right" uk-icon="future"></span> Recurring Invoices</a></li>
+            <li class="{{ 'uk-active' if request.blueprint == 'estimates' }}"><a href="{{ url_for('estimates.index') }}"><span class="uk-margin-small-right" uk-icon="file-edit"></span> Estimates</a></li>
+            <li class="{{ 'uk-active' if request.blueprint == 'bills' }}"><a href="{{ url_for('bills.index') }}"><span class="uk-margin-small-right" uk-icon="credit-card"></span> Bills</a></li>
+            <li class="{{ 'uk-active' if request.blueprint == 'journal' }}"><a href="{{ url_for('journal.index') }}"><span class="uk-margin-small-right" uk-icon="list"></span> Journal Entries</a></li>
+            
+            <li class="uk-nav-header">Relationships</li>
+            <li class="{{ 'uk-active' if request.blueprint == 'customers' }}"><a href="{{ url_for('customers.index') }}"><span class="uk-margin-small-right" uk-icon="users"></span> Customers</a></li>
+            <li class="{{ 'uk-active' if request.blueprint == 'vendors' }}"><a href="{{ url_for('vendors.index') }}"><span class="uk-margin-small-right" uk-icon="home"></span> Vendors</a></li>
+            
+            <li class="uk-nav-header">Configuration</li>
+            <li class="{{ 'uk-active' if request.blueprint == 'accounts' }}"><a href="{{ url_for('accounts.index') }}"><span class="uk-margin-small-right" uk-icon="database"></span> Chart of Accounts</a></li>
+            <li class="{{ 'uk-active' if request.blueprint == 'audit' }}"><a href="{{ url_for('audit.history') }}"><span class="uk-margin-small-right" uk-icon="history"></span> Audit Trail</a></li>
+            <li class="{{ 'uk-active' if request.blueprint == 'tags' }}"><a href="{{ url_for('tags.index') }}"><span class="uk-margin-small-right" uk-icon="tag"></span> Category Tags</a></li>
+            <li class="{{ 'uk-active' if request.blueprint == 'reports' }}"><a href="{{ url_for('reports.index') }}"><span class="uk-margin-small-right" uk-icon="file-text"></span> Financial Reports</a></li>
+            <li><a href="{{ url_for('settings.tax_rates') }}"><span class="uk-margin-small-right" uk-icon="settings"></span> Tax Settings</a></li>
+            
+            <li class="uk-nav-divider"></li>
+            <li><a href="{{ url_for('auth.logout') }}"><span class="uk-margin-small-right" uk-icon="sign-out"></span> Logout</a></li>
+        </ul>
+    </div>
+    {% endif %}
+
+    <main class="{% if current_user.is_authenticated %}main-content{% else %}uk-flex uk-flex-center uk-flex-middle uk-height-viewport{% endif %}">
+        {% if current_user.is_authenticated %}
+        <div class="top-bar">
+            <div class="uk-inline uk-width-1-3">
+                <span class="uk-form-icon" uk-icon="icon: search"></span>
+                <input class="uk-input uk-form-blank" type="text" placeholder="Global search...">
+            </div>
+            
+            <div class="uk-flex uk-flex-middle">
+                <span class="uk-margin-right uk-text-meta uk-visible@m">Welcome, {{ current_user.full_name or current_user.email }}</span>
+                <div class="uk-inline">
+                    {% if current_user.avatar_path %}
+                    <div class="user-avatar" role="button" aria-haspopup="true" style="padding: 0; overflow: hidden; background: transparent;">
+                        <img src="{{ url_for('static', filename=current_user.avatar_path) }}" alt="User Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                    </div>
+                    {% else %}
+                    <div class="user-avatar" role="button" aria-haspopup="true">
+                        {{ (current_user.username or "U")[0] | upper }}
+                    </div>
+                    {% endif %}
+                    <div uk-dropdown="mode: click; pos: bottom-right; offset: 10;">
+                        <ul class="uk-nav uk-dropdown-nav">
+                            <li class="uk-nav-header">User Profile</li>
+                            <li><a href="{{ url_for('settings.profile') }}"><span uk-icon="user" class="uk-margin-small-right"></span> My Account</a></li>
+                            <li><a href="{{ url_for('settings.users') }}"><span uk-icon="users" class="uk-margin-small-right"></span> Manage Users</a></li>
+                            <li><a href="#"><span uk-icon="settings" class="uk-margin-small-right"></span> Security</a></li>
+                            <li class="uk-nav-divider"></li>
+                            <li><a href="{{ url_for('auth.logout') }}" class="uk-text-danger"><span uk-icon="sign-out" class="uk-margin-small-right"></span> Sign Out</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="uk-container uk-container-expand {% if current_user.is_authenticated %}uk-margin-top{% endif %}">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="uk-alert-{{ 'danger' if category == 'error' or category == 'danger' else 'primary' }}" uk-alert>
+                    <a class="uk-alert-close" uk-close></a>
+                    <p>{{ message }}</p>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- UIkit JS -->
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.5/dist/js/uikit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.5/dist/js/uikit-icons.min.js"></script>
+    <script>
+        // CSRF for AJAX/Fetch
+        window.csrf_token = "{{ csrf_token() }}";
+    </script>
+</body>
+</html>

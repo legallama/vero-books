@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="mb-10">
+        <a href="{{ url_for('reports.index') }}" class="text-slate-500 hover:text-slate-300 text-sm mb-4 inline-block">← Back to Reports</a>
+        <h1 class="text-4xl font-bold">Profit & Loss</h1>
+        <p class="text-slate-400">{{ start_date }} to {{ end_date }}</p>
+    </div>
+
+    <div class="glass-card">
+        <!-- Income Section -->
+        <h3 class="text-xl font-bold mb-6 text-indigo-400 border-b border-slate-800 pb-2">Income</h3>
+        <div class="space-y-4 mb-10">
+            {% for line in report.lines if line.account.type == 'Income' %}
+            <div class="flex justify-between items-center px-4">
+                <span class="font-medium text-slate-300">{{ line.account.name }}</span>
+                <span class="font-mono">${{ "{:,.2f}".format(line.balance) }}</span>
+            </div>
+            {% endfor %}
+            <div class="flex justify-between items-center px-4 py-3 bg-slate-800/30 rounded-lg font-bold">
+                <span>Total Income</span>
+                <span class="text-indigo-300">${{ "{:,.2f}".format(report.income_total) }}</span>
+            </div>
+        </div>
+
+        <!-- Expense Section -->
+        <h3 class="text-xl font-bold mb-6 text-rose-400 border-b border-slate-800 pb-2">Expenses</h3>
+        <div class="space-y-4 mb-10">
+            {% for line in report.lines if line.account.type == 'Expense' %}
+            <div class="flex justify-between items-center px-4">
+                <span class="font-medium text-slate-300">{{ line.account.name }}</span>
+                <span class="font-mono">${{ "{:,.2f}".format(line.balance) }}</span>
+            </div>
+            {% endfor %}
+            <div class="flex justify-between items-center px-4 py-3 bg-slate-800/30 rounded-lg font-bold">
+                <span>Total Expenses</span>
+                <span class="text-rose-300">${{ "{:,.2f}".format(report.expense_total) }}</span>
+            </div>
+        </div>
+
+        <!-- Net Profit -->
+        <div class="flex justify-between items-center p-6 bg-indigo-500/10 border-2 border-indigo-500/20 rounded-xl">
+            <h2 class="text-2xl font-bold">Net Profit</h2>
+            <div class="text-3xl font-bold text-indigo-400">${{ "{:,.2f}".format(report.net_profit) }}</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+    <div>
+        <h1 class="uk-heading-small uk-margin-remove-bottom">Recurring Invoices</h1>
+        <p class="uk-text-meta">Automate your billing for retainers and subscription services.</p>
+    </div>
+    <a href="{{ url_for('recurring.create') }}" class="uk-button uk-button-primary">+ New Template</a>
+</div>
+
+<div class="uk-grid-medium uk-child-width-1-2@m" uk-grid>
+    {% for template in templates %}
+    <div>
+        <div class="uk-card uk-card-default uk-card-body">
+            <div class="uk-flex uk-flex-between uk-flex-top">
+                <span class="uk-label uk-label-primary">{{ template.frequency }}</span>
+                <span uk-icon="icon: future; ratio: 1.2" class="uk-text-primary"></span>
+            </div>
+            <h3 class="uk-card-title uk-margin-small-top uk-text-bold">{{ template.profile_name }}</h3>
+            <p class="uk-text-meta uk-margin-remove-top">{{ template.customer.display_name }}</p>
+            
+            <div class="uk-margin-top uk-background-muted uk-padding-small uk-border-rounded">
+                <div class="uk-grid-small" uk-grid>
+                    <div class="uk-width-1-2">
+                        <p class="uk-text-meta uk-text-uppercase uk-margin-remove">Next Run</p>
+                        <p class="uk-text-bold uk-margin-remove">{{ template.next_issue_date.strftime('%Y-%m-%d') }}</p>
+                    </div>
+                    <div class="uk-width-1-2 uk-text-right">
+                        <p class="uk-text-meta uk-text-uppercase uk-margin-remove">Amount</p>
+                        <p class="uk-text-bold uk-margin-remove">${{ "%.2f"|format(template.total) }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="uk-margin-top uk-text-right">
+                <a href="{{ url_for('recurring.create') }}" class="uk-button uk-button-text">Modify Template</a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="uk-width-1-1">
+        <div class="uk-card uk-card-default uk-card-body uk-text-center uk-padding-large">
+            <p class="uk-text-muted italic">There are no recurring templates yet.</p>
+            <a href="{{ url_for('recurring.create') }}" class="uk-button uk-button-text">Create your first automated billing schedule →</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

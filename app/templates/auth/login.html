@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% set show_sidebar = false %}
+
+{% block content %}
+<div class="uk-width-medium uk-margin-auto">
+    <div class="uk-card uk-card-default uk-card-body uk-box-shadow-large uk-border-rounded">
+        <div class="uk-text-center uk-margin-medium-bottom">
+            <div class="uk-border-rounded uk-background-primary uk-flex uk-flex-center uk-flex-middle uk-margin-auto" style="width: 48px; height: 48px; background: #3b82f6 !important;">
+                <span class="uk-text-bold uk-text-lead text-white" style="color: #fff;">V</span>
+            </div>
+            <h2 class="uk-card-title uk-margin-small-top uk-text-bold">Welcome Back</h2>
+            <p class="uk-text-meta">Sign in to VeroBooks</p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('auth.login') }}" class="uk-form-stacked">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="uk-margin">
+                <label class="uk-form-label uk-text-bold">Email Address</label>
+                <div class="uk-form-controls uk-inline uk-width-1-1">
+                    <span class="uk-form-icon" uk-icon="icon: mail"></span>
+                    <input type="email" name="email" required class="uk-input uk-border-rounded" placeholder="name@company.com">
+                </div>
+            </div>
+            
+            <div class="uk-margin">
+                <label class="uk-form-label uk-text-bold">Password</label>
+                <div class="uk-form-controls uk-inline uk-width-1-1">
+                    <span class="uk-form-icon" uk-icon="icon: lock"></span>
+                    <input type="password" name="password" required class="uk-input uk-border-rounded" placeholder="••••••••">
+                </div>
+            </div>
+            
+            <div class="uk-margin-medium-top">
+                <button type="submit" class="uk-button uk-button-primary uk-width-1-1 uk-border-rounded uk-text-bold">
+                    Sign In
+                </button>
+            </div>
+        </form>
+        
+        <div class="uk-margin-top uk-text-center">
+            <p class="uk-text-small uk-text-meta">
+                Don't have an account? <a href="#" class="uk-link-text uk-text-primary">Contact support</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

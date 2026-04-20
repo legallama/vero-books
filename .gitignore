@@ -1,0 +1,26 @@
+# Environments
+.env
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Database
+verobooks.db
+instance/
+
+# IDEs
+.vscode/
+.idea/
+
+# Custom scratch / debug files
+scratch/
+last_import.xlsx
+*.csv
+debug_import.py
+test_parse.py

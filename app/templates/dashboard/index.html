@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="dashboard-app">
+    <div class="uk-grid-small uk-child-width-expand@s uk-text-center" uk-grid>
+        <div>
+            <div class="uk-card uk-card-default uk-card-body">
+                <p class="uk-text-meta uk-text-uppercase uk-margin-remove-bottom">Cash on Hand</p>
+                <h3 class="uk-card-title uk-text-bold uk-margin-small-top">$12,450.00</h3>
+            </div>
+        </div>
+        <div>
+            <div class="uk-card uk-card-default uk-card-body">
+                <p class="uk-text-meta uk-text-uppercase uk-margin-remove-bottom">Open Invoices</p>
+                <h3 class="uk-card-title uk-text-bold uk-margin-small-top uk-text-warning">$8,920.00</h3>
+            </div>
+        </div>
+        <div>
+            <div class="uk-card uk-card-default uk-card-body">
+                <p class="uk-text-meta uk-text-uppercase uk-margin-remove-bottom">Unpaid Bills</p>
+                <h3 class="uk-card-title uk-text-bold uk-margin-small-top uk-text-danger">$3,410.00</h3>
+            </div>
+        </div>
+        <div>
+            <div class="uk-card uk-card-default uk-card-body">
+                <p class="uk-text-meta uk-text-uppercase uk-margin-remove-bottom">MTD Profit</p>
+                <h3 class="uk-card-title uk-text-bold uk-margin-small-top uk-text-success">$5,840.00</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="uk-grid-large uk-margin-large-top" uk-grid>
+        <div class="uk-width-2-3@m">
+            <div class="uk-card uk-card-default uk-card-body">
+                <h3 class="uk-card-title uk-text-bold">Revenue Trend</h3>
+                <div class="uk-height-medium">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="uk-width-1-3@m">
+            <div class="uk-card uk-card-default uk-card-body">
+                <h3 class="uk-card-title uk-text-bold">Quick Tasks</h3>
+                <ul class="uk-list uk-list-divider">
+                    <li><a href="{{ url_for('invoices.create') }}" class="uk-link-text uk-flex uk-flex-between">Create New Invoice <span uk-icon="chevron-right"></span></a></li>
+                    <li><a href="{{ url_for('journal.create') }}" class="uk-link-text uk-flex uk-flex-between">Post Journal Entry <span uk-icon="chevron-right"></span></a></li>
+                    <li><a href="{{ url_for('banking.index') }}" class="uk-link-text uk-flex uk-flex-between">Match Bank Feed <span uk-icon="chevron-right"></span></a></li>
+                    <li><a href="{{ url_for('reports.index') }}" class="uk-link-text uk-flex uk-flex-between">View P&L Report <span uk-icon="chevron-right"></span></a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const { createApp, onMounted } = Vue;
+    createApp({
+        setup() {
+            onMounted(() => {
+                const ctx = document.getElementById('revenueChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: {{ chart_labels | tojson }},
+                        datasets: [{
+                            label: 'Revenue',
+                            data: {{ chart_values | tojson }},
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { grid: { display: false } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            });
+        }
+    }).mount('#dashboard-app');
+</script>
+{% endblock %}

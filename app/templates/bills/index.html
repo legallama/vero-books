@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+    <div>
+        <h1 class="uk-heading-small uk-margin-remove-bottom">Bills</h1>
+        <p class="uk-text-meta">Track and manage your vendor liabilities</p>
+    </div>
+    <a href="{{ url_for('bills.create') }}" class="uk-button uk-button-primary">+ Add New Bill</a>
+</div>
+
+<div class="uk-grid-small uk-child-width-expand@s uk-margin-bottom" uk-grid>
+    <div>
+        <div class="uk-card uk-card-default uk-card-small uk-card-body">
+            <p class="uk-text-meta uk-text-uppercase">Total Unpaid</p>
+            <h3 class="uk-margin-remove-top uk-text-danger">$0.00</h3>
+        </div>
+    </div>
+    <div>
+        <div class="uk-card uk-card-default uk-card-small uk-card-body">
+            <p class="uk-text-meta uk-text-uppercase">Overdue</p>
+            <h3 class="uk-margin-remove-top">$0.00</h3>
+        </div>
+    </div>
+    <div>
+        <div class="uk-card uk-card-default uk-card-small uk-card-body">
+            <p class="uk-text-meta uk-text-uppercase">Due in 7 Days</p>
+            <h3 class="uk-margin-remove-top uk-text-warning">$0.00</h3>
+        </div>
+    </div>
+</div>
+
+<div class="uk-card uk-card-default">
+    <div class="uk-overflow-auto">
+        <table class="uk-table uk-table-divider uk-table-hover uk-table-middle">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Bill #</th>
+                    <th>Vendor</th>
+                    <th>Due Date</th>
+                    <th class="uk-text-right">Amount</th>
+                    <th class="uk-text-center">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bill in bills %}
+                <tr class="uk-visible-toggle">
+                    <td>{{ bill.date.strftime('%Y-%m-%d') }}</td>
+                    <td class="uk-text-primary font-mono">{{ bill.bill_number }}</td>
+                    <td class="uk-text-bold">{{ bill.vendor.display_name }}</td>
+                    <td class="uk-text-meta">{{ bill.due_date.strftime('%Y-%m-%d') }}</td>
+                    <td class="uk-text-right uk-text-bold uk-text-danger">${{ "%.2f"|format(bill.total) }}</td>
+                    <td class="uk-text-center">
+                        <span class="uk-label {{ 'uk-label-warning' if bill.status == 'UNPAID' else 'uk-label-success' }}">
+                            {{ bill.status }}
+                        </span>
+                    </td>
+                    <td class="uk-text-right">
+                        <div class="uk-invisible-hover">
+                            <a href="#" class="uk-icon-button" uk-icon="file-text" uk-tooltip="View Details"></a>
+                            <a href="#" class="uk-icon-button" uk-icon="pencil" uk-tooltip="Edit"></a>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="uk-text-center uk-text-muted uk-padding-large italic">No bills recorded yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

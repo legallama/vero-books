@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="banking-app">
+    <div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+        <div>
+            <h1 class="uk-heading-small uk-margin-remove-bottom">Banking Center</h1>
+            <p class="uk-text-meta">Connect financial institutions and reconcile ledger entries</p>
+        </div>
+        <div>
+            <button @click="txType = 'deposit'; showTxModal = true" class="uk-button uk-button-default uk-margin-small-right">+ Record Deposit</button>
+            <button @click="txType = 'withdrawal'; showTxModal = true" class="uk-button uk-button-default uk-margin-small-right">- Record Withdrawal</button>
+            <button @click="showModal = true" class="uk-button uk-button-primary">+ Link Account</button>
+        </div>
+    </div>
+
+    <!-- Accounts Grid -->
+    <div class="uk-grid-medium uk-child-width-1-3@m uk-margin-large-bottom" uk-grid>
+        {% for acc in accounts %}
+        <div>
+            <div class="uk-card uk-card-default uk-card-body uk-card-hover">
+                <div class="uk-flex uk-flex-between uk-flex-top">
+                    <span uk-icon="icon: database; ratio: 1.5" class="uk-text-primary"></span>
+                    <span class="uk-label uk-label-muted">{{ acc.account_type }}</span>
+                </div>
+                <h3 class="uk-card-title uk-margin-small-top uk-text-bold">{{ acc.name }}</h3>
+                <p class="uk-text-meta uk-margin-remove-top">**** {{ acc.account_number_last4 or '4421' }}</p>
+                <div class="uk-margin-top">
+                    <p class="uk-text-meta uk-text-uppercase uk-margin-remove">Current Balance</p>
+                    <h3 class="uk-margin-remove-top uk-text-bold">${{ "{:,.2f}".format(acc.balance) }}</h3>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% if not accounts %}
+        <div class="uk-width-1-1">
+            <div class="uk-card uk-card-default uk-card-body uk-text-center uk-padding-large">
+                <p class="uk-text-muted italic">No financial accounts are currently linked.</p>
+                <button @click="showModal = true" class="uk-button uk-button-text uk-text-primary">Link your first bank account or statement</button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Transaction List -->
+    <div class="uk-card uk-card-default">
+        <div class="uk-card-header uk-flex uk-flex-between uk-flex-middle">
+            <h3 class="uk-card-title uk-text-bold">Live Transaction Feed</h3>
+            <div>
+                <form id="qboImportForm" action="{{ url_for('banking.import_statements') }}" method="POST" enctype="multipart/form-data" class="uk-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div uk-form-custom>
+                        <input type="file" name="statement_file" accept=".qbo,.ofx,.qfx,.csv,.xlsx,.xls" onchange="document.getElementById('qboImportForm').submit()">
+                        <button class="uk-button uk-button-default uk-button-small uk-margin-small-right" type="button" tabindex="-1"><span uk-icon="upload" class="uk-margin-small-right"></span>Import QBO / Excel</button>
+                    </div>
+                </form>
+                <button class="uk-button uk-button-primary uk-button-small" onclick="UIkit.notification({message: 'Scanning for matches...', status: 'success'})">Audit Matches</button>
+                <button v-show="selectedTxs.length > 0" @click="deleteSelected" class="uk-button uk-button-danger uk-button-small uk-margin-small-left">Batch Delete ([[ selectedTxs.length ]])</button>
+            </div>
+        </div>
+        <div class="uk-overflow-auto">
+            <table class="uk-table uk-table-divider uk-table-hover uk-table-middle">
+                <thead>
+                    <tr>
+                        <th class="uk-table-shrink"><input class="uk-checkbox" type="checkbox" @change="toggleAll($event)"></th>
+                        <th class="uk-table-shrink">Date</th>
+                        <th>Description / Payee</th>
+                        <th class="uk-text-center">Status</th>
+                        <th class="uk-text-right">Amount</th>
+                        <th class="uk-table-shrink"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tx in transactions %}
+                    <tr>
+                        <td><input class="uk-checkbox" type="checkbox" value="{{ tx.id }}" v-model="selectedTxs"></td>
+                        <td class="uk-text-meta">{{ tx.date.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <div class="uk-text-bold">{{ tx.description }}</div>
+                            {% if tx.suggested_account %}
+                            <div class="uk-text-meta uk-text-success">
+                                <span uk-icon="icon: check; ratio: 0.7"></span> 
+                                Suggested: <span class="uk-text-bold">{{ tx.suggested_account.name }}</span> (via {{ tx.rule_name }})
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="uk-text-center">
+                            {% if tx.status != 'MATCHED' %}
+                                {% if tx.suggested_account %}
+                                <form action="{{ url_for('banking.accept_match', tx_id=tx.id, account_id=tx.suggested_account.id) }}" method="POST" class="uk-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="uk-button uk-button-primary uk-button-small">Accept Match</button>
+                                </form>
+                                {% else %}
+                                <form action="{{ url_for('banking.accept_match', tx_id=tx.id) }}" method="POST" class="uk-flex uk-flex-middle">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <select class="uk-select uk-form-small uk-margin-small-right" name="account_id" required>
+                                        <option value="">Categorize...</option>
+                                        {% for acc in gl_accounts %}
+                                        <option value="{{ acc.id }}">{{ acc.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="uk-button uk-button-primary uk-button-small">Add</button>
+                                </form>
+                                {% endif %}
+                            {% else %}
+                                <span class="uk-label uk-label-success">
+                                    {{ tx.status }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="uk-text-right uk-text-bold {{ 'uk-text-success' if tx.amount > 0 else '' }}">
+                            {{ "$" if tx.amount > 0 else "-$" }}{{ "{:,.2f}".format(tx.amount | abs) }}
+                        </td>
+                        <td class="uk-text-right">
+                            <form action="{{ url_for('banking.delete_transaction', tx_id=tx.id) }}" method="POST" class="uk-inline" onsubmit="return confirm('Remove this transaction? If it was already matched, the associated journal entry will NOT be removed. Proceed?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="uk-icon-button uk-text-danger" uk-icon="trash" uk-tooltip="Remove Transaction"></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="uk-text-center uk-text-muted uk-padding-large italic">No transactions found in feed.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Link Account Modal (UIkit logic with Vue visibility) -->
+    <div v-if="showModal" class="uk-flex uk-flex-top uk-flex-center uk-position-fixed uk-position-z-index uk-height-viewport uk-width-1-1" style="background: rgba(0,0,0,0.6); top:0; left:0; padding-top: 100px;">
+        <div class="uk-card uk-card-default uk-card-body uk-width-large uk-animation-scale-up uk-animation-fast">
+            <h3 class="uk-card-title uk-text-bold">Link Bank Account</h3>
+            <p class="uk-text-meta">Add a new financial institution connection to sync your transactions.</p>
+            
+            <form action="{{ url_for('banking.create_account') }}" method="POST" class="uk-form-stacked">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="uk-margin">
+                    <label class="uk-form-label uk-text-bold">Account Friendly Name</label>
+                    <input class="uk-input" type="text" name="name" placeholder="e.g. Primary Operations Checking" required>
+                </div>
+
+                <div class="uk-margin">
+                    <label class="uk-form-label uk-text-bold">Account Type</label>
+                    <select class="uk-select" name="type">
+                        <option value="Checking">Checking</option>
+                        <option value="Savings">Savings</option>
+                        <option value="Credit Card">Credit Card</option>
+                        <option value="Line of Credit">Line of Credit</option>
+                    </select>
+                </div>
+
+                <div class="uk-margin-large-top uk-text-right">
+                    <button type="button" @click="showModal = false" class="uk-button uk-button-text uk-margin-right">Cancel</button>
+                    <button type="submit" class="uk-button uk-button-primary">Securely Link Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Manual Transaction Modal -->
+    <div v-if="showTxModal" class="uk-flex uk-flex-top uk-flex-center uk-position-fixed uk-position-z-index uk-height-viewport uk-width-1-1" style="background: rgba(0,0,0,0.6); top:0; left:0; padding-top: 100px;">
+        <div class="uk-card uk-card-default uk-card-body uk-width-large uk-animation-scale-up uk-animation-fast">
+            <h3 class="uk-card-title uk-text-bold">Record [[ txType === 'deposit' ? 'Deposit' : 'Withdrawal' ]]</h3>
+            <p class="uk-text-meta">Manually enter a transaction to your bank feed pending automated clearing.</p>
+            
+            <form action="{{ url_for('banking.manual_transaction') }}" method="POST" class="uk-form-stacked">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="type" :value="txType">
+                
+                <div class="uk-grid-small" uk-grid>
+                    <div class="uk-width-1-2">
+                        <label class="uk-form-label uk-text-bold">Date</label>
+                        <input class="uk-input" type="date" name="date" required>
+                    </div>
+                    <div class="uk-width-1-2">
+                        <label class="uk-form-label uk-text-bold">Amount</label>
+                        <input class="uk-input" type="number" step="0.01" name="amount" required placeholder="0.00">
+                    </div>
+                </div>
+
+                <div class="uk-margin">
+                    <label class="uk-form-label uk-text-bold">Target Account</label>
+                    <select class="uk-select" name="bank_account_id" required>
+                        <option value="">Select Bank Account...</option>
+                        {% for acc in accounts %}
+                        <option value="{{ acc.id }}">{{ acc.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="uk-margin">
+                    <label class="uk-form-label uk-text-bold">Description / Payee</label>
+                    <input class="uk-input" type="text" name="description" placeholder="e.g. Cash Deposit" required>
+                </div>
+
+                <div class="uk-margin-large-top uk-text-right">
+                    <button type="button" @click="showTxModal = false" class="uk-button uk-button-text uk-margin-right">Cancel</button>
+                    <button type="submit" class="uk-button uk-button-primary">Record Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp, ref } = Vue;
+    createApp({
+        delimiters: ['[[', ']]'],
+        setup() {
+            const showModal = ref(false);
+            const showTxModal = ref(false);
+            const txType = ref('deposit');
+            
+            const selectedTxs = ref([]);
+            
+            const toggleAll = (e) => {
+                const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+                if (e.target.checked) {
+                    selectedTxs.value = Array.from(checkboxes).map(cb => cb.value);
+                } else {
+                    selectedTxs.value = [];
+                }
+            };
+            
+            const deleteSelected = () => {
+                if (!confirm(`Delete ${selectedTxs.value.length} selected transactions?`)) return;
+                
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "{{ url_for('banking.delete_batch') }}";
+                
+                const csrf = document.createElement('input');
+                csrf.type = 'hidden';
+                csrf.name = 'csrf_token';
+                csrf.value = "{{ csrf_token() }}";
+                form.appendChild(csrf);
+                
+                selectedTxs.value.forEach(id => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'tx_ids';
+                    input.value = id;
+                    form.appendChild(input);
+                });
+                
+                document.body.appendChild(form);
+                form.submit();
+            };
+
+            return { showModal, showTxModal, txType, selectedTxs, toggleAll, deleteSelected };
+        }
+    }).mount('#banking-app');
+</script>
+{% endblock %}

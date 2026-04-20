@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-flex uk-flex-center">
+    <div class="uk-width-1-2@m">
+        <div class="uk-card uk-card-default uk-card-body">
+            <h2 class="uk-card-title uk-text-bold">Register New Business</h2>
+            <p class="uk-text-meta">Expand your portfolio by adding another legal entity to VeroBooks.</p>
+            
+            <form method="POST" class="uk-form-stacked uk-margin-large-top">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="uk-margin">
+                    <label class="uk-form-label uk-text-bold">Business Name</label>
+                    <div class="uk-form-controls">
+                        <input class="uk-input uk-form-large" name="name" type="text" placeholder="e.g. Acme Holdings LLC" required>
+                    </div>
+                </div>
+
+                <div class="uk-margin">
+                    <label class="uk-form-label uk-text-bold">Legal Entity Type</label>
+                    <div class="uk-form-controls">
+                        <select class="uk-select">
+                            <option>LLC</option>
+                            <option>Corporation</option>
+                            <option>Partnership</option>
+                            <option>Solo Proprietorship</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="uk-margin-large-top uk-flex uk-flex-between">
+                    <a href="{{ url_for('dashboard.index') }}" class="uk-button uk-button-text">Cancel</a>
+                    <button type="submit" class="uk-button uk-button-primary uk-button-large">Initialize Business</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

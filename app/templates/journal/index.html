@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="journal-app">
+    <div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+        <div>
+            <h1 class="uk-heading-small uk-margin-remove-bottom">Journal Entries</h1>
+            <p class="uk-text-meta">Record and review manual ledger adjustments</p>
+        </div>
+        <a href="{{ url_for('journal.create') }}" class="uk-button uk-button-primary">+ New Journal Entry</a>
+    </div>
+
+    <div class="uk-card uk-card-default">
+        <div class="uk-overflow-auto">
+            <table class="uk-table uk-table-divider uk-table-hover uk-table-middle">
+                <thead>
+                    <tr>
+                        <th class="uk-table-shrink">Date</th>
+                        <th>Number</th>
+                        <th>Memo</th>
+                        <th class="uk-text-center">Status</th>
+                        <th class="uk-text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                    <tr>
+                        <td class="uk-text-meta">{{ entry.entry_date.strftime('%Y-%m-%d') }}</td>
+                        <td class="uk-text-bold uk-text-primary">{{ entry.entry_number }}</td>
+                        <td>{{ entry.memo or '-' }}</td>
+                        <td class="uk-text-center">
+                            {% if entry.status == 'POSTED' %}
+                            <span class="uk-label uk-label-success">Posted</span>
+                            {% elif entry.status == 'DRAFT' %}
+                            <span class="uk-label uk-label-warning">Draft</span>
+                            {% else %}
+                            <span class="uk-label">{{ entry.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="uk-text-right">
+                            {% if entry.status == 'DRAFT' %}
+                            <a href="{{ url_for('journal.edit', entry_id=entry.id) }}" class="uk-icon-button uk-margin-small-right" uk-icon="pencil" uk-tooltip="Edit Entry"></a>
+                            <form method="POST" action="{{ url_for('journal.post_entry', entry_id=entry.id) }}" class="uk-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="uk-button uk-button-primary uk-button-small">Post</button>
+                            </form>
+                            {% else %}
+                            <a href="{{ url_for('journal.view', entry_id=entry.id) }}" class="uk-icon-button" uk-icon="info" uk-tooltip="View Details"></a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="uk-text-center uk-text-muted uk-padding-large italic">No journal entries found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

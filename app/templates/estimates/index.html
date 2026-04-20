@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+    <div>
+        <h1 class="uk-heading-small uk-margin-remove-bottom">Estimates & Quotes</h1>
+        <p class="uk-text-meta">Manage pending proposals for your clients</p>
+    </div>
+    <a href="{{ url_for('estimates.create') }}" class="uk-button uk-button-primary">+ New Estimate</a>
+</div>
+
+<div class="uk-card uk-card-default">
+    <div class="uk-overflow-auto">
+        <table class="uk-table uk-table-divider uk-table-hover uk-table-middle">
+            <thead>
+                <tr>
+                    <th class="uk-table-shrink">Number</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th class="uk-text-center">Status</th>
+                    <th class="uk-text-right">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for estimate in estimates %}
+                <tr>
+                    <td class="uk-text-primary uk-text-bold font-mono">{{ estimate.estimate_number }}</td>
+                    <td class="uk-text-bold">{{ estimate.customer.display_name }}</td>
+                    <td class="uk-text-meta">{{ estimate.issue_date.strftime('%Y-%m-%d') }}</td>
+                    <td class="uk-text-center">
+                        <span class="uk-label uk-label-warning">{{ estimate.status }}</span>
+                    </td>
+                    <td class="uk-text-right uk-text-bold">${{ "{:,.2f}".format(estimate.total) }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="uk-text-center uk-text-muted uk-padding-large italic">No estimates found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

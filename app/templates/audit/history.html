@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-margin-large-bottom">
+    <h1 class="uk-heading-small uk-margin-remove-bottom">Audit Trail</h1>
+    <p class="uk-text-meta">A comprehensive history of every transaction and administrative action.</p>
+</div>
+
+<div class="uk-card uk-card-default">
+    <div class="uk-card-header uk-flex uk-flex-between uk-flex-middle">
+        <h3 class="uk-card-title uk-text-bold">Activity History</h3>
+        <div>
+            <button class="uk-button uk-button-default uk-button-small" onclick="UIkit.notification({message: 'Exporting audit trail...', status: 'primary', pos: 'top-right'})">Export CSV</button>
+        </div>
+    </div>
+    <div class="uk-overflow-auto">
+        <table class="uk-table uk-table-divider uk-table-hover uk-table-middle">
+            <thead>
+                <tr>
+                    <th class="uk-width-medium">Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Entity</th>
+                    <th class="uk-width-large">Summary / Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td class="uk-text-meta">{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td class="uk-text-bold">{{ (log.user.full_name or log.user.email) if log.user else 'System' }}</td>
+                    <td>
+                        <span class="uk-label {{ 'uk-label-success' if log.action == 'CREATE' else 'uk-label-warning' if log.action == 'UPDATE' else 'uk-label-danger' }}">
+                            {{ log.action }}
+                        </span>
+                    </td>
+                    <td class="uk-text-meta">{{ log.entity_type }}</td>
+                    <td>{{ log.reason or 'Modified ' + log.entity_type + ' record.' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="uk-text-center uk-text-muted uk-padding-large italic">No activity recorded yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

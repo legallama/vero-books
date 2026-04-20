@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="users-app">
+    <div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+        <div>
+            <h1 class="uk-heading-small uk-margin-remove-bottom">User Management</h1>
+            <p class="uk-text-meta">Manage team access and roles for {{ current_org.name }}</p>
+        </div>
+        <button class="uk-button uk-button-primary" @click="showModal = true">+ Invite User</button>
+    </div>
+
+    <div class="uk-card uk-card-default">
+        <div class="uk-overflow-auto">
+            <table class="uk-table uk-table-divider uk-table-hover uk-table-middle">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th class="uk-text-center">Status</th>
+                        <th class="uk-table-shrink"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in memberships %}
+                    <tr>
+                        <td>
+                            <div class="uk-flex uk-flex-middle">
+                                <div class="uk-border-circle uk-background-muted uk-flex uk-flex-center uk-flex-middle uk-margin-small-right" style="width: 32px; height: 32px; color: #475569; font-weight: 700; font-size: 12px;">
+                                    {{ (member.user.full_name or member.user.email or "U")[0] | upper }}
+                                </div>
+                                <span class="uk-text-bold">{{ member.user.full_name or member.user.email }}</span>
+                                {% if member.is_owner %}
+                                <span class="uk-label uk-label-primary uk-margin-small-left" style="font-size: 10px; padding: 0 4px;">OWNER</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="uk-text-meta">{{ member.user.email }}</td>
+                        <td>
+                            <span class="uk-label uk-label-muted">{{ member.role.name }}</span>
+                        </td>
+                        <td class="uk-text-center">
+                            <span class="uk-label {{ 'uk-label-success' if member.is_active else 'uk-label-warning' }}">
+                                {{ 'Active' if member.is_active else 'Pending' }}
+                            </span>
+                        </td>
+                        <td class="uk-text-right">
+                            <button class="uk-icon-button" uk-icon="more-vertical" uk-tooltip="Manage Access"></button>
+                            <div uk-dropdown="mode: click; pos: bottom-right">
+                                <ul class="uk-nav uk-dropdown-nav">
+                                    <li><a href="#" onclick="UIkit.notification('Role management coming soon', {status:'primary'})"><span uk-icon="pencil" class="uk-margin-small-right"></span> Edit Role</a></li>
+                                    <li class="uk-nav-divider"></li>
+                                    <li><a href="#" class="uk-text-danger" onclick="UIkit.notification('Remove access coming soon', {status:'danger'})"><span uk-icon="trash" class="uk-margin-small-right"></span> Revoke Access</a></li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Invite User Modal -->
+    <div v-if="showModal" class="uk-flex uk-flex-top uk-flex-center uk-position-fixed uk-position-z-index uk-height-viewport uk-width-1-1" style="background: rgba(0,0,0,0.6); top:0; left:0; padding-top: 100px;">
+        <div class="uk-card uk-card-default uk-card-body uk-width-large uk-animation-scale-up uk-animation-fast">
+            <h3 class="uk-card-title uk-text-bold">Invite Team Member</h3>
+            <p class="uk-text-meta">Send an email invitation to collaborate on your financial records.</p>
+            
+            <form class="uk-form-stacked uk-margin-top" @submit.prevent="submitInvite">
+                <div class="uk-margin">
+                    <label class="uk-form-label uk-text-bold">Email Address</label>
+                    <input class="uk-input" type="email" placeholder="colleague@company.com" required>
+                </div>
+                
+                <div class="uk-margin">
+                    <label class="uk-form-label uk-text-bold">Assign Role</label>
+                    <select class="uk-select">
+                        <option>ADMIN (Full Access)</option>
+                        <option>BOOKKEEPER (Standard Access)</option>
+                        <option>VIEWER (Read Only)</option>
+                    </select>
+                </div>
+
+                <div class="uk-margin-large-top uk-text-right">
+                    <button type="button" @click="showModal = false" class="uk-button uk-button-text uk-margin-right">Cancel</button>
+                    <button type="submit" class="uk-button uk-button-primary">Send Invitation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp, ref } = Vue;
+    createApp({
+        setup() {
+            const showModal = ref(false);
+            
+            const submitInvite = () => {
+                UIkit.notification('Invitation sent successfully.', {status:'success'});
+                showModal.value = false;
+            };
+
+            return { showModal, submitInvite };
+        }
+    }).mount('#users-app');
+</script>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+    <div>
+        <h1 class="uk-heading-small uk-margin-remove-bottom">Invoices</h1>
+        <p class="uk-text-meta">Track and manage your client billing</p>
+    </div>
+    <a href="{{ url_for('invoices.create') }}" class="uk-button uk-button-primary">+ New Invoice</a>
+</div>
+
+<div class="uk-card uk-card-default">
+    <div class="uk-overflow-auto">
+        <table class="uk-table uk-table-divider uk-table-hover uk-table-middle">
+            <thead>
+                <tr>
+                    <th>Number</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th class="uk-text-center">Status</th>
+                    <th class="uk-text-right">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in invoices %}
+                <tr class="uk-visible-toggle">
+                    <td class="uk-text-primary uk-text-bold font-mono">{{ inv.invoice_number }}</td>
+                    <td class="uk-text-bold">{{ inv.customer.display_name }}</td>
+                    <td class="uk-text-meta">{{ inv.issue_date.strftime('%Y-%m-%d') }}</td>
+                    <td class="uk-text-center">
+                        <span class="uk-label {{ 'uk-label-success' if inv.status == 'PAID' else 'uk-label-warning' }}">{{ inv.status }}</span>
+                    </td>
+                    <td class="uk-text-right uk-text-bold">${{ "{:,.2f}".format(inv.total) }}</td>
+                    <td class="uk-text-right">
+                        <div class="uk-invisible-hover">
+                            <a href="#" class="uk-icon-button" uk-icon="file-text" uk-tooltip="View Invoice"></a>
+                            <a href="#" class="uk-icon-button" uk-icon="pencil" uk-tooltip="Edit"></a>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="uk-text-center uk-text-muted uk-padding-large italic">No invoices found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

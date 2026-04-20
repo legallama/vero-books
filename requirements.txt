@@ -1,0 +1,13 @@
+flask
+flask-sqlalchemy
+flask-migrate
+flask-login
+flask-wtf
+pydantic
+psycopg2-binary
+python-dotenv
+marshmallow
+gunicorn
+alembic
+wtforms
+email-validator

@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="tax-settings-app">
+    <div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+        <div>
+            <h1 class="uk-heading-small uk-margin-remove-bottom">Tax Settings</h1>
+            <p class="uk-text-meta">Manage jurisdictional tax rates and filing requirements</p>
+        </div>
+        <button @click="showModal = true" class="uk-button uk-button-primary">+ Create Tax Rate</button>
+    </div>
+
+    <div class="uk-grid-large" uk-grid>
+        <div class="uk-width-1-1">
+            <div class="uk-card uk-card-default">
+                <div class="uk-card-header">
+                    <h3 class="uk-card-title uk-text-bold">Active Tax Rates</h3>
+                </div>
+                <div class="uk-card-body">
+                    <div class="uk-overflow-auto">
+                        <table class="uk-table uk-table-divider uk-table-hover uk-table-middle">
+                            <thead>
+                                <tr>
+                                    <th>Authority Name</th>
+                                    <th class="uk-text-right">Multiplier</th>
+                                    <th class="uk-text-right">Rate (%)</th>
+                                    <th class="uk-table-shrink"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="rate in rates" :key="rate.id">
+                                    <td class="uk-text-bold">[[ rate.name ]]</td>
+                                    <td class="uk-text-right uk-text-meta font-mono">[[ rate.rate.toFixed(4) ]]</td>
+                                    <td class="uk-text-right uk-text-primary uk-text-bold">[[ (rate.rate * 100).toFixed(2) ]]%</td>
+                                    <td class="uk-text-right">
+                                        <button class="uk-button uk-button-text uk-text-danger" uk-icon="trash" @click="deleteRate(rate.id)"></button>
+                                    </td>
+                                </tr>
+                                <tr v-if="rates.length === 0">
+                                    <td colspan="4" class="uk-text-center uk-text-muted uk-padding-large">No tax rates configured.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UIkit Modal Integration with Vue -->
+    <div v-if="showModal" class="uk-flex uk-flex-top uk-flex-center uk-position-fixed uk-position-z-index uk-height-viewport uk-width-1-1" style="background: rgba(0,0,0,0.6); top:0; left:0; padding-top: 100px;">
+        <div class="uk-card uk-card-default uk-card-body uk-width-xlarge uk-animation-scale-up uk-animation-fast">
+            <h3 class="uk-card-title uk-text-bold">New Tax Jurisdiction</h3>
+            <p class="uk-text-meta uk-margin-remove-top">Configure a new tax authority for your business transactions.</p>
+            
+            <div class="uk-margin-medium-top">
+                <label class="uk-form-label uk-text-bold">Authority Name</label>
+                <input class="uk-input" type="text" v-model="newRate.name" placeholder="e.g. State Sales Tax">
+            </div>
+
+                <div class="uk-margin-medium-top">
+                    <label class="uk-form-label uk-text-bold">Applicable Rate (%)</label>
+                    <input class="uk-input" type="number" step="0.001" v-model.number="newRate.ratePercent" placeholder="e.g. 6.25">
+                </div>
+
+                <div class="uk-margin-large-top uk-text-right">
+                    <button class="uk-button uk-button-text uk-margin-right" @click="showModal = false">Cancel</button>
+                    <button class="uk-button uk-button-primary" @click="saveRate" :disabled="!newRate.name || !newRate.ratePercent">Add Authority</button>
+                </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp, ref, onMounted } = Vue;
+
+    createApp({
+        delimiters: ['[[', ']]'],
+        setup() {
+            const showModal = ref(false);
+            const rates = ref([]);
+            
+            // Hydrate from server-rendered data initially
+            const initialRates = [
+                {% for r in tax_rates %}
+                { id: '{{ r.id }}', name: '{{ r.name }}', rate: {{ r.rate }} },
+                {% endfor %}
+            ];
+            rates.value = initialRates;
+
+            const newRate = ref({
+                name: '',
+                ratePercent: 0
+            });
+
+            const saveRate = async () => {
+                const response = await fetch('{{ url_for("settings.create_tax_rate") }}', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': window.csrf_token
+                    },
+                    body: JSON.stringify({
+                        name: newRate.value.name,
+                        rate: newRate.value.ratePercent / 100
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    rates.value.push({
+                        id: result.id,
+                        name: newRate.value.name,
+                        rate: newRate.value.ratePercent / 100
+                    });
+                    showModal.value = false;
+                    newRate.value = { name: '', ratePercent: 0 };
+                }
+            };
+            
+            const deleteRate = async (id) => {
+                const confirmed = confirm('Are you sure you want to delete this tax jurisdiction?');
+                if (!confirmed) return;
+
+                const response = await fetch(`/settings/api/tax-rates/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': window.csrf_token }
+                });
+
+                if (response.ok) {
+                    rates.value = rates.value.filter(r => r.id !== id);
+                    UIkit.notification({message: 'Jurisdiction removed successfully.', status: 'success'});
+                }
+            };
+
+            return { showModal, rates, newRate, saveRate, deleteRate };
+        }
+    }).mount('#tax-settings-app');
+</script>
+{% endblock %}

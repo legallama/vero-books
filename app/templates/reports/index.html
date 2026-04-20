@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-margin-large-bottom">
+    <h1 class="uk-heading-small uk-margin-remove-bottom">Reports Center</h1>
+    <p class="uk-text-meta">Comprehensive financial analysis and statement generation</p>
+</div>
+
+<div class="uk-grid-match uk-grid-medium uk-child-width-1-3@m" uk-grid>
+    <!-- Financial Statements -->
+    <div>
+        <div class="uk-card uk-card-default uk-card-body">
+            <h3 class="uk-card-title uk-text-bold">Financial Statements</h3>
+            <ul class="uk-list uk-list-divider uk-margin-top">
+                <li><a href="{{ url_for('reports.profit_and_loss') }}" class="uk-link-text uk-flex uk-flex-between">Profit & Loss <span uk-icon="chevron-right"></span></a></li>
+                <li><a href="{{ url_for('reports.balance_sheet') }}" class="uk-link-text uk-flex uk-flex-between">Balance Sheet <span uk-icon="chevron-right"></span></a></li>
+                <li class="uk-text-muted">Cash Flow (Coming Soon)</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Management Reports -->
+    <div>
+        <div class="uk-card uk-card-default uk-card-body">
+            <h3 class="uk-card-title uk-text-bold">Management</h3>
+            <ul class="uk-list uk-list-divider uk-margin-top">
+                <li><a href="{{ url_for('reports.trial_balance') }}" class="uk-link-text uk-flex uk-flex-between">Trial Balance <span uk-icon="chevron-right"></span></a></li>
+                <li class="uk-text-muted">A/R Aging Summary</li>
+                <li class="uk-text-muted">A/P Aging Summary</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Audit & Compliance -->
+    <div>
+        <div class="uk-card uk-card-default uk-card-body">
+            <h3 class="uk-card-title uk-text-bold">Audit & Tax</h3>
+            <ul class="uk-list uk-list-divider uk-margin-top">
+                <li class="uk-text-muted">General Ledger Audit</li>
+                <li class="uk-text-muted">Tax Liability Summary</li>
+                <li class="uk-text-muted">Transaction List by Tag</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

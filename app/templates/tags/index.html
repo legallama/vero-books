@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="tags-app">
+    <div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+        <div>
+            <h1 class="uk-heading-small uk-margin-remove-bottom">Category Tags</h1>
+            <p class="uk-text-meta">Organize your ledger data by Projects, Locations, or Classes</p>
+        </div>
+        <button @click="showModal = true" class="uk-button uk-button-primary">+ Create Tag</button>
+    </div>
+
+    <div class="uk-grid-medium uk-child-width-1-3@m" uk-grid>
+        <div v-for="tag in tags" :key="tag.id">
+            <div class="uk-card uk-card-default uk-card-body">
+                <div class="uk-flex uk-flex-between uk-flex-top">
+                    <span class="uk-label" :style="{ background: tag.color_code + '20', color: tag.color_code, border: '1px solid ' + tag.color_code }">
+                        [[ tag.tag_type ]]
+                    </span>
+                    <span :style="{ background: tag.color_code }" class="uk-border-circle" style="width: 10px; height: 10px;"></span>
+                </div>
+                <h3 class="uk-card-title uk-margin-top uk-text-bold">[[ tag.name ]]</h3>
+                <div class="uk-margin-top uk-text-right">
+                    <button class="uk-button uk-button-text uk-text-muted uk-margin-small-right">Edit</button>
+                    <button class="uk-button uk-button-text uk-text-danger">Archive</button>
+                </div>
+            </div>
+        </div>
+        
+        <div v-if="tags.length === 0" class="uk-width-1-1">
+            <div class="uk-card uk-card-default uk-card-body uk-text-center uk-padding-large">
+                <p class="uk-text-muted italic">No classification tags created yet.</p>
+                <button @click="showModal = true" class="uk-button uk-button-text uk-text-primary">Create your first tag label</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- UIkit Modal Integration with Vue -->
+    <div v-if="showModal" class="uk-flex uk-flex-top uk-flex-center uk-position-fixed uk-position-z-index uk-height-viewport uk-width-1-1" style="background: rgba(0,0,0,0.6); top:0; left:0; padding-top: 100px;">
+        <div class="uk-card uk-card-default uk-card-body uk-width-large uk-animation-scale-up uk-animation-fast">
+            <h3 class="uk-card-title uk-text-bold">New Category Tag</h3>
+            <p class="uk-text-meta">Define a label for tracking transactions across your ledger.</p>
+            
+            <div class="uk-margin-top">
+                <label class="uk-form-label uk-text-bold">Tag Name</label>
+                <input class="uk-input" type="text" v-model="form.name" placeholder="e.g. Q4 Marketing Campaign">
+            </div>
+
+            <div class="uk-margin">
+                <label class="uk-form-label uk-text-bold">Classification Type</label>
+                <select class="uk-select" v-model="form.tag_type">
+                    <option value="PROJECT">Project</option>
+                    <option value="LOCATION">Location</option>
+                    <option value="CLASS">Class / Department</option>
+                </select>
+            </div>
+
+            <div class="uk-margin">
+                <label class="uk-form-label uk-text-bold">Color Label</label>
+                <div class="uk-grid-small uk-child-width-1-5" uk-grid>
+                    <div v-for="color in ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#f43f5e', '#1e293b', '#64748b']">
+                        <div @click="form.color_code = color" 
+                             :style="{ background: color }" 
+                             class="uk-height-small uk-border-rounded uk-cursor-pointer" 
+                             style="height: 30px; position: relative;">
+                            <span v-if="form.color_code === color" uk-icon="icon: check; ratio: 0.6" class="uk-position-center uk-text-white"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="uk-margin-large-top uk-text-right">
+                <button class="uk-button uk-button-text uk-margin-right" @click="showModal = false">Cancel</button>
+                <button class="uk-button uk-button-primary" @click="submit" :disabled="!form.name">Create Tag</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp, ref } = Vue;
+
+    createApp({
+        delimiters: ['[[', ']]'],
+        setup() {
+            const showModal = ref(false);
+            const tags = ref([
+                {% for t in tags %}
+                { id: '{{ t.id }}', name: '{{ t.name }}', tag_type: '{{ t.tag_type }}', color_code: '{{ t.color_code }}' },
+                {% endfor %}
+            ]);
+
+            const form = ref({
+                name: '',
+                tag_type: 'PROJECT',
+                color_code: '#6366f1'
+            });
+
+            const submit = async () => {
+                const response = await fetch('{{ url_for("tags.create_tag") }}', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': window.csrf_token
+                    },
+                    body: JSON.stringify(form.value)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    tags.value.push(result);
+                    showModal.value = false;
+                    form.value = { name: '', tag_type: 'PROJECT', color_code: '#6366f1' };
+                }
+            };
+
+            return { showModal, tags, form, submit };
+        }
+    }).mount('#tags-app');
+</script>
+{% endblock %}

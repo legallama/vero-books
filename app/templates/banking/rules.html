@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="bank-rules-app">
+    <div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+        <div>
+            <h1 class="uk-heading-small uk-margin-remove-bottom">Bank Rules</h1>
+            <p class="uk-text-meta">Automate your reconciliation by defining matching criteria for bank transactions.</p>
+        </div>
+        <button class="uk-button uk-button-primary" @click="showModal = true">+ Create New Rule</button>
+    </div>
+
+    <div class="uk-card uk-card-default">
+        <div class="uk-overflow-auto">
+            <table class="uk-table uk-table-divider uk-table-hover uk-table-middle">
+                <thead>
+                    <tr>
+                        <th>Rule Name</th>
+                        <th>Conditions</th>
+                        <th>Target Account</th>
+                        <th class="uk-text-center">Status</th>
+                        <th class="uk-table-shrink"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rule in rules %}
+                    <tr>
+                        <td class="uk-text-bold">{{ rule.name }}</td>
+                        <td>
+                            <span class="uk-text-meta">If </span>
+                            <span class="uk-text-bold uk-text-primary">{{ rule.field_to_match }}</span>
+                            <span class="uk-text-meta"> {{ rule.match_type | lower }} </span>
+                            <span class="uk-text-bold">"{{ rule.match_value }}"</span>
+                        </td>
+                        <td>
+                            <div class="uk-text-bold">{{ rule.target_account.name }}</div>
+                            <div class="uk-text-meta">{{ rule.target_account.code }}</div>
+                        </td>
+                        <td class="uk-text-center">
+                            <span class="uk-label {{ 'uk-label-success' if rule.is_active else 'uk-label-muted' }}">
+                                {{ 'Active' if rule.is_active else 'Paused' }}
+                            </span>
+                        </td>
+                        <td class="uk-text-right">
+                            <form action="{{ url_for('banking.delete_rule', rule_id=rule.id) }}" method="POST" onsubmit="return confirm('Delete this automation rule?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="uk-icon-button uk-button-danger" uk-icon="trash"></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="uk-text-center uk-padding-large uk-text-muted italic">No automation rules created yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Create Rule Modal -->
+    <div v-if="showModal" class="uk-flex uk-flex-top uk-flex-center uk-position-fixed uk-position-z-index uk-height-viewport uk-width-1-1" style="background: rgba(0,0,0,0.6); top:0; left:0; padding-top: 50px;">
+        <div class="uk-card uk-card-default uk-card-body uk-width-xlarge uk-animation-scale-up uk-animation-fast">
+            <h3 class="uk-card-title uk-text-bold">New Automation Rule</h3>
+            <p class="uk-text-meta">Define the 'If/Then' logic for your bank statement processing.</p>
+            
+            <form action="{{ url_for('banking.create_rule') }}" method="POST" class="uk-form-stacked uk-margin-top">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="uk-margin">
+                    <label class="uk-form-label uk-text-bold">Rule Name</label>
+                    <input class="uk-input" type="text" name="name" placeholder="e.g. Starbucks Auto-Categorize" required>
+                </div>
+
+                <div class="uk-grid-small" uk-grid>
+                    <div class="uk-width-1-3@s">
+                        <label class="uk-form-label">When...</label>
+                        <select class="uk-select" name="field">
+                            <option value="DESCRIPTION">Description</option>
+                            <option value="AMOUNT">Transaction Amount</option>
+                        </select>
+                    </div>
+                    <div class="uk-width-1-3@s">
+                        <label class="uk-form-label">Condition</label>
+                        <select class="uk-select" name="match_type">
+                            <option value="CONTAINS">Contains</option>
+                            <option value="EXACT">Exactly Matches</option>
+                            <option value="GREATER_THAN">Is Greater Than</option>
+                        </select>
+                    </div>
+                    <div class="uk-width-1-3@s">
+                        <label class="uk-form-label">Value</label>
+                        <input class="uk-input" type="text" name="match_value" placeholder="Query..." required>
+                    </div>
+                </div>
+
+                <div class="uk-margin">
+                    <label class="uk-form-label uk-text-bold">Then Assign to Ledger Account</label>
+                    <select class="uk-select" name="target_account_id" required>
+                        <option value="">Select Target Account...</option>
+                        {% for acc in accounts %}
+                        <option value="{{ acc.id }}">{{ acc.code }} - {{ acc.name }} ({{ acc.type }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="uk-margin-large-top uk-text-right">
+                    <button type="button" @click="showModal = false" class="uk-button uk-button-text uk-margin-right">Cancel</button>
+                    <button type="submit" class="uk-button uk-button-primary">Save Automation Rule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp, ref } = Vue;
+    createApp({
+        setup() {
+            const showModal = ref(false);
+            return { showModal };
+        }
+    }).mount('#bank-rules-app');
+</script>
+{% endblock %}
