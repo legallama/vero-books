@@ -11,10 +11,36 @@ def index():
     org = get_current_org()
     from app.models.banking.bank_account import BankAccount, BankTransaction
     from app.models.accounting.bank_rule import BankRule
+    from app.models.accounting.account import Account
+    from decimal import Decimal
+    from datetime import datetime, timedelta
     
     accounts = BankAccount.query.filter_by(organization_id=org.id).all()
     transactions = BankTransaction.query.filter_by(organization_id=org.id).order_by(BankTransaction.date.desc()).limit(50).all()
     active_rules = BankRule.query.filter_by(organization_id=org.id, is_active=True).order_by(BankRule.priority.desc()).all()
+    
+    # ── Dashboard stats ──
+    all_txs = BankTransaction.query.filter_by(organization_id=org.id).all()
+    
+    total_balance = sum(float(a.balance or 0) for a in accounts)
+    total_uncategorized = sum(1 for t in all_txs if t.status == 'UNCATEGORIZED')
+    total_matched = sum(1 for t in all_txs if t.status == 'MATCHED')
+    
+    # Per-account enrichment
+    for acc in accounts:
+        acc_txs = [t for t in all_txs if t.bank_account_id == acc.id]
+        acc.tx_count = len(acc_txs)
+        acc.uncategorized_count = sum(1 for t in acc_txs if t.status == 'UNCATEGORIZED')
+        acc.matched_count = sum(1 for t in acc_txs if t.status == 'MATCHED')
+        acc.total_deposits = sum(float(t.amount) for t in acc_txs if float(t.amount) > 0)
+        acc.total_withdrawals = sum(abs(float(t.amount)) for t in acc_txs if float(t.amount) < 0)
+        acc.last_tx = max((t.date for t in acc_txs), default=None)
+    
+    # Last 30 days flow
+    thirty_days_ago = datetime.utcnow().date() - timedelta(days=30)
+    recent_txs = [t for t in all_txs if t.date and t.date >= thirty_days_ago]
+    money_in_30d = sum(float(t.amount) for t in recent_txs if float(t.amount) > 0)
+    money_out_30d = sum(abs(float(t.amount)) for t in recent_txs if float(t.amount) < 0)
     
     # Apply rules to transaction list for display
     for tx in transactions:
@@ -42,9 +68,20 @@ def index():
                 tx.rule_name = rule.name
                 break # First match wins based on priority
                 
-    from app.models.accounting.account import Account
     gl_accounts = Account.query.filter_by(organization_id=org.id).order_by(Account.name).all()
-    return render_template('banking/index.html', accounts=accounts, transactions=transactions, gl_accounts=gl_accounts)
+    
+    return render_template('banking/index.html',
+        accounts=accounts,
+        transactions=transactions,
+        gl_accounts=gl_accounts,
+        total_balance=total_balance,
+        total_uncategorized=total_uncategorized,
+        total_matched=total_matched,
+        total_transactions=len(all_txs),
+        money_in_30d=money_in_30d,
+        money_out_30d=money_out_30d,
+        rules_count=len(active_rules),
+    )
 
 @banking_bp.route('/accounts/create', methods=['POST'])
 @login_required

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-flex uk-flex-between uk-flex-middle uk-margin-bottom">
+    <div>
+        <h2 class="uk-margin-remove uk-text-bold" style="color: #1e293b;">Schedule Appointment</h2>
+        <p class="uk-text-meta uk-margin-remove">Book a new meeting with a customer</p>
+    </div>
+    <div>
+        <a href="{{ url_for('customers.appointments') }}" class="uk-button uk-button-default uk-button-small" style="border-radius: 6px; text-transform: none; font-weight: 600;">Cancel</a>
+    </div>
+</div>
+
+<div class="uk-card uk-card-default uk-card-body" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+    <form action="{{ url_for('customers.create_appointment') }}" method="POST" class="uk-form-stacked">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <div class="uk-grid-small" uk-grid>
+            <div class="uk-width-1-1">
+                <label class="uk-form-label uk-text-bold" style="font-size: 13px; color: #475569;">Customer</label>
+                <select class="uk-select" name="customer_id" required style="border-radius: 8px;">
+                    <option value="">Select Customer</option>
+                    {% for customer in customers %}
+                    <option value="{{ customer.id }}">{{ customer.display_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="uk-width-1-2@m uk-margin-top">
+                <label class="uk-form-label uk-text-bold" style="font-size: 13px; color: #475569;">Appointment Title</label>
+                <input class="uk-input" type="text" name="title" placeholder="e.g. Initial Consultation" required style="border-radius: 8px;">
+            </div>
+            
+            <div class="uk-width-1-2@m uk-margin-top">
+                <label class="uk-form-label uk-text-bold" style="font-size: 13px; color: #475569;">Location</label>
+                <input class="uk-input" type="text" name="location" placeholder="e.g. Office or Zoom" style="border-radius: 8px;">
+            </div>
+
+            <div class="uk-width-1-2@m uk-margin-top">
+                <label class="uk-form-label uk-text-bold" style="font-size: 13px; color: #475569;">Start Time</label>
+                <input class="uk-input" type="datetime-local" name="start_time" required style="border-radius: 8px;">
+            </div>
+            
+            <div class="uk-width-1-2@m uk-margin-top">
+                <label class="uk-form-label uk-text-bold" style="font-size: 13px; color: #475569;">End Time</label>
+                <input class="uk-input" type="datetime-local" name="end_time" required style="border-radius: 8px;">
+            </div>
+
+            <div class="uk-width-1-1 uk-margin-top">
+                <label class="uk-form-label uk-text-bold" style="font-size: 13px; color: #475569;">Notes / Description</label>
+                <textarea class="uk-textarea" name="description" rows="3" placeholder="Additional details..." style="border-radius: 8px;"></textarea>
+            </div>
+        </div>
+
+        <div class="uk-margin-large-top uk-flex uk-flex-right">
+            <button type="submit" class="uk-button uk-button-primary" style="border-radius: 8px; text-transform: none; font-weight: 700; height: 44px; background: #6366f1; padding: 0 40px;">Schedule Appointment</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

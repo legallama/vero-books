@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-flex uk-flex-between uk-flex-middle uk-margin-bottom">
+    <div>
+        <h2 class="uk-margin-remove uk-text-bold" style="color: #1e293b;">New Recurring Transaction</h2>
+        <p class="uk-text-meta uk-margin-remove">Create a template for automated accounting entries</p>
+    </div>
+    <div>
+        <a href="{{ url_for('recurring_journal.index') }}" class="uk-button uk-button-default uk-button-small" style="border-radius: 6px; text-transform: none; font-weight: 600;">Cancel</a>
+    </div>
+</div>
+
+<div class="uk-card uk-card-default uk-card-body" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+    <form action="{{ url_for('recurring_journal.create') }}" method="POST" class="uk-form-stacked">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <div class="uk-grid-small" uk-grid>
+            <div class="uk-width-1-2@m">
+                <label class="uk-form-label uk-text-bold" style="font-size: 13px; color: #475569;">Template Name</label>
+                <div class="uk-inline uk-width-1-1">
+                    <span class="uk-form-icon" uk-icon="icon: tag; ratio: 0.8"></span>
+                    <input class="uk-input" type="text" name="name" placeholder="e.g. Monthly Office Rent" required style="border-radius: 8px;">
+                </div>
+            </div>
+            <div class="uk-width-1-2@m">
+                <label class="uk-form-label uk-text-bold" style="font-size: 13px; color: #475569;">Frequency</label>
+                <div class="uk-inline uk-width-1-1">
+                    <span class="uk-form-icon" uk-icon="icon: refresh; ratio: 0.8"></span>
+                    <select class="uk-select" name="frequency" style="border-radius: 8px; padding-left: 40px;">
+                        <option value="WEEKLY">Weekly</option>
+                        <option value="MONTHLY" selected>Monthly</option>
+                        <option value="QUARTERLY">Quarterly</option>
+                        <option value="YEARLY">Yearly</option>
+                    </select>
+                </div>
+            </div>
+            <div class="uk-width-1-1">
+                <label class="uk-form-label uk-text-bold" style="font-size: 13px; color: #475569;">Memo</label>
+                <textarea class="uk-textarea" name="memo" rows="2" placeholder="Internal notes about this transaction..." style="border-radius: 8px;"></textarea>
+            </div>
+        </div>
+
+        <hr class="uk-margin-large">
+
+        <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-bottom">
+            <h4 class="uk-margin-remove uk-text-bold" style="color: #1e293b;">Transaction Details</h4>
+            <div class="uk-text-meta" style="font-size: 12px;">Ensure debits and credits match</div>
+        </div>
+
+        <div id="lines-container">
+            <!-- Line Header -->
+            <div class="uk-grid-small uk-visible@m" uk-grid style="margin-bottom: 8px;">
+                <div class="uk-width-expand">
+                    <span class="uk-text-bold" style="font-size: 11px; color: #64748b; text-transform: uppercase;">Account</span>
+                </div>
+                <div class="uk-width-small">
+                    <span class="uk-text-bold" style="font-size: 11px; color: #64748b; text-transform: uppercase;">Debit</span>
+                </div>
+                <div class="uk-width-small">
+                    <span class="uk-text-bold" style="font-size: 11px; color: #64748b; text-transform: uppercase;">Credit</span>
+                </div>
+                <div style="width: 40px;"></div>
+            </div>
+
+            <!-- Line 1 -->
+            <div class="uk-grid-small uk-flex-middle uk-margin-small" uk-grid>
+                <div class="uk-width-expand">
+                    <select class="uk-select" name="line_account[]" style="border-radius: 6px;">
+                        <option value="">Select Account</option>
+                        {% for account in accounts %}
+                        <option value="{{ account.id }}">{{ account.code }} - {{ account.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="uk-width-small">
+                    <input class="uk-input" type="number" step="0.01" name="line_debit[]" placeholder="0.00" style="border-radius: 6px;">
+                </div>
+                <div class="uk-width-small">
+                    <input class="uk-input" type="number" step="0.01" name="line_credit[]" placeholder="0.00" style="border-radius: 6px;">
+                </div>
+                <div style="width: 40px;"></div>
+            </div>
+
+            <!-- Line 2 -->
+            <div class="uk-grid-small uk-flex-middle uk-margin-small" uk-grid>
+                <div class="uk-width-expand">
+                    <select class="uk-select" name="line_account[]" style="border-radius: 6px;">
+                        <option value="">Select Account</option>
+                        {% for account in accounts %}
+                        <option value="{{ account.id }}">{{ account.code }} - {{ account.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="uk-width-small">
+                    <input class="uk-input" type="number" step="0.01" name="line_debit[]" placeholder="0.00" style="border-radius: 6px;">
+                </div>
+                <div class="uk-width-small">
+                    <input class="uk-input" type="number" step="0.01" name="line_credit[]" placeholder="0.00" style="border-radius: 6px;">
+                </div>
+                <div style="width: 40px;"></div>
+            </div>
+        </div>
+
+        <div class="uk-margin-top">
+            <button type="button" class="uk-button uk-button-text uk-text-primary" style="text-transform: none; font-size: 13px; font-weight: 600;">
+                <span uk-icon="icon: plus; ratio: 0.7" class="uk-margin-small-right"></span> Add another line
+            </button>
+        </div>
+
+        <div class="uk-margin-large-top uk-flex uk-flex-right">
+            <button type="submit" class="uk-button uk-button-primary" style="border-radius: 8px; text-transform: none; font-weight: 700; height: 44px; background: #6366f1; padding: 0 40px;">Create Template</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

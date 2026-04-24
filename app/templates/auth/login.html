@@ -2,46 +2,145 @@
 {% set show_sidebar = false %}
 
 {% block content %}
-<div class="uk-width-medium uk-margin-auto">
-    <div class="uk-card uk-card-default uk-card-body uk-box-shadow-large uk-border-rounded">
-        <div class="uk-text-center uk-margin-medium-bottom">
-            <div class="uk-border-rounded uk-background-primary uk-flex uk-flex-center uk-flex-middle uk-margin-auto" style="width: 48px; height: 48px; background: #3b82f6 !important;">
-                <span class="uk-text-bold uk-text-lead text-white" style="color: #fff;">V</span>
+<style>
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+        background: var(--bg-color);
+        margin: -20px -40px; /* Offset parent padding */
+    }
+    .login-branding {
+        flex: 1.2;
+        background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 60px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    .login-branding::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+        animation: rotate 20s linear infinite;
+    }
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .login-form-side {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 60px;
+        background: var(--bg-color);
+    }
+    .login-card {
+        max-width: 400px;
+        width: 100%;
+        margin: 0 auto;
+    }
+    .branding-content {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+    }
+    .glass-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 40px;
+        border-radius: 24px;
+        margin-top: 40px;
+    }
+    /* Dark mode adjustments for login */
+    .dark-mode .login-form-side {
+        background: var(--bg-color);
+    }
+</style>
+
+<div class="login-container">
+    <div class="login-branding uk-visible@m">
+        <div class="branding-content">
+            <div style="width: 64px; height: 64px; background: white; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: #1d4ed8; font-weight: 900; font-size: 32px; margin: 0 auto 24px;">V</div>
+            <h1 class="uk-heading-small uk-text-bold text-white" style="color: white !important;">VeroBooks</h1>
+            <p class="uk-text-lead" style="opacity: 0.9; color: white !important;">The intelligent accounting platform for modern enterprises.</p>
+            
+            <div class="glass-card">
+                <div class="uk-grid-small uk-flex-middle" uk-grid>
+                    <div class="uk-width-auto">
+                        <span uk-icon="icon: check; ratio: 1.5"></span>
+                    </div>
+                    <div class="uk-width-expand uk-text-left">
+                        <div class="uk-text-bold">Automated Bookkeeping</div>
+                        <div class="uk-text-small" style="opacity: 0.8;">Sync bank feeds and reconcile in seconds.</div>
+                    </div>
+                </div>
+                <div class="uk-grid-small uk-flex-middle uk-margin-top" uk-grid>
+                    <div class="uk-width-auto">
+                        <span uk-icon="icon: users; ratio: 1.5"></span>
+                    </div>
+                    <div class="uk-width-expand uk-text-left">
+                        <div class="uk-text-bold">Team Collaboration</div>
+                        <div class="uk-text-small" style="opacity: 0.8;">Seamless workflows for you and your accountant.</div>
+                    </div>
+                </div>
             </div>
-            <h2 class="uk-card-title uk-margin-small-top uk-text-bold">Welcome Back</h2>
-            <p class="uk-text-meta">Sign in to VeroBooks</p>
         </div>
-        
-        <form method="POST" action="{{ url_for('auth.login') }}" class="uk-form-stacked">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </div>
+    
+    <div class="login-form-side">
+        <div class="login-card">
+            <div class="uk-hidden@m uk-text-center uk-margin-large-bottom">
+                <div style="width: 48px; height: 48px; background: #1d4ed8; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin: 0 auto 12px;">V</div>
+                <h2 class="uk-text-bold uk-margin-remove">VeroBooks</h2>
+            </div>
             
-            <div class="uk-margin">
-                <label class="uk-form-label uk-text-bold">Email Address</label>
-                <div class="uk-form-controls uk-inline uk-width-1-1">
-                    <span class="uk-form-icon" uk-icon="icon: mail"></span>
-                    <input type="email" name="email" required class="uk-input uk-border-rounded" placeholder="name@company.com">
+            <h2 class="uk-text-bold uk-margin-small-bottom" style="color: var(--text-color);">Welcome Back</h2>
+            <p class="uk-text-muted uk-margin-medium-bottom">Enter your credentials to access your workspace.</p>
+            
+            <form method="POST" action="{{ url_for('auth.login') }}" class="uk-form-stacked">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="uk-margin">
+                    <label class="uk-form-label uk-text-bold" style="color: var(--text-color);">Email Address</label>
+                    <div class="uk-form-controls uk-inline uk-width-1-1">
+                        <span class="uk-form-icon" uk-icon="icon: mail"></span>
+                        <input type="email" name="email" required class="uk-input uk-form-large uk-border-rounded" placeholder="name@company.com" style="background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color);">
+                    </div>
                 </div>
-            </div>
-            
-            <div class="uk-margin">
-                <label class="uk-form-label uk-text-bold">Password</label>
-                <div class="uk-form-controls uk-inline uk-width-1-1">
-                    <span class="uk-form-icon" uk-icon="icon: lock"></span>
-                    <input type="password" name="password" required class="uk-input uk-border-rounded" placeholder="••••••••">
+                
+                <div class="uk-margin">
+                    <div class="uk-flex uk-flex-between uk-flex-middle">
+                        <label class="uk-form-label uk-text-bold" style="color: var(--text-color);">Password</label>
+                        <a href="#" class="uk-text-small uk-text-primary">Forgot Password?</a>
+                    </div>
+                    <div class="uk-form-controls uk-inline uk-width-1-1">
+                        <span class="uk-form-icon" uk-icon="icon: lock"></span>
+                        <input type="password" name="password" required class="uk-input uk-form-large uk-border-rounded" placeholder="••••••••" style="background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color);">
+                    </div>
                 </div>
-            </div>
+                
+                <div class="uk-margin-medium-top">
+                    <button type="submit" class="uk-button uk-button-primary uk-button-large uk-width-1-1 uk-border-rounded uk-text-bold" style="background: #1d4ed8;">
+                        Sign In
+                    </button>
+                </div>
+            </form>
             
-            <div class="uk-margin-medium-top">
-                <button type="submit" class="uk-button uk-button-primary uk-width-1-1 uk-border-rounded uk-text-bold">
-                    Sign In
-                </button>
+            <div class="uk-margin-large-top uk-text-center">
+                <p class="uk-text-small uk-text-muted">
+                    New to VeroBooks? <a href="#" class="uk-text-primary uk-text-bold">Start 30-day free trial</a>
+                </p>
             </div>
-        </form>
-        
-        <div class="uk-margin-top uk-text-center">
-            <p class="uk-text-small uk-text-meta">
-                Don't have an account? <a href="#" class="uk-link-text uk-text-primary">Contact support</a>
-            </p>
         </div>
     </div>
 </div>

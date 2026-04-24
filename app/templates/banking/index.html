@@ -2,127 +2,253 @@
 
 {% block content %}
 <div id="banking-app">
-    <div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+    <!-- Header -->
+    <div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-bottom">
         <div>
-            <h1 class="uk-heading-small uk-margin-remove-bottom">Banking Center</h1>
-            <p class="uk-text-meta">Connect financial institutions and reconcile ledger entries</p>
+            <h1 class="uk-margin-remove-bottom" style="font-size: 26px; font-weight: 800; color: #0f172a;">Banking Center</h1>
+            <p class="uk-text-meta" style="font-size: 13px;">Manage accounts, import statements, and reconcile transactions</p>
         </div>
-        <div>
-            <button @click="txType = 'deposit'; showTxModal = true" class="uk-button uk-button-default uk-margin-small-right">+ Record Deposit</button>
-            <button @click="txType = 'withdrawal'; showTxModal = true" class="uk-button uk-button-default uk-margin-small-right">- Record Withdrawal</button>
-            <button @click="showModal = true" class="uk-button uk-button-primary">+ Link Account</button>
+        <div class="uk-flex" style="gap: 8px;">
+            <button @click="txType = 'deposit'; showTxModal = true" class="uk-button uk-button-default uk-button-small" style="border-radius: 6px; font-size: 13px;">
+                <span uk-icon="icon: plus-circle; ratio: 0.75" class="uk-margin-small-right"></span>Deposit
+            </button>
+            <button @click="txType = 'withdrawal'; showTxModal = true" class="uk-button uk-button-default uk-button-small" style="border-radius: 6px; font-size: 13px;">
+                <span uk-icon="icon: minus-circle; ratio: 0.75" class="uk-margin-small-right"></span>Withdrawal
+            </button>
+            <button @click="showModal = true" class="uk-button uk-button-primary uk-button-small" style="border-radius: 6px; font-size: 13px;">
+                <span uk-icon="icon: link; ratio: 0.75" class="uk-margin-small-right"></span>Link Account
+            </button>
         </div>
     </div>
 
-    <!-- Accounts Grid -->
-    <div class="uk-grid-medium uk-child-width-1-3@m uk-margin-large-bottom" uk-grid>
-        {% for acc in accounts %}
-        <div>
-            <div class="uk-card uk-card-default uk-card-body uk-card-hover">
-                <div class="uk-flex uk-flex-between uk-flex-top">
-                    <span uk-icon="icon: database; ratio: 1.5" class="uk-text-primary"></span>
-                    <span class="uk-label uk-label-muted">{{ acc.account_type }}</span>
+    <!-- ═══ Summary KPI Strip ═══ -->
+    <div class="uk-grid-small uk-margin-bottom" uk-grid>
+        <div class="uk-width-1-4@m">
+            <div class="kpi-card kpi-blue">
+                <div class="kpi-icon"><span uk-icon="icon: database; ratio: 1.1"></span></div>
+                <div>
+                    <div class="kpi-label">Total Balance</div>
+                    <div class="kpi-value">${{ "{:,.2f}".format(total_balance) }}</div>
+                    <div class="kpi-sub">{{ accounts|length }} account{{ 's' if accounts|length != 1 }}</div>
                 </div>
-                <h3 class="uk-card-title uk-margin-small-top uk-text-bold">{{ acc.name }}</h3>
-                <p class="uk-text-meta uk-margin-remove-top">**** {{ acc.account_number_last4 or '4421' }}</p>
-                <div class="uk-margin-top">
-                    <p class="uk-text-meta uk-text-uppercase uk-margin-remove">Current Balance</p>
-                    <h3 class="uk-margin-remove-top uk-text-bold">${{ "{:,.2f}".format(acc.balance) }}</h3>
+            </div>
+        </div>
+        <div class="uk-width-1-4@m">
+            <div class="kpi-card kpi-green">
+                <div class="kpi-icon"><span uk-icon="icon: arrow-down; ratio: 1.1"></span></div>
+                <div>
+                    <div class="kpi-label">Money In (30d)</div>
+                    <div class="kpi-value">${{ "{:,.2f}".format(money_in_30d) }}</div>
+                    <div class="kpi-sub">Deposits & credits</div>
+                </div>
+            </div>
+        </div>
+        <div class="uk-width-1-4@m">
+            <div class="kpi-card kpi-red">
+                <div class="kpi-icon"><span uk-icon="icon: arrow-up; ratio: 1.1"></span></div>
+                <div>
+                    <div class="kpi-label">Money Out (30d)</div>
+                    <div class="kpi-value">${{ "{:,.2f}".format(money_out_30d) }}</div>
+                    <div class="kpi-sub">Payments & debits</div>
+                </div>
+            </div>
+        </div>
+        <div class="uk-width-1-4@m">
+            <div class="kpi-card kpi-amber">
+                <div class="kpi-icon"><span uk-icon="icon: warning; ratio: 1.1"></span></div>
+                <div>
+                    <div class="kpi-label">Needs Review</div>
+                    <div class="kpi-value">{{ total_uncategorized }}</div>
+                    <div class="kpi-sub">of {{ total_transactions }} total · {{ rules_count }} rules active</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Account Cards ═══ -->
+    <h3 class="uk-text-bold uk-margin-small-bottom" style="font-size: 16px; color: #1e293b;">
+        <span uk-icon="icon: database; ratio: 0.85" class="uk-margin-small-right" style="color: #3b82f6;"></span>Your Accounts
+    </h3>
+    {% if accounts %}
+    <div class="uk-grid-small uk-margin-bottom" uk-grid>
+        {% for acc in accounts %}
+        <div class="uk-width-1-2@s uk-width-1-3@l">
+            <div class="account-card">
+                <div class="account-card-header">
+                    <div class="uk-flex uk-flex-between uk-flex-middle">
+                        <div class="uk-flex uk-flex-middle" style="gap: 10px;">
+                            <div class="account-icon {{ 'icon-checking' if acc.account_type == 'Checking' else 'icon-savings' if acc.account_type == 'Savings' else 'icon-credit' }}">
+                                {% if acc.account_type == 'Credit Card' %}
+                                <span uk-icon="icon: credit-card; ratio: 0.85"></span>
+                                {% elif acc.account_type == 'Savings' %}
+                                <span uk-icon="icon: lock; ratio: 0.85"></span>
+                                {% else %}
+                                <span uk-icon="icon: database; ratio: 0.85"></span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div class="account-name">{{ acc.name }}</div>
+                                <div class="account-meta">{{ acc.account_type }} · *{{ acc.account_number_last4 or '••••' }}</div>
+                            </div>
+                        </div>
+                        <div class="account-balance {{ 'balance-negative' if (acc.balance|float) < 0 }}">
+                            ${{ "{:,.2f}".format(acc.balance|abs) }}
+                        </div>
+                    </div>
+                </div>
+                <div class="account-card-body">
+                    <div class="account-stats">
+                        <div class="account-stat">
+                            <span class="stat-dot dot-green"></span>
+                            <span class="stat-label">Deposits</span>
+                            <span class="stat-value uk-text-success">${{ "{:,.2f}".format(acc.total_deposits) }}</span>
+                        </div>
+                        <div class="account-stat">
+                            <span class="stat-dot dot-red"></span>
+                            <span class="stat-label">Withdrawals</span>
+                            <span class="stat-value" style="color: #dc2626;">${{ "{:,.2f}".format(acc.total_withdrawals) }}</span>
+                        </div>
+                        <div class="account-stat">
+                            <span class="stat-dot dot-blue"></span>
+                            <span class="stat-label">Transactions</span>
+                            <span class="stat-value">{{ acc.tx_count }}</span>
+                        </div>
+                    </div>
+                    <div class="account-card-footer">
+                        <div>
+                            {% if acc.uncategorized_count > 0 %}
+                            <span class="uncategorized-badge">{{ acc.uncategorized_count }} uncategorized</span>
+                            {% else %}
+                            <span class="all-clear-badge">All categorized</span>
+                            {% endif %}
+                        </div>
+                        <div class="uk-text-meta" style="font-size: 11px;">
+                            {% if acc.last_tx %}
+                            Last activity: {{ acc.last_tx.strftime('%m/%d/%Y') }}
+                            {% else %}
+                            No activity
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
         {% endfor %}
-        
-        {% if not accounts %}
-        <div class="uk-width-1-1">
-            <div class="uk-card uk-card-default uk-card-body uk-text-center uk-padding-large">
-                <p class="uk-text-muted italic">No financial accounts are currently linked.</p>
-                <button @click="showModal = true" class="uk-button uk-button-text uk-text-primary">Link your first bank account or statement</button>
-            </div>
-        </div>
-        {% endif %}
     </div>
+    {% else %}
+    <div class="uk-card uk-card-default uk-card-body uk-text-center uk-margin-bottom" style="padding: 48px;">
+        <span uk-icon="icon: database; ratio: 2.5" style="color: #cbd5e1;"></span>
+        <p class="uk-text-bold uk-margin-small-top" style="color: #64748b; font-size: 15px;">No accounts linked yet</p>
+        <p class="uk-text-meta" style="font-size: 13px;">Link a bank account or import a statement to get started.</p>
+        <button @click="showModal = true" class="uk-button uk-button-primary uk-button-small uk-margin-small-top" style="border-radius: 6px;">
+            <span uk-icon="icon: link; ratio: 0.75" class="uk-margin-small-right"></span>Link First Account
+        </button>
+    </div>
+    {% endif %}
 
-    <!-- Transaction List -->
-    <div class="uk-card uk-card-default">
-        <div class="uk-card-header uk-flex uk-flex-between uk-flex-middle">
-            <h3 class="uk-card-title uk-text-bold">Live Transaction Feed</h3>
-            <div>
+    <!-- ═══ Transaction Feed ═══ -->
+    <div class="uk-card uk-card-default" style="border-radius: 12px;">
+        <div class="uk-card-header uk-flex uk-flex-between uk-flex-middle" style="padding: 16px 24px;">
+            <div class="uk-flex uk-flex-middle" style="gap: 12px;">
+                <h3 class="uk-card-title uk-text-bold uk-margin-remove" style="font-size: 16px;">Live Transaction Feed</h3>
+                {% if total_uncategorized > 0 %}
+                <span class="uk-label" style="background: #fef3c7; color: #92400e; font-size: 10px; font-weight: 700; border-radius: 10px; padding: 2px 10px;">{{ total_uncategorized }} to review</span>
+                {% elif total_transactions > 0 %}
+                <span class="uk-label" style="background: #dcfce7; color: #166534; font-size: 10px; font-weight: 700; border-radius: 10px; padding: 2px 10px;">All clear</span>
+                {% endif %}
+            </div>
+            <div class="uk-flex uk-flex-middle" style="gap: 8px;">
                 <form id="qboImportForm" action="{{ url_for('banking.import_statements') }}" method="POST" enctype="multipart/form-data" class="uk-inline">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div uk-form-custom>
                         <input type="file" name="statement_file" accept=".qbo,.ofx,.qfx,.csv,.xlsx,.xls" onchange="document.getElementById('qboImportForm').submit()">
-                        <button class="uk-button uk-button-default uk-button-small uk-margin-small-right" type="button" tabindex="-1"><span uk-icon="upload" class="uk-margin-small-right"></span>Import QBO / Excel</button>
+                        <button class="uk-button uk-button-default uk-button-small" type="button" tabindex="-1" style="border-radius: 6px; font-size: 12px;">
+                            <span uk-icon="icon: upload; ratio: 0.7" class="uk-margin-small-right"></span>Import Statement
+                        </button>
                     </div>
                 </form>
-                <button class="uk-button uk-button-primary uk-button-small" onclick="UIkit.notification({message: 'Scanning for matches...', status: 'success'})">Audit Matches</button>
-                <button v-show="selectedTxs.length > 0" @click="deleteSelected" class="uk-button uk-button-danger uk-button-small uk-margin-small-left">Batch Delete ([[ selectedTxs.length ]])</button>
+                <a href="{{ url_for('banking.rules') }}" class="uk-button uk-button-default uk-button-small" style="border-radius: 6px; font-size: 12px;">
+                    <span uk-icon="icon: settings; ratio: 0.7" class="uk-margin-small-right"></span>Rules
+                </a>
+                <button v-show="selectedTxs.length > 0" @click="deleteSelected" class="uk-button uk-button-danger uk-button-small" style="border-radius: 6px; font-size: 12px;">
+                    Batch Delete ([[ selectedTxs.length ]])
+                </button>
             </div>
         </div>
         <div class="uk-overflow-auto">
-            <table class="uk-table uk-table-divider uk-table-hover uk-table-middle">
+            <table class="uk-table uk-table-hover uk-table-middle feed-table">
                 <thead>
                     <tr>
-                        <th class="uk-table-shrink"><input class="uk-checkbox" type="checkbox" @change="toggleAll($event)"></th>
-                        <th class="uk-table-shrink">Date</th>
+                        <th class="uk-table-shrink" style="padding-left: 20px;"><input class="uk-checkbox" type="checkbox" @change="toggleAll($event)"></th>
+                        <th style="width: 100px;">Date</th>
                         <th>Description / Payee</th>
-                        <th class="uk-text-center">Status</th>
-                        <th class="uk-text-right">Amount</th>
+                        <th style="width: 160px;">Account</th>
+                        <th class="uk-text-center" style="width: 180px;">Status</th>
+                        <th class="uk-text-right" style="width: 120px;">Amount</th>
                         <th class="uk-table-shrink"></th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for tx in transactions %}
                     <tr>
-                        <td><input class="uk-checkbox" type="checkbox" value="{{ tx.id }}" v-model="selectedTxs"></td>
-                        <td class="uk-text-meta">{{ tx.date.strftime('%Y-%m-%d') }}</td>
+                        <td style="padding-left: 20px;"><input class="uk-checkbox" type="checkbox" value="{{ tx.id }}" v-model="selectedTxs"></td>
+                        <td class="uk-text-meta" style="font-size: 13px; white-space: nowrap;">{{ tx.date.strftime('%m/%d/%Y') }}</td>
                         <td>
-                            <div class="uk-text-bold">{{ tx.description }}</div>
+                            <div class="uk-text-bold" style="font-size: 13px; color: #1e293b;">{{ tx.description }}</div>
                             {% if tx.suggested_account %}
-                            <div class="uk-text-meta uk-text-success">
-                                <span uk-icon="icon: check; ratio: 0.7"></span> 
-                                Suggested: <span class="uk-text-bold">{{ tx.suggested_account.name }}</span> (via {{ tx.rule_name }})
+                            <div class="uk-text-meta" style="font-size: 11px; color: #059669;">
+                                <span uk-icon="icon: check; ratio: 0.6"></span> 
+                                Suggested: <strong>{{ tx.suggested_account.name }}</strong> <span style="color: #94a3b8;">({{ tx.rule_name }})</span>
                             </div>
                             {% endif %}
+                        </td>
+                        <td>
+                            <span class="uk-text-meta" style="font-size: 12px;">{{ tx.bank_account.name if tx.bank_account else '—' }}</span>
                         </td>
                         <td class="uk-text-center">
                             {% if tx.status != 'MATCHED' %}
                                 {% if tx.suggested_account %}
                                 <form action="{{ url_for('banking.accept_match', tx_id=tx.id, account_id=tx.suggested_account.id) }}" method="POST" class="uk-inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="uk-button uk-button-primary uk-button-small">Accept Match</button>
+                                    <button type="submit" class="uk-button uk-button-primary uk-button-small" style="font-size: 11px; border-radius: 6px; padding: 0 12px; height: 28px;">Accept Match</button>
                                 </form>
                                 {% else %}
-                                <form action="{{ url_for('banking.accept_match', tx_id=tx.id) }}" method="POST" class="uk-flex uk-flex-middle">
+                                <form action="{{ url_for('banking.accept_match', tx_id=tx.id) }}" method="POST" class="uk-flex uk-flex-middle" style="gap: 4px;">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <select class="uk-select uk-form-small uk-margin-small-right" name="account_id" required>
+                                    <select class="uk-select uk-form-small" name="account_id" required style="font-size: 11px; height: 28px; border-radius: 6px; min-width: 100px;">
                                         <option value="">Categorize...</option>
                                         {% for acc in gl_accounts %}
                                         <option value="{{ acc.id }}">{{ acc.name }}</option>
                                         {% endfor %}
                                     </select>
-                                    <button type="submit" class="uk-button uk-button-primary uk-button-small">Add</button>
+                                    <button type="submit" class="uk-button uk-button-primary uk-button-small" style="font-size: 11px; border-radius: 6px; padding: 0 10px; height: 28px;">Add</button>
                                 </form>
                                 {% endif %}
                             {% else %}
-                                <span class="uk-label uk-label-success">
-                                    {{ tx.status }}
+                                <span class="matched-badge">
+                                    <span uk-icon="icon: check; ratio: 0.6"></span> Matched
                                 </span>
                             {% endif %}
                         </td>
-                        <td class="uk-text-right uk-text-bold {{ 'uk-text-success' if tx.amount > 0 else '' }}">
-                            {{ "$" if tx.amount > 0 else "-$" }}{{ "{:,.2f}".format(tx.amount | abs) }}
-                        </td>
                         <td class="uk-text-right">
-                            <form action="{{ url_for('banking.delete_transaction', tx_id=tx.id) }}" method="POST" class="uk-inline" onsubmit="return confirm('Remove this transaction? If it was already matched, the associated journal entry will NOT be removed. Proceed?');">
+                            <span class="{{ 'amount-deposit' if tx.amount > 0 else 'amount-payment' }}" style="font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums;">
+                                {{ "$" if tx.amount > 0 else "-$" }}{{ "{:,.2f}".format(tx.amount | abs) }}
+                            </span>
+                        </td>
+                        <td class="uk-text-right" style="padding-right: 16px;">
+                            <form action="{{ url_for('banking.delete_transaction', tx_id=tx.id) }}" method="POST" class="uk-inline" onsubmit="return confirm('Remove this transaction from the feed?');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="uk-icon-button uk-text-danger" uk-icon="trash" uk-tooltip="Remove Transaction"></button>
+                                <button type="submit" class="uk-icon-button" uk-icon="icon: trash; ratio: 0.7" uk-tooltip="Remove" style="width: 28px; height: 28px; color: #94a3b8;"></button>
                             </form>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="uk-text-center uk-text-muted uk-padding-large italic">No transactions found in feed.</td>
+                        <td colspan="7" class="uk-text-center" style="padding: 48px;">
+                            <span uk-icon="icon: refresh; ratio: 2" style="color: #cbd5e1;"></span>
+                            <p class="uk-text-bold uk-margin-small-top" style="color: #64748b; font-size: 14px;">No transactions in feed</p>
+                            <p class="uk-text-meta" style="font-size: 13px;">Import a bank statement or record a transaction to begin.</p>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -130,23 +256,23 @@
         </div>
     </div>
 
-    <!-- Link Account Modal (UIkit logic with Vue visibility) -->
-    <div v-if="showModal" class="uk-flex uk-flex-top uk-flex-center uk-position-fixed uk-position-z-index uk-height-viewport uk-width-1-1" style="background: rgba(0,0,0,0.6); top:0; left:0; padding-top: 100px;">
-        <div class="uk-card uk-card-default uk-card-body uk-width-large uk-animation-scale-up uk-animation-fast">
-            <h3 class="uk-card-title uk-text-bold">Link Bank Account</h3>
-            <p class="uk-text-meta">Add a new financial institution connection to sync your transactions.</p>
+    <!-- ═══ Link Account Modal ═══ -->
+    <div v-if="showModal" class="uk-flex uk-flex-top uk-flex-center uk-position-fixed uk-position-z-index uk-height-viewport uk-width-1-1" style="background: rgba(0,0,0,0.5); top:0; left:0; padding-top: 80px; backdrop-filter: blur(4px);">
+        <div class="uk-card uk-card-default uk-card-body uk-width-large uk-animation-scale-up uk-animation-fast" style="border-radius: 14px;">
+            <h3 class="uk-card-title uk-text-bold" style="font-size: 18px;">Link Bank Account</h3>
+            <p class="uk-text-meta" style="font-size: 13px;">Add a new financial institution to track your money flow.</p>
             
-            <form action="{{ url_for('banking.create_account') }}" method="POST" class="uk-form-stacked">
+            <form action="{{ url_for('banking.create_account') }}" method="POST" class="uk-form-stacked uk-margin-top">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 
                 <div class="uk-margin">
-                    <label class="uk-form-label uk-text-bold">Account Friendly Name</label>
-                    <input class="uk-input" type="text" name="name" placeholder="e.g. Primary Operations Checking" required>
+                    <label class="uk-form-label uk-text-bold" style="font-size: 12px;">Account Name</label>
+                    <input class="uk-input" type="text" name="name" placeholder="e.g. Primary Checking" required style="border-radius: 6px;">
                 </div>
 
                 <div class="uk-margin">
-                    <label class="uk-form-label uk-text-bold">Account Type</label>
-                    <select class="uk-select" name="type">
+                    <label class="uk-form-label uk-text-bold" style="font-size: 12px;">Account Type</label>
+                    <select class="uk-select" name="type" style="border-radius: 6px;">
                         <option value="Checking">Checking</option>
                         <option value="Savings">Savings</option>
                         <option value="Credit Card">Credit Card</option>
@@ -155,38 +281,38 @@
                 </div>
 
                 <div class="uk-margin-large-top uk-text-right">
-                    <button type="button" @click="showModal = false" class="uk-button uk-button-text uk-margin-right">Cancel</button>
-                    <button type="submit" class="uk-button uk-button-primary">Securely Link Account</button>
+                    <button type="button" @click="showModal = false" class="uk-button uk-button-text uk-margin-right" style="font-size: 13px;">Cancel</button>
+                    <button type="submit" class="uk-button uk-button-primary" style="border-radius: 6px;">Link Account</button>
                 </div>
             </form>
         </div>
     </div>
     
-    <!-- Manual Transaction Modal -->
-    <div v-if="showTxModal" class="uk-flex uk-flex-top uk-flex-center uk-position-fixed uk-position-z-index uk-height-viewport uk-width-1-1" style="background: rgba(0,0,0,0.6); top:0; left:0; padding-top: 100px;">
-        <div class="uk-card uk-card-default uk-card-body uk-width-large uk-animation-scale-up uk-animation-fast">
-            <h3 class="uk-card-title uk-text-bold">Record [[ txType === 'deposit' ? 'Deposit' : 'Withdrawal' ]]</h3>
-            <p class="uk-text-meta">Manually enter a transaction to your bank feed pending automated clearing.</p>
+    <!-- ═══ Manual Transaction Modal ═══ -->
+    <div v-if="showTxModal" class="uk-flex uk-flex-top uk-flex-center uk-position-fixed uk-position-z-index uk-height-viewport uk-width-1-1" style="background: rgba(0,0,0,0.5); top:0; left:0; padding-top: 80px; backdrop-filter: blur(4px);">
+        <div class="uk-card uk-card-default uk-card-body uk-width-large uk-animation-scale-up uk-animation-fast" style="border-radius: 14px;">
+            <h3 class="uk-card-title uk-text-bold" style="font-size: 18px;">Record [[ txType === 'deposit' ? 'Deposit' : 'Withdrawal' ]]</h3>
+            <p class="uk-text-meta" style="font-size: 13px;">Manually enter a transaction to your bank feed.</p>
             
-            <form action="{{ url_for('banking.manual_transaction') }}" method="POST" class="uk-form-stacked">
+            <form action="{{ url_for('banking.manual_transaction') }}" method="POST" class="uk-form-stacked uk-margin-top">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="type" :value="txType">
                 
                 <div class="uk-grid-small" uk-grid>
                     <div class="uk-width-1-2">
-                        <label class="uk-form-label uk-text-bold">Date</label>
-                        <input class="uk-input" type="date" name="date" required>
+                        <label class="uk-form-label uk-text-bold" style="font-size: 12px;">Date</label>
+                        <input class="uk-input" type="date" name="date" required :value="today" style="border-radius: 6px;">
                     </div>
                     <div class="uk-width-1-2">
-                        <label class="uk-form-label uk-text-bold">Amount</label>
-                        <input class="uk-input" type="number" step="0.01" name="amount" required placeholder="0.00">
+                        <label class="uk-form-label uk-text-bold" style="font-size: 12px;">Amount</label>
+                        <input class="uk-input" type="number" step="0.01" name="amount" required placeholder="0.00" style="border-radius: 6px;">
                     </div>
                 </div>
 
                 <div class="uk-margin">
-                    <label class="uk-form-label uk-text-bold">Target Account</label>
-                    <select class="uk-select" name="bank_account_id" required>
-                        <option value="">Select Bank Account...</option>
+                    <label class="uk-form-label uk-text-bold" style="font-size: 12px;">Bank Account</label>
+                    <select class="uk-select" name="bank_account_id" required style="border-radius: 6px;">
+                        <option value="">Select Account...</option>
                         {% for acc in accounts %}
                         <option value="{{ acc.id }}">{{ acc.name }}</option>
                         {% endfor %}
@@ -194,18 +320,136 @@
                 </div>
 
                 <div class="uk-margin">
-                    <label class="uk-form-label uk-text-bold">Description / Payee</label>
-                    <input class="uk-input" type="text" name="description" placeholder="e.g. Cash Deposit" required>
+                    <label class="uk-form-label uk-text-bold" style="font-size: 12px;">Description / Payee</label>
+                    <input class="uk-input" type="text" name="description" placeholder="e.g. Office supplies" required style="border-radius: 6px;">
                 </div>
 
                 <div class="uk-margin-large-top uk-text-right">
-                    <button type="button" @click="showTxModal = false" class="uk-button uk-button-text uk-margin-right">Cancel</button>
-                    <button type="submit" class="uk-button uk-button-primary">Record Transaction</button>
+                    <button type="button" @click="showTxModal = false" class="uk-button uk-button-text uk-margin-right" style="font-size: 13px;">Cancel</button>
+                    <button type="submit" class="uk-button uk-button-primary" style="border-radius: 6px;">Record Transaction</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<style>
+    /* ── KPI Cards ── */
+    .kpi-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 18px 20px;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        border: 1px solid #f1f5f9;
+        transition: box-shadow 0.2s;
+    }
+    .kpi-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .kpi-icon {
+        width: 44px; height: 44px;
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .kpi-blue .kpi-icon { background: #eff6ff; color: #3b82f6; }
+    .kpi-green .kpi-icon { background: #f0fdf4; color: #16a34a; }
+    .kpi-red .kpi-icon { background: #fef2f2; color: #dc2626; }
+    .kpi-amber .kpi-icon { background: #fffbeb; color: #d97706; }
+    .kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+    .kpi-value { font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1.3; font-variant-numeric: tabular-nums; }
+    .kpi-sub { font-size: 11px; color: #94a3b8; }
+
+    /* ── Account Cards ── */
+    .account-card {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        transition: all 0.2s;
+    }
+    .account-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .account-card-header { padding: 16px 18px; }
+    .account-icon {
+        width: 36px; height: 36px;
+        border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .icon-checking { background: #eff6ff; color: #3b82f6; }
+    .icon-savings { background: #f0fdf4; color: #16a34a; }
+    .icon-credit { background: #faf5ff; color: #9333ea; }
+    .account-name { font-weight: 700; font-size: 14px; color: #1e293b; }
+    .account-meta { font-size: 11px; color: #94a3b8; margin-top: 1px; }
+    .account-balance { font-size: 20px; font-weight: 800; color: #0f172a; font-variant-numeric: tabular-nums; }
+    .account-balance.balance-negative { color: #dc2626; }
+
+    .account-card-body { padding: 0 18px 14px; }
+    .account-stats { display: flex; gap: 4px; flex-direction: column; }
+    .account-stat {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 0;
+    }
+    .stat-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .dot-green { background: #22c55e; }
+    .dot-red { background: #ef4444; }
+    .dot-blue { background: #3b82f6; }
+    .stat-label { font-size: 12px; color: #64748b; flex: 1; }
+    .stat-value { font-size: 12px; font-weight: 700; color: #1e293b; font-variant-numeric: tabular-nums; }
+
+    .account-card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .uncategorized-badge {
+        display: inline-flex; align-items: center;
+        font-size: 10px; font-weight: 700;
+        background: #fef3c7; color: #92400e;
+        padding: 2px 8px; border-radius: 10px;
+    }
+    .all-clear-badge {
+        display: inline-flex; align-items: center;
+        font-size: 10px; font-weight: 700;
+        background: #dcfce7; color: #166534;
+        padding: 2px 8px; border-radius: 10px;
+    }
+
+    /* ── Feed Table ── */
+    .feed-table { margin: 0; }
+    .feed-table thead th {
+        background: #f8fafc;
+        font-weight: 700; text-transform: uppercase; font-size: 10px;
+        color: #64748b; letter-spacing: 0.8px;
+        padding: 10px 12px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .feed-table tbody td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+    .feed-table tbody tr:hover { background: #f8fafc; }
+
+    .matched-badge {
+        display: inline-flex; align-items: center; gap: 3px;
+        font-size: 10px; font-weight: 700;
+        background: #dcfce7; color: #166534;
+        padding: 3px 10px; border-radius: 10px;
+    }
+    .amount-deposit { color: #059669; }
+    .amount-payment { color: #dc2626; }
+</style>
 
 <script>
     const { createApp, ref } = Vue;
@@ -215,6 +459,7 @@
             const showModal = ref(false);
             const showTxModal = ref(false);
             const txType = ref('deposit');
+            const today = ref(new Date().toISOString().split('T')[0]);
             
             const selectedTxs = ref([]);
             
@@ -252,7 +497,7 @@
                 form.submit();
             };
 
-            return { showModal, showTxModal, txType, selectedTxs, toggleAll, deleteSelected };
+            return { showModal, showTxModal, txType, today, selectedTxs, toggleAll, deleteSelected };
         }
     }).mount('#banking-app');
 </script>

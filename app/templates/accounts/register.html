@@ -1,0 +1,470 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="register-app">
+    <!-- Breadcrumb & Header -->
+    <div class="uk-margin-bottom">
+        <ul class="uk-breadcrumb uk-margin-remove-bottom">
+            <li><a href="{{ url_for('accounts.index') }}">Chart of Accounts</a></li>
+            <li><span>{{ account.code }} — {{ account.name }}</span></li>
+        </ul>
+    </div>
+
+    <!-- Account Summary Card -->
+    <div class="uk-grid-small uk-margin-medium-bottom" uk-grid>
+        <div class="uk-width-expand">
+            <div class="uk-flex uk-flex-middle" style="gap: 16px;">
+                <div class="register-icon">
+                    <span uk-icon="icon: file-text; ratio: 1.8"></span>
+                </div>
+                <div>
+                    <h1 class="uk-margin-remove-bottom" style="font-size: 26px; font-weight: 800; color: #0f172a;">{{ account.name }}</h1>
+                    <div class="uk-flex uk-flex-middle" style="gap: 12px; margin-top: 4px;">
+                        <span class="uk-text-meta" style="font-size: 13px;">Account {{ account.code }}</span>
+                        <span class="register-type-badge">{{ account.type }}{% if account.subtype %} · {{ account.subtype }}{% endif %}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="uk-width-auto uk-text-right">
+            <div class="uk-text-meta uk-text-uppercase" style="font-size: 10px; letter-spacing: 1.5px; font-weight: 700; color: #64748b;">Current Balance</div>
+            <div class="register-balance {{ 'balance-positive' if running_balance >= 0 else 'balance-negative' }}">
+                {{ "$" if running_balance >= 0 else "-$" }}{{ "{:,.2f}".format(running_balance|abs) }}
+            </div>
+            <div class="uk-text-meta" style="font-size: 11px;">{{ register_entries|length }} transaction{{ 's' if register_entries|length != 1 else '' }}</div>
+        </div>
+    </div>
+
+    <!-- Help Guidebar -->
+    <div class="register-guide uk-margin-bottom" v-show="showGuide">
+        <div class="uk-flex uk-flex-between uk-flex-top">
+            <div class="uk-flex" style="gap: 12px;">
+                <span uk-icon="icon: info; ratio: 0.9" style="color: #3b82f6; flex-shrink: 0; margin-top: 2px;"></span>
+                <div style="font-size: 13px; line-height: 1.6;">
+                    <strong>How to use the Check Register</strong><br>
+                    Use the <strong style="color: #3b82f6;">blue entry row</strong> at the bottom of the register to record new transactions. 
+                    Choose <strong>Payment</strong> for money going out or <strong>Deposit</strong> for money coming in. 
+                    Select the <strong>Category</strong> to classify where the money is going (e.g., an expense account for payments, or an income account for deposits).
+                    Transactions are automatically posted to the General Ledger.
+                </div>
+            </div>
+            <button @click="showGuide = false" class="uk-close-large" uk-close style="flex-shrink: 0; margin-left: 16px;"></button>
+        </div>
+    </div>
+
+    <!-- Register Table -->
+    <div class="uk-card uk-card-default register-card">
+        <div class="uk-card-header uk-flex uk-flex-between uk-flex-middle" style="padding: 16px 24px;">
+            <div class="uk-flex uk-flex-middle" style="gap: 12px;">
+                <h3 class="uk-card-title uk-text-bold uk-margin-remove" style="font-size: 16px;">Transaction Register</h3>
+                <span class="uk-label" style="background: #e0e7ff; color: #3730a3; font-size: 10px; font-weight: 700; border-radius: 10px; padding: 2px 10px;">{{ register_entries|length }}</span>
+            </div>
+            <div class="uk-flex uk-flex-middle" style="gap: 8px;">
+                <button @click="showGuide = !showGuide" class="uk-button uk-button-text uk-text-meta" style="font-size: 12px; text-transform: none;">
+                    <span uk-icon="icon: question; ratio: 0.7" class="uk-margin-small-right"></span>Help
+                </button>
+                <a href="{{ url_for('journal.index') }}" class="uk-button uk-button-default uk-button-small" style="font-size: 12px; border-radius: 6px;">
+                    <span uk-icon="icon: list; ratio: 0.7" class="uk-margin-small-right"></span>Journal
+                </a>
+            </div>
+        </div>
+
+        <div class="uk-overflow-auto">
+            <table class="uk-table uk-table-hover uk-table-middle register-table" id="register-table">
+                <thead>
+                    <tr>
+                        <th style="width: 110px;">Date</th>
+                        <th style="width: 100px;">Ref #</th>
+                        <th>Description / Memo</th>
+                        <th style="width: 180px;">Category</th>
+                        <th class="uk-text-right" style="width: 120px;">
+                            {% if account.type in ('Asset', 'Expense') %}Payment{% else %}Debit{% endif %}
+                        </th>
+                        <th class="uk-text-right" style="width: 120px;">
+                            {% if account.type in ('Asset', 'Expense') %}Deposit{% else %}Credit{% endif %}
+                        </th>
+                        <th class="uk-text-right" style="width: 130px;">Balance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if register_entries %}
+                    {% for entry in register_entries %}
+                    <tr class="register-row">
+                        <td class="uk-text-meta" style="font-size: 13px; white-space: nowrap;">
+                            {{ entry.date.strftime('%m/%d/%Y') if entry.date else '' }}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('journal.view', entry_id=entry.entry_id) }}" class="register-ref" title="View journal entry">
+                                {{ entry.entry_number }}
+                            </a>
+                        </td>
+                        <td>
+                            <div class="uk-text-bold" style="font-size: 13px; color: #1e293b;">{{ entry.description or entry.memo }}</div>
+                            {% if entry.source_type != 'MANUAL' and entry.source_type != 'REGISTER' %}
+                            <span class="register-source-badge">{{ entry.source_type }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if entry.other_accounts %}
+                            <div style="font-size: 12px; color: #475569;">
+                                {% for oa in entry.other_accounts %}
+                                <span title="{{ oa.code }} — {{ oa.name }}">{{ oa.name }}</span>{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <span class="uk-text-muted" style="font-size: 12px;">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="uk-text-right">
+                            {% if account.type in ('Asset', 'Expense') %}
+                                {% if entry.credit > 0 %}
+                                <span class="amount-payment">${{ "{:,.2f}".format(entry.credit) }}</span>
+                                {% endif %}
+                            {% else %}
+                                {% if entry.debit > 0 %}
+                                <span class="amount-payment">${{ "{:,.2f}".format(entry.debit) }}</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td class="uk-text-right">
+                            {% if account.type in ('Asset', 'Expense') %}
+                                {% if entry.debit > 0 %}
+                                <span class="amount-deposit">${{ "{:,.2f}".format(entry.debit) }}</span>
+                                {% endif %}
+                            {% else %}
+                                {% if entry.credit > 0 %}
+                                <span class="amount-deposit">${{ "{:,.2f}".format(entry.credit) }}</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        <td class="uk-text-right">
+                            <span class="amount-balance {{ 'balance-negative' if entry.balance < 0 else '' }}">
+                                {{ "$" if entry.balance >= 0 else "-$" }}{{ "{:,.2f}".format(entry.balance|abs) }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="uk-text-center uk-padding" style="padding: 48px !important;">
+                            <div style="color: #94a3b8;">
+                                <span uk-icon="icon: file-text; ratio: 2.5" style="color: #cbd5e1;"></span>
+                                <p class="uk-text-bold uk-margin-small-top" style="color: #64748b; font-size: 15px;">No transactions recorded yet</p>
+                                <p class="uk-text-meta" style="font-size: 13px;">Use the entry row below to record your first transaction in this register.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    <!-- Quick Entry Row (always visible at bottom) -->
+                    <tr class="quick-entry-row">
+                        <td colspan="7" style="padding: 0; background: transparent; border-top: 2px solid #3b82f6;">
+                            <form action="{{ url_for('accounts.quick_entry', acc_id=account.id) }}" method="POST" id="quickEntryForm">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="quick-entry-container">
+                                    <div class="quick-entry-badge">
+                                        <span uk-icon="icon: plus-circle; ratio: 0.7"></span>
+                                        NEW
+                                    </div>
+                                    <div class="uk-grid-collapse quick-entry-grid" uk-grid>
+                                        <div class="quick-entry-field" style="width: 130px;">
+                                            <label class="quick-entry-label">Date</label>
+                                            <input class="uk-input uk-form-small quick-entry-input" type="date" name="date" required
+                                                   :value="today">
+                                        </div>
+                                        <div class="quick-entry-field uk-width-expand">
+                                            <label class="quick-entry-label">Description / Payee</label>
+                                            <input class="uk-input uk-form-small quick-entry-input" type="text" name="description"
+                                                   placeholder="e.g. Office Depot — printer paper" required>
+                                        </div>
+                                        <div class="quick-entry-field" style="width: 200px;">
+                                            <label class="quick-entry-label">Category (Account)</label>
+                                            <select class="uk-select uk-form-small quick-entry-input" name="category_id" required>
+                                                <option value="">Select category...</option>
+                                                {% set current_type = namespace(value='') %}
+                                                {% for acc in all_accounts %}
+                                                    {% if acc.type != current_type.value %}
+                                                        {% if current_type.value %}
+                                                        </optgroup>
+                                                        {% endif %}
+                                                        {% set current_type.value = acc.type %}
+                                                        <optgroup label="{{ acc.type }}">
+                                                    {% endif %}
+                                                    <option value="{{ acc.id }}">{{ acc.code }} — {{ acc.name }}</option>
+                                                {% endfor %}
+                                                {% if all_accounts %}</optgroup>{% endif %}
+                                            </select>
+                                        </div>
+                                        <div class="quick-entry-field" style="width: 140px;">
+                                            <label class="quick-entry-label">Type</label>
+                                            <select class="uk-select uk-form-small quick-entry-input" name="type" @change="txType = $event.target.value">
+                                                <option value="payment">
+                                                    {% if account.type in ('Asset', 'Expense') %}💳 Payment{% else %}⬇️ Debit{% endif %}
+                                                </option>
+                                                <option value="deposit">
+                                                    {% if account.type in ('Asset', 'Expense') %}💰 Deposit{% else %}⬆️ Credit{% endif %}
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div class="quick-entry-field" style="width: 130px;">
+                                            <label class="quick-entry-label">Amount ($)</label>
+                                            <input class="uk-input uk-form-small quick-entry-input" type="number" step="0.01" min="0.01"
+                                                   name="amount" placeholder="0.00" required>
+                                        </div>
+                                        <div class="quick-entry-field uk-flex uk-flex-bottom" style="width: 60px;">
+                                            <button type="submit" class="uk-button uk-button-primary uk-button-small" 
+                                                    style="border-radius: 6px; height: 36px; width: 100%; padding: 0;"
+                                                    uk-tooltip="Record Transaction">
+                                                <span uk-icon="icon: check; ratio: 0.9"></span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+
+                <!-- Footer with running total -->
+                <tfoot>
+                    <tr class="register-footer">
+                        <td colspan="4" class="uk-text-right uk-text-bold" style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">
+                            Ending Balance
+                        </td>
+                        <td class="uk-text-right">
+                            {% set total_payments = namespace(value=0) %}
+                            {% for e in register_entries %}
+                                {% if account.type in ('Asset', 'Expense') %}
+                                    {% set total_payments.value = total_payments.value + (e.credit|float) %}
+                                {% else %}
+                                    {% set total_payments.value = total_payments.value + (e.debit|float) %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if total_payments.value > 0 %}
+                            <span class="uk-text-bold" style="color: #ef4444; font-size: 13px;">${{ "{:,.2f}".format(total_payments.value) }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="uk-text-right">
+                            {% set total_deposits = namespace(value=0) %}
+                            {% for e in register_entries %}
+                                {% if account.type in ('Asset', 'Expense') %}
+                                    {% set total_deposits.value = total_deposits.value + (e.debit|float) %}
+                                {% else %}
+                                    {% set total_deposits.value = total_deposits.value + (e.credit|float) %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if total_deposits.value > 0 %}
+                            <span class="uk-text-bold" style="color: #059669; font-size: 13px;">${{ "{:,.2f}".format(total_deposits.value) }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="uk-text-right">
+                            <span class="uk-text-bold {{ 'balance-negative' if running_balance < 0 else '' }}" style="font-size: 15px; color: #0f172a;">
+                                {{ "$" if running_balance >= 0 else "-$" }}{{ "{:,.2f}".format(running_balance|abs) }}
+                            </span>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .register-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #eff6ff, #dbeafe);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #3b82f6;
+        flex-shrink: 0;
+    }
+
+    .register-type-badge {
+        background: #f1f5f9;
+        color: #475569;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 10px;
+        border-radius: 10px;
+    }
+
+    .register-balance {
+        font-size: 32px;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.2;
+    }
+    .register-balance.balance-positive { color: #059669; }
+    .register-balance.balance-negative { color: #dc2626; }
+
+    .register-guide {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 10px;
+        padding: 16px 20px;
+        animation: fadeInDown 0.3s ease;
+    }
+
+    .register-card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .register-table {
+        margin: 0;
+    }
+    .register-table thead th {
+        background: #f8fafc;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 10px;
+        color: #64748b;
+        letter-spacing: 0.8px;
+        padding: 12px 16px;
+        border-bottom: 2px solid #e2e8f0;
+        white-space: nowrap;
+    }
+    .register-table tbody td {
+        padding: 10px 16px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13px;
+        vertical-align: middle;
+    }
+
+    .register-row {
+        transition: background 0.15s ease;
+    }
+    .register-row:hover {
+        background: #f8fafc !important;
+    }
+
+    .register-ref {
+        font-family: 'SF Mono', 'Fira Code', monospace;
+        font-size: 11px;
+        color: #6366f1;
+        font-weight: 600;
+        text-decoration: none;
+        background: #eef2ff;
+        padding: 2px 8px;
+        border-radius: 4px;
+        white-space: nowrap;
+    }
+    .register-ref:hover {
+        background: #e0e7ff;
+        color: #4338ca;
+    }
+
+    .register-source-badge {
+        display: inline-block;
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: #fef3c7;
+        color: #92400e;
+        padding: 1px 6px;
+        border-radius: 4px;
+        margin-top: 2px;
+    }
+
+    .amount-payment {
+        color: #dc2626;
+        font-weight: 600;
+        font-size: 13px;
+        font-variant-numeric: tabular-nums;
+    }
+    .amount-deposit {
+        color: #059669;
+        font-weight: 600;
+        font-size: 13px;
+        font-variant-numeric: tabular-nums;
+    }
+    .amount-balance {
+        font-weight: 700;
+        font-size: 13px;
+        color: #1e293b;
+        font-variant-numeric: tabular-nums;
+    }
+    .amount-balance.balance-negative {
+        color: #dc2626;
+    }
+
+    /* Quick Entry Row */
+    .quick-entry-container {
+        background: linear-gradient(to bottom, #eff6ff, #f0f4ff);
+        padding: 14px 16px;
+        position: relative;
+    }
+    .quick-entry-badge {
+        position: absolute;
+        top: -11px;
+        left: 20px;
+        background: #3b82f6;
+        color: white;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        padding: 2px 10px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .quick-entry-grid {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+    }
+    .quick-entry-field {
+        display: flex;
+        flex-direction: column;
+    }
+    .quick-entry-label {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #3b82f6;
+        margin-bottom: 4px;
+    }
+    .quick-entry-input {
+        border-radius: 6px !important;
+        border-color: #93c5fd !important;
+        background: #fff !important;
+        font-size: 13px !important;
+        height: 36px !important;
+    }
+    .quick-entry-input:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    }
+
+    .register-footer td {
+        background: #f8fafc;
+        padding: 14px 16px !important;
+        border-top: 2px solid #e2e8f0;
+    }
+
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<script>
+    const { createApp, ref } = Vue;
+    createApp({
+        delimiters: ['[[', ']]'],
+        setup() {
+            const showGuide = ref(true);
+            const txType = ref('payment');
+            const today = ref(new Date().toISOString().split('T')[0]);
+
+            return { showGuide, txType, today };
+        }
+    }).mount('#register-app');
+</script>
+{% endblock %}

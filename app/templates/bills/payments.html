@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-flex uk-flex-between uk-flex-middle uk-margin-bottom">
+    <div>
+        <h2 class="uk-margin-remove uk-text-bold" style="color: #1e293b;">Bill Payments</h2>
+        <p class="uk-text-meta uk-margin-remove">Track all payments made to your vendors</p>
+    </div>
+</div>
+
+<div class="uk-card uk-card-default uk-card-body" style="border-radius: 12px; border: 1px solid #e2e8f0; padding: 0; overflow: hidden;">
+    <table class="uk-table uk-table-hover uk-table-middle uk-table-divider uk-margin-remove">
+        <thead>
+            <tr style="background: #f8fafc;">
+                <th class="uk-table-shrink" style="padding-left: 24px;">DATE</th>
+                <th class="uk-table-expand uk-text-bold" style="font-size: 11px; color: #64748b;">VENDOR</th>
+                <th class="uk-width-small uk-text-bold" style="font-size: 11px; color: #64748b;">REF #</th>
+                <th class="uk-width-small uk-text-bold" style="font-size: 11px; color: #64748b;">BILL #</th>
+                <th class="uk-width-small uk-text-bold uk-text-right" style="font-size: 11px; color: #64748b; padding-right: 24px;">AMOUNT PAID</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+            <tr>
+                <td style="padding-left: 24px; font-size: 13px;">{{ payment.payment_date.strftime('%m/%d/%Y') }}</td>
+                <td>
+                    <div class="uk-text-bold" style="font-size: 14px; color: #1e293b;">{{ payment.bill.vendor.name }}</div>
+                </td>
+                <td style="font-size: 13px;">{{ payment.reference or '--' }}</td>
+                <td style="font-size: 13px;">{{ payment.bill.bill_number or 'No Ref' }}</td>
+                <td class="uk-text-right uk-text-bold" style="padding-right: 24px; font-size: 14px; color: #10b981;">
+                    ${{ "{:,.2f}".format(payment.amount) }}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="uk-text-center uk-padding-large">
+                    <div class="uk-padding-large">
+                        <span uk-icon="icon: history; ratio: 2.5" style="color: #e2e8f0;"></span>
+                        <p class="uk-text-meta uk-margin-small-top">No bill payments recorded yet.</p>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

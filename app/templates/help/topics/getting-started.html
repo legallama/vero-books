@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-section uk-section-small">
+    <div class="uk-container uk-container-small">
+        <a href="{{ url_for('help.index') }}" class="uk-button uk-button-text uk-margin-bottom">
+            <span uk-icon="arrow-left"></span> Back to Help Center
+        </a>
+        
+        <h1 class="uk-text-bold">Getting Started with VeroBooks</h1>
+        <p class="uk-text-lead uk-text-muted">Welcome! This guide will help you set up your company and start managing your books effectively.</p>
+        
+        <hr class="uk-margin-medium">
+        
+        <div class="uk-article">
+            <h3>1. Set Up Your Company</h3>
+            <p>The first step is to ensure your company profile is complete. Head over to <strong>Settings > Company Profile</strong> to upload your logo, set your fiscal year-end, and define your reporting currency.</p>
+            
+            <h3>2. Invite Your Team</h3>
+            <p>Accounting is a team sport. Invite your bookkeeper, accountant, or business partners in <strong>Settings > Users</strong>. You can control their access levels with granular roles.</p>
+            
+            <h3>3. Connect Your Bank</h3>
+            <p>VeroBooks works best when it's synced with your real-world transactions. Go to <strong>Banking</strong> and use the "Connect Bank" feature to securely link your accounts.</p>
+            
+            <div class="uk-alert-primary" uk-alert>
+                <p><strong>Pro Tip:</strong> Use "Bank Rules" to automatically categorize recurring transactions like rent or utility payments.</p>
+            </div>
+            
+            <h3>4. Create Your First Invoice</h3>
+            <p>Start getting paid! Navigate to <strong>Sales & Revenue > Invoices</strong> and click "New Invoice". You can customize your invoice templates to match your brand.</p>
+        </div>
+        
+        <div class="uk-margin-large-top uk-padding-small uk-background-muted uk-border-rounded">
+            <div class="uk-grid-small uk-flex-middle" uk-grid>
+                <div class="uk-width-expand">
+                    <h4 class="uk-margin-remove uk-text-bold">Still need help?</h4>
+                    <p class="uk-margin-remove uk-text-small">Our support team is available 24/7 for our enterprise customers.</p>
+                </div>
+                <div class="uk-width-auto">
+                    <a href="#" class="uk-button uk-button-primary uk-border-rounded">Contact Support</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

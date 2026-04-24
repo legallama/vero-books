@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-flex uk-flex-between uk-flex-middle uk-margin-bottom" style="background: white; padding: 20px 40px; margin: -20px -40px 20px -40px; border-bottom: 1px solid #e2e8f0; position: sticky; top: 64px; z-index: 100;">
+    <div>
+        <h3 class="uk-margin-remove uk-text-bold" style="color: #1e293b;">Reconcile {{ recon.account.name }}</h3>
+        <p class="uk-text-meta uk-margin-remove">Statement Date: {{ recon.statement_date.strftime('%b %d, %Y') }}</p>
+    </div>
+    <div class="uk-flex uk-flex-middle">
+        <div class="uk-margin-large-right uk-text-right">
+            <div class="uk-text-meta" style="font-size: 10px; text-transform: uppercase; font-weight: 700;">Difference</div>
+            <div id="diff-amount" class="uk-text-bold" style="font-size: 24px; color: #f43f5e;">$0.00</div>
+        </div>
+        <form action="{{ url_for('reconciliation.match', recon_id=recon.id) }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" name="finish" id="finish-btn" class="uk-button uk-button-primary" style="border-radius: 8px; text-transform: none; font-weight: 700; background: #6366f1;" disabled>Finish Now</button>
+        </form>
+    </div>
+</div>
+
+<div class="uk-grid-small" uk-grid>
+    <div class="uk-width-expand">
+        <div class="uk-card uk-card-default" style="border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden;">
+            <table class="uk-table uk-table-hover uk-table-middle uk-table-divider uk-margin-remove" id="transactions-table">
+                <thead>
+                    <tr style="background: #f8fafc;">
+                        <th class="uk-table-shrink" style="padding-left: 24px;"></th>
+                        <th class="uk-width-small uk-text-bold" style="font-size: 11px; color: #64748b;">DATE</th>
+                        <th class="uk-table-expand uk-text-bold" style="font-size: 11px; color: #64748b;">DESCRIPTION</th>
+                        <th class="uk-width-small uk-text-bold uk-text-right" style="font-size: 11px; color: #64748b;">DEBIT</th>
+                        <th class="uk-width-small uk-text-bold uk-text-right" style="font-size: 11px; color: #64748b; padding-right: 24px;">CREDIT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for line in lines %}
+                    <tr class="transaction-row {{ 'cleared' if line.cleared }}" data-id="{{ line.id }}" data-debit="{{ line.debit }}" data-credit="{{ line.credit }}" onclick="toggleLine('{{ line.id }}')">
+                        <td style="padding-left: 24px;">
+                            <div class="check-box {{ 'checked' if line.cleared }}" id="check-{{ line.id }}">
+                                <span uk-icon="icon: check; ratio: 0.8"></span>
+                            </div>
+                        </td>
+                        <td style="font-size: 13px;">{{ line.journal_entry.entry_date.strftime('%m/%d/%Y') }}</td>
+                        <td style="font-size: 13px;">
+                            <div class="uk-text-bold">{{ line.description or line.journal_entry.memo or 'No Description' }}</div>
+                            <div class="uk-text-meta" style="font-size: 11px;">{{ line.journal_entry.entry_number }}</div>
+                        </td>
+                        <td class="uk-text-right" style="font-size: 13px;">{{ "${:,.2f}".format(line.debit) if line.debit > 0 else '--' }}</td>
+                        <td class="uk-text-right" style="font-size: 13px; padding-right: 24px;">{{ "${:,.2f}".format(line.credit) if line.credit > 0 else '--' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="uk-text-center uk-padding-large">
+                            <p class="uk-text-meta">No pending transactions found for this account.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="uk-width-1-4@m">
+        <div class="uk-card uk-card-default uk-card-body" uk-sticky="offset: 160; bottom: true" style="border-radius: 12px; border: 1px solid #e2e8f0; background: #fafafa;">
+            <h4 class="uk-text-bold uk-margin-small-bottom" style="font-size: 14px; color: #475569;">Summary</h4>
+            
+            <div class="uk-margin-small-bottom uk-flex uk-flex-between">
+                <span class="uk-text-meta">Statement Ending Balance</span>
+                <span class="uk-text-bold" style="color: #1e293b;">${{ "{:,.2f}".format(recon.statement_balance) }}</span>
+            </div>
+            <div class="uk-margin-small-bottom uk-flex uk-flex-between">
+                <span class="uk-text-meta">Cleared Balance</span>
+                <span id="cleared-balance" class="uk-text-bold" style="color: #1e293b;">$0.00</span>
+            </div>
+            
+            <hr class="uk-margin-small">
+            
+            <div class="uk-flex uk-flex-between uk-flex-middle">
+                <span class="uk-text-bold" style="font-size: 13px; color: #475569;">Difference</span>
+                <span id="summary-diff" class="uk-text-bold" style="font-size: 18px; color: #f43f5e;">$0.00</span>
+            </div>
+            
+            <div class="uk-margin-top uk-text-meta" style="font-size: 11px; line-height: 1.4;">
+                To finish, your cleared balance must match your statement balance (Difference should be $0.00).
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .transaction-row { cursor: pointer; transition: background 0.1s; }
+    .transaction-row:hover { background: #f1f5f9 !important; }
+    .transaction-row.cleared { background: #f0fdf4; }
+    .check-box {
+        width: 20px; height: 20px;
+        border: 2px solid #cbd5e1;
+        border-radius: 4px;
+        display: flex; align-items: center; justify-content: center;
+        color: transparent;
+        transition: all 0.2s;
+    }
+    .check-box.checked {
+        background: #10b981;
+        border-color: #10b981;
+        color: white;
+    }
+</style>
+
+<script>
+    const statementBalance = {{ recon.statement_balance | float }};
+    const startingBalance = {{ recon.starting_balance | float }};
+    const accountType = "{{ recon.account.type }}";
+    const reconId = {{ recon.id }};
+    const csrfToken = "{{ csrf_token() }}";
+
+    function updateCalculations() {
+        let netCleared = 0;
+        document.querySelectorAll('.transaction-row.cleared').forEach(row => {
+            const debit = parseFloat(row.dataset.debit) || 0;
+            const credit = parseFloat(row.dataset.credit) || 0;
+            
+            if (accountType === 'Asset') {
+                netCleared += (debit - credit);
+            } else {
+                netCleared += (credit - debit);
+            }
+        });
+
+        const currentClearedBalance = startingBalance + netCleared;
+        const diff = statementBalance - currentClearedBalance;
+
+        document.getElementById('cleared-balance').innerText = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(currentClearedBalance);
+        
+        const diffFormatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(diff);
+        document.getElementById('diff-amount').innerText = diffFormatted;
+        document.getElementById('summary-diff').innerText = diffFormatted;
+
+        if (Math.abs(diff) < 0.01) {
+            document.getElementById('diff-amount').style.color = '#10b981';
+            document.getElementById('summary-diff').style.color = '#10b981';
+            document.getElementById('finish-btn').disabled = false;
+        } else {
+            document.getElementById('diff-amount').style.color = '#f43f5e';
+            document.getElementById('summary-diff').style.color = '#f43f5e';
+            document.getElementById('finish-btn').disabled = true;
+        }
+    }
+
+    function toggleLine(lineId) {
+        const row = document.querySelector(`.transaction-row[data-id="${lineId}"]`);
+        const checkbox = document.getElementById(`check-${lineId}`);
+        
+        fetch(`/reconcile/toggle_line/${reconId}/${lineId}`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.cleared) {
+                    row.classList.add('cleared');
+                    checkbox.classList.add('checked');
+                } else {
+                    row.classList.remove('cleared');
+                    checkbox.classList.remove('checked');
+                }
+                updateCalculations();
+            }
+        });
+    }
+
+    // Initial calculation
+    document.addEventListener('DOMContentLoaded', updateCalculations);
+</script>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-flex uk-flex-between uk-flex-middle uk-margin-bottom">
+    <div>
+        <h2 class="uk-margin-remove uk-text-bold" style="color: #1e293b;">New {{ member_type.capitalize() }}</h2>
+        <p class="uk-text-meta uk-margin-remove">Add a new member to your organization's team</p>
+    </div>
+    <div>
+        <a href="{{ url_for('team.overview') }}" class="uk-button uk-button-default uk-button-small" style="border-radius: 6px; text-transform: none; font-weight: 600;">Cancel</a>
+    </div>
+</div>
+
+<div class="uk-card uk-card-default uk-card-body" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+    <form action="{{ url_for('team.create') }}" method="POST" class="uk-form-stacked">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="type" value="{{ member_type }}">
+        
+        <div class="uk-grid-small" uk-grid>
+            <div class="uk-width-1-2@m">
+                <label class="uk-form-label uk-text-bold" style="font-size: 13px; color: #475569;">Full Name</label>
+                <div class="uk-inline uk-width-1-1">
+                    <span class="uk-form-icon" uk-icon="icon: user; ratio: 0.8"></span>
+                    <input class="uk-input" type="text" name="full_name" placeholder="John Doe" required style="border-radius: 8px;">
+                </div>
+            </div>
+            
+            <div class="uk-width-1-2@m">
+                <label class="uk-form-label uk-text-bold" style="font-size: 13px; color: #475569;">Email Address</label>
+                <div class="uk-inline uk-width-1-1">
+                    <span class="uk-form-icon" uk-icon="icon: mail; ratio: 0.8"></span>
+                    <input class="uk-input" type="email" name="email" placeholder="john@example.com" style="border-radius: 8px;">
+                </div>
+            </div>
+
+            <div class="uk-width-1-2@m uk-margin-top">
+                <label class="uk-form-label uk-text-bold" style="font-size: 13px; color: #475569;">Phone Number</label>
+                <div class="uk-inline uk-width-1-1">
+                    <span class="uk-form-icon" uk-icon="icon: receiver; ratio: 0.8"></span>
+                    <input class="uk-input" type="text" name="phone" placeholder="(555) 000-0000" style="border-radius: 8px;">
+                </div>
+            </div>
+            
+            <div class="uk-width-1-2@m uk-margin-top">
+                <label class="uk-form-label uk-text-bold" style="font-size: 13px; color: #475569;">Job Role / Title</label>
+                <div class="uk-inline uk-width-1-1">
+                    <span class="uk-form-icon" uk-icon="icon: tag; ratio: 0.8"></span>
+                    <input class="uk-input" type="text" name="role" placeholder="e.g. Senior Accountant" style="border-radius: 8px;">
+                </div>
+            </div>
+
+            <div class="uk-width-1-2@m uk-margin-top">
+                <label class="uk-form-label uk-text-bold" style="font-size: 13px; color: #475569;">Hourly Rate ($)</label>
+                <div class="uk-inline uk-width-1-1">
+                    <span class="uk-form-icon" uk-icon="icon: credit-card; ratio: 0.8"></span>
+                    <input class="uk-input" type="number" step="0.01" name="hourly_rate" placeholder="0.00" style="border-radius: 8px;">
+                </div>
+            </div>
+        </div>
+
+        <div class="uk-margin-large-top uk-flex uk-flex-right">
+            <button type="submit" class="uk-button uk-button-primary" style="border-radius: 8px; text-transform: none; font-weight: 700; height: 44px; background: #6366f1; padding: 0 40px;">Add to Team</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-flex uk-flex-between uk-flex-middle uk-margin-bottom">
+    <div>
+        <h2 class="uk-margin-remove uk-text-bold" style="color: #1e293b;">Customer Hub Overview</h2>
+        <p class="uk-text-meta uk-margin-remove">Manage your customers, leads, and appointments</p>
+    </div>
+    <div>
+        <a href="{{ url_for('customers.index') }}" class="uk-button uk-button-primary" style="border-radius: 8px; text-transform: none; font-weight: 600; background: #6366f1;">
+            <span uk-icon="icon: users; ratio: 0.8" class="uk-margin-small-right"></span> Manage Customers
+        </a>
+    </div>
+</div>
+
+<div class="uk-grid-small uk-child-width-1-2@m" uk-grid>
+    <!-- Appointments Card -->
+    <div>
+        <div class="uk-card uk-card-default uk-card-body" style="border-radius: 12px; border: 1px solid #e2e8f0; height: 100%;">
+            <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-small-bottom">
+                <h4 class="uk-margin-remove uk-text-bold" style="color: #1e293b;">Upcoming Appointments</h4>
+                <a href="{{ url_for('customers.appointments') }}" class="uk-button uk-button-text uk-text-small" style="text-transform: none;">View All</a>
+            </div>
+            <ul class="uk-list uk-list-divider">
+                {% for appt in upcoming_appointments %}
+                <li>
+                    <div class="uk-flex uk-flex-between">
+                        <div>
+                            <div class="uk-text-bold" style="font-size: 14px; color: #1e293b;">{{ appt.title }}</div>
+                            <div class="uk-text-meta" style="font-size: 11px;">{{ appt.customer.display_name }}</div>
+                        </div>
+                        <div class="uk-text-right">
+                            <div class="uk-text-bold" style="font-size: 13px; color: #6366f1;">{{ appt.start_time.strftime('%b %d') }}</div>
+                            <div class="uk-text-meta" style="font-size: 11px;">{{ appt.start_time.strftime('%I:%M %p') }}</div>
+                        </div>
+                    </div>
+                </li>
+                {% else %}
+                <li class="uk-text-center uk-padding">
+                    <p class="uk-text-meta">No upcoming appointments</p>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Estimates Card -->
+    <div>
+        <div class="uk-card uk-card-default uk-card-body" style="border-radius: 12px; border: 1px solid #e2e8f0; height: 100%;">
+            <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-small-bottom">
+                <h4 class="uk-margin-remove uk-text-bold" style="color: #1e293b;">Recent Estimates</h4>
+                <a href="{{ url_for('estimates.index') }}" class="uk-button uk-button-text uk-text-small" style="text-transform: none;">View All</a>
+            </div>
+            <ul class="uk-list uk-list-divider">
+                {% for est in recent_estimates %}
+                <li>
+                    <div class="uk-flex uk-flex-between">
+                        <div>
+                            <div class="uk-text-bold" style="font-size: 14px; color: #1e293b;">{{ est.estimate_number }}</div>
+                            <div class="uk-text-meta" style="font-size: 11px;">{{ est.customer.display_name }}</div>
+                        </div>
+                        <div class="uk-text-right">
+                            <div class="uk-text-bold" style="font-size: 13px; color: #1e293b;">${{ "{:,.2f}".format(est.total) }}</div>
+                            <div class="uk-text-meta" style="font-size: 11px;">{{ est.status }}</div>
+                        </div>
+                    </div>
+                </li>
+                {% else %}
+                <li class="uk-text-center uk-padding">
+                    <p class="uk-text-meta">No recent estimates</p>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="uk-margin-large-top">
+    <div class="uk-card uk-card-primary uk-card-body uk-light" style="border-radius: 16px; background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);">
+        <div class="uk-grid-small uk-flex-middle" uk-grid>
+            <div class="uk-width-expand">
+                <h3 class="uk-text-bold uk-margin-remove">Growth & Leads</h3>
+                <p class="uk-margin-small-top">You have {{ total_customers }} customers in your database. Keep growing your reach!</p>
+            </div>
+            <div class="uk-width-auto">
+                <button class="uk-button uk-button-default" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.4);">Run Lead Report</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

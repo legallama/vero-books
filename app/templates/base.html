@@ -1,166 +1,1053 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VeroBooks | Professional Accounting</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    
+
     <!-- UIkit CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.21.5/dist/css/uikit.min.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    
+
     <style>
         :root {
-            --primary-color: #1e293b;
-            --sidebar-width: 260px;
+            /* Light Mode - Professional Corporate Theme */
+            --sidebar-bg: #ffffff;
+            --sidebar-header-bg: #f9fafb;
+            --sidebar-active-bg: #eff6ff;
+            --sidebar-active-text: #1d4ed8;
+            --sidebar-text: #4b5563;
+            --sidebar-width: 250px;
+            --transition-speed: 0.2s;
+            --bg-color: #f4f5f7;
+            --text-color: #111827;
+            --text-muted: #6b7280;
+            --card-bg: #ffffff;
+            --border-color: #e5e7eb;
+            --topbar-bg: #ffffff;
+            --table-header-bg: #f9fafb;
+            --input-bg: #ffffff;
+            --primary-color: #1d4ed8;
         }
-        body { font-family: 'Inter', sans-serif; background: #f1f5f9; color: #334155; }
-        .sidebar { 
-            width: var(--sidebar-width); 
-            position: fixed; 
-            top: 0; bottom: 0; left: 0; 
-            background: var(--primary-color); 
-            color: #fff;
-            padding: 20px 0;
+
+        :root.dark-mode {
+            /* Dark Mode - Sleek Obsidian Navy */
+            --bg-color: #0b0f19;
+            --text-color: #f9fafb;
+            --text-muted: #e5e7eb;
+            --card-bg: #131825;
+            --border-color: #1f2937;
+            --sidebar-bg: #131825;
+            --sidebar-header-bg: #0b0f19;
+            --sidebar-active-bg: #1e3a8a;
+            --sidebar-active-text: #60a5fa;
+            --sidebar-text: #d1d5db;
+            --topbar-bg: #131825;
+            --table-header-bg: #0b0f19;
+            --input-bg: #0b0f19;
+            --primary-color: #3b82f6;
+        }
+
+        /* Global style overrides to enforce the new professional palette */
+        body [style*="background: #6366f1"] {
+            background: var(--primary-color) !important;
+        }
+
+        body [style*="color: #6366f1"] {
+            color: var(--primary-color) !important;
+        }
+
+        body [style*="color: #1e293b"],
+        body [style*="color: #0f172a"] {
+            color: var(--text-color) !important;
+        }
+
+        body [style*="color: #475569"],
+        body [style*="color: #64748b"],
+        body [style*="color: #94a3b8"] {
+            color: var(--text-muted) !important;
+        }
+
+        html.dark-mode {
+            background: var(--bg-color);
+        }
+
+        .dark-mode body {
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .dark-mode .uk-background-muted {
+            background-color: #333333 !important;
+            color: #f8fafc;
+        }
+
+        .dark-mode .uk-link-muted a,
+        .uk-link-toggle .uk-link-muted,
+        a.uk-link-muted {
+            color: var(--text-muted) !important;
+        }
+
+        .dark-mode .sidebar {
+            background: var(--sidebar-bg);
+            border-color: var(--border-color);
+            color: var(--sidebar-text);
+        }
+
+        .dark-mode .sidebar .uk-nav>li>a {
+            color: var(--sidebar-text);
+        }
+
+        .dark-mode .sidebar .uk-nav>li>a:hover {
+            background: #334155;
+            color: #f8fafc;
+        }
+
+        .dark-mode .sidebar .uk-nav>li.uk-active>a {
+            background: var(--sidebar-active-bg);
+            color: var(--sidebar-active-text);
+        }
+
+        .dark-mode .nav-section {
+            border-color: var(--border-color);
+        }
+
+        .dark-mode .nav-section li a:hover {
+            background: #0f172a !important;
+            color: #f8fafc !important;
+        }
+
+        .dark-mode .top-bar {
+            background: var(--topbar-bg);
+            border-color: var(--border-color);
+        }
+
+        .dark-mode .uk-card,
+        .dark-mode .uk-card-default {
+            background: var(--card-bg) !important;
+            border-color: var(--border-color) !important;
+            color: var(--text-color) !important;
+        }
+
+        .dark-mode h1,
+        .dark-mode h2,
+        .dark-mode h3,
+        .dark-mode h4,
+        .dark-mode h5,
+        .dark-mode h6,
+        .dark-mode .uk-text-bold {
+            color: var(--text-color) !important;
+        }
+
+        .dark-mode .uk-text-meta,
+        .dark-mode .uk-text-muted {
+            color: var(--text-muted) !important;
+        }
+
+        .dark-mode .uk-table thead tr,
+        .dark-mode .uk-table th {
+            background: var(--table-header-bg) !important;
+            color: var(--text-muted) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        .dark-mode .uk-table td {
+            border-color: var(--border-color) !important;
+            color: var(--text-color) !important;
+        }
+
+        .dark-mode .uk-table-hover>tbody>tr:hover>td,
+        .dark-mode .uk-table-hover>tbody>tr:hover {
+            background: #334155 !important;
+        }
+
+        .dark-mode .uk-input,
+        .dark-mode .uk-select,
+        .dark-mode .uk-textarea {
+            background: var(--input-bg) !important;
+            border-color: var(--border-color) !important;
+            color: var(--text-color) !important;
+        }
+
+        .dark-mode .uk-dropdown {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .dark-mode [style*="background: #fafafa"],
+        .dark-mode [style*="background: #f8fafc"],
+        .dark-mode [style*="background: #f1f5f9"],
+        .dark-mode [style*="background: #eff6ff"],
+        .dark-mode [style*="background: #eef2ff"],
+        .dark-mode [style*="background: #fff"],
+        .dark-mode [style*="background: #ffffff"],
+        .dark-mode [style*="background: white"] {
+            background: var(--table-header-bg) !important;
+        }
+
+        .dark-mode [style*="color: #1e293b"],
+        .dark-mode [style*="color: #475569"],
+        .dark-mode [style*="color: #0f172a"] {
+            color: var(--text-color) !important;
+        }
+
+        .dark-mode [style*="color: #64748b"],
+        .dark-mode [style*="color: #94a3b8"] {
+            color: var(--text-muted) !important;
+        }
+
+        .dark-mode .quick-create-dropdown .uk-nav-header,
+        .dark-mode .quick-create-dropdown a {
+            color: var(--text-color) !important;
+        }
+
+        .dark-mode .uk-button-default {
+            background: transparent;
+            border-color: var(--border-color);
+            color: var(--text-color) !important;
+        }
+
+        .dark-mode .sidebar-brand-container button {
+            background: var(--sidebar-header-bg) !important;
+            color: var(--text-color) !important;
+            border-color: var(--border-color) !important;
+        }
+
+        .dark-mode .uk-dropdown, .dark-mode .uk-modal-dialog {
+            background: var(--card-bg) !important;
+            border: 1px solid var(--border-color);
+            color: var(--text-color) !important;
+        }
+
+        .dark-mode kbd {
+            background: #1f2937;
+            color: #f3f4f6;
+            border: 1px solid #374151;
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+
+        .dark-mode .top-bar-search input {
+            color: var(--text-color) !important;
+        }
+
+        .dark-mode .top-bar-search .uk-form-icon {
+            color: var(--text-muted);
+        }
+
+        .top-bar-search .uk-input {
+            background: #f1f5f9;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .top-bar-search .uk-input:focus {
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .search-badge {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #e2e8f0;
+            color: #64748b;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            pointer-events: none;
+        }
+
+        .dark-mode .search-badge {
+            background: #1f2937;
+            color: #94a3b8;
+        }
+
+        /* Pulsing Notification */
+        @keyframes pulse-red {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .pulse-badge {
+            animation: pulse-red 2s infinite;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--primary-color);
+            color: #fff !important;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        /* Command Palette Modal */
+        #command-palette {
+            z-index: 2000;
+        }
+        .cmd-input {
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            font-size: 18px !important;
+            padding: 20px !important;
+        }
+        .cmd-item {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background 0.1s;
+            display: flex;
+            align-items: center;
+        }
+        .cmd-item:hover, .cmd-item.active {
+            background: var(--sidebar-active-bg);
+            color: var(--sidebar-active-text);
+        }
+        .cmd-shortcut {
+            margin-left: auto;
+            background: rgba(0,0,0,0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        /* Animated Theme Switch */
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 36px;
+            height: 20px;
+            margin-left: 10px;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .theme-switch .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: .3s;
+            border-radius: 20px;
+            pointer-events: none;
+        }
+
+        .theme-switch .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .theme-switch input:checked+.slider {
+            background-color: #6366f1;
+        }
+
+        .theme-switch input:checked+.slider:before {
+            transform: translateX(16px);
+        }
+
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        html {
+            background: var(--bg-color);
+        }
+
+        /* Sidebar Base (Akaunting Style - Light) */
+        .sidebar {
+            width: var(--sidebar-width);
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            background: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            padding: 0;
             overflow-y: auto;
             z-index: 1000;
+            border-right: 1px solid #e2e8f0;
         }
-        .main-content { margin-left: var(--sidebar-width); padding: 40px; min-height: 100vh; }
-        .sidebar-brand { padding: 20px 30px; font-size: 22px; font-weight: 800; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
-        .sidebar .uk-nav-default > li > a { color: #94a3b8; padding: 12px 30px; font-size: 14px; font-weight: 500; transition: all 0.2s; }
-        .sidebar .uk-nav-default > li > a:hover { background: rgba(255,255,255,0.05); color: #fff; }
-        .sidebar .uk-nav-default > li.uk-active > a { color: #fff; background: #3b82f6; }
-        .sidebar .uk-nav-header { color: #475569; padding: 20px 30px 5px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .uk-card { border: none; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border-radius: 12px; }
-        .uk-table th { font-weight: 700; text-transform: uppercase; font-size: 11px; color: #64748b; letter-spacing: 0.5px; }
-        .uk-button-primary { background: #3b82f6; border-radius: 6px; font-weight: 600; text-transform: none; }
-        .top-bar { 
-            height: 64px; 
-            background: #fff; 
-            border-bottom: 1px solid #e2e8f0; 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
+
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 4px;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            padding: 0;
+            min-height: 100vh;
+            position: relative;
+            transition: all 0.3s ease;
+            background: var(--bg-color);
+        }
+
+        /* Responsive Sidebar */
+        @media (max-width: 960px) {
+            :root {
+                --sidebar-width: 0px;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                width: 280px;
+                box-shadow: 10px 0 30px rgba(0, 0, 0, 0.1);
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .sidebar-toggle-mobile {
+                display: block !important;
+            }
+
+            .top-bar-search {
+                display: none !important;
+            }
+
+            .top-bar {
+                padding: 0 16px !important;
+            }
+
+            /* Submenu dropdown mobile width */
+            .quick-create-dropdown {
+                width: calc(100vw - 32px) !important;
+                max-width: 440px !important;
+            }
+
+            .quick-create-grid {
+                display: flex;
+                flex-direction: column !important;
+            }
+
+            .quick-create-grid>div {
+                width: 100% !important;
+                border-left: none !important;
+            }
+        }
+
+        .sidebar-toggle-mobile {
+            display: none;
+            background: none;
+            border: none;
+            color: #475569;
+            padding: 8px;
+            cursor: pointer;
+            margin-right: 12px;
+        }
+
+        /* Overlay for mobile sidebar */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.2);
+            backdrop-filter: blur(2px);
+            z-index: 999;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        /* Brand Section */
+        .sidebar-brand-container {
+            padding: 24px 20px;
+            margin-bottom: 5px;
+        }
+
+        /* Navigation Links */
+        .sidebar .uk-nav {
+            padding: 0 12px;
+        }
+
+        .sidebar .uk-nav>li>a {
+            color: var(--sidebar-text);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            margin: 1px 0;
+        }
+
+        .sidebar .uk-nav>li>a:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .sidebar .uk-nav>li.uk-active>a {
+            background: var(--sidebar-active-bg);
+            color: var(--sidebar-active-text);
+            font-weight: 600;
+        }
+
+        /* Submenu Styling */
+        .nav-section {
+            margin-left: 20px;
+            border-left: 1px solid #f1f5f9;
+            padding-left: 4px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            display: block;
+        }
+
+        .nav-section.collapsed {
+            max-height: 0 !important;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .nav-section.expanded {
+            max-height: 1000px;
+            opacity: 1;
+        }
+
+        .nav-section li a {
+            color: #64748b !important;
+            font-size: 13.5px !important;
+            padding: 7px 16px !important;
+        }
+
+        .nav-section li a:hover {
+            color: #0f172a !important;
+            background: #f8fafc !important;
+        }
+
+        .nav-section li.uk-active a {
+            color: var(--sidebar-active-text) !important;
+            background: transparent !important;
+            font-weight: 600;
+        }
+
+        /* Collapsible Headers */
+        .collapsible-header {
+            cursor: pointer;
+            user-select: none;
+            padding: 10px 14px !important;
+            background: transparent;
+            border-radius: 8px;
+            margin: 4px 0 1px 0 !important;
+            transition: background 0.2s ease;
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            color: #94a3b8 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .collapsible-header:hover {
+            background: #f8fafc;
+            color: #475569 !important;
+        }
+
+        .chevron {
+            transition: transform 0.3s ease;
+            opacity: 0.4;
+        }
+
+        .chevron.rotated {
+            transform: rotate(180deg);
+        }
+
+        /* Top Bar & Content */
+        .top-bar {
+            height: 64px;
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             padding: 0 40px;
             position: sticky;
             top: 0;
             z-index: 900;
         }
+
+        /* Utils */
+        .uk-card {
+            border: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+        }
+
+        .uk-button-primary {
+            border-radius: 6px;
+            font-weight: 600;
+            text-transform: none;
+        }
+
         .user-avatar {
-            width: 44px;
-            height: 44px;
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
-            background: #e2e8f0;
+            background: #f1f5f9;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
             color: #475569;
-            font-size: 16px;
             cursor: pointer;
         }
     </style>
 </head>
+
 <body>
 
     {% if current_user.is_authenticated %}
-    <div class="sidebar text-white">
-        <!-- ... sidebar remains same ... -->
-        <div class="uk-padding-small">
-            <div class="uk-flex uk-flex-middle uk-margin-small-bottom">
-                <div class="uk-border-rounded uk-background-primary uk-flex uk-flex-center uk-flex-middle uk-margin-small-right" style="width: 28px; height: 28px; background: #6366f1 !important;">
-                    <span class="uk-text-bold uk-text-small text-white">V</span>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleMobileSidebar()"></div>
+    <div class="sidebar" id="sidebar">
+        <!-- Brand Section -->
+        <div class="sidebar-brand-container">
+            <div class="uk-flex uk-flex-middle">
+                <div
+                    style="width: 32px; height: 32px; background: #6366f1; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-right: 12px;">
+                    V</div>
+                <div>
+                    <h4 class="uk-margin-remove uk-text-bold"
+                        style="color: #1e293b; font-size: 16px; line-height: 1.1;">Vero</h4>
+                    <span class="uk-text-meta" style="font-size: 10px; text-transform: uppercase;">Accounting</span>
                 </div>
-                <h4 class="uk-margin-remove uk-text-bold uk-text-uppercase uk-text-small tracking-widest" style="color: #fff; letter-spacing: 1px;">VeroBooks</h4>
             </div>
-            
+
             <div class="uk-inline uk-width-1-1 uk-margin-small-top">
-                <button class="uk-button uk-button-default uk-button-small uk-width-1-1 uk-text-truncate uk-text-left" type="button" style="border-color: rgba(255,255,255,0.15); color: #94a3b8; text-transform: none; padding: 0 10px; font-size: 12px; height: 32px;">
-                    <span uk-icon="icon: home; ratio: 0.8" class="uk-margin-small-right"></span>
-                    {{ current_org.name if current_org else 'Select Business' }}
-                    <span uk-icon="icon: triangle-down; ratio: 0.8" class="uk-float-right uk-margin-small-top"></span>
+                <button class="uk-button uk-button-default uk-button-small uk-width-1-1 uk-text-truncate uk-text-left"
+                    type="button"
+                    style="border-color: #e2e8f0; color: #475569; text-transform: none; padding: 0 12px; font-size: 11px; height: 32px; border-radius: 8px; background: #f8fafc;">
+                    <span uk-icon="icon: home; ratio: 0.75" class="uk-margin-small-right"></span>
+                    {{ current_org.name if current_org else 'Select Enterprise' }}
+                    <span uk-icon="icon: chevron-down; ratio: 0.75" class="uk-float-right uk-margin-small-top"></span>
                 </button>
-                <div uk-dropdown="mode: click; pos: bottom-justify;">
+                <div
+                    uk-dropdown="mode: click; pos: bottom-justify; offset: 8; animation: uk-animation-slide-bottom-small; duration: 150;">
                     <ul class="uk-nav uk-dropdown-nav">
-                        <li class="uk-nav-header uk-text-bold">Switch Business</li>
+                        <li class="uk-nav-header">Switch Company</li>
                         {% for membership in current_user.memberships %}
-                        <li><a href="{{ url_for('settings.switch_organization', org_id=membership.organization.id) }}">{{ membership.organization.name }}</a></li>
+                        <li><a href="{{ url_for('settings.switch_organization', org_id=membership.organization.id) }}">{{
+                                membership.organization.name }}</a></li>
                         {% endfor %}
                         <li class="uk-nav-divider"></li>
-                        <li><a href="{{ url_for('settings.create_organization') }}" class="uk-text-primary"><span uk-icon="plus" class="uk-margin-small-right"></span>New Business</a></li>
+                        <li><a href="{{ url_for('settings.create_organization') }}" class="uk-text-primary"><span
+                                    uk-icon="plus" class="uk-margin-small-right"></span>New Company</a></li>
                     </ul>
                 </div>
             </div>
         </div>
-        
-        <ul class="uk-nav-default uk-nav uk-nav-parent-icon" uk-nav style="margin-top: 5px;">
-            <li class="{{ 'uk-active' if request.blueprint == 'dashboard' }}"><a href="{{ url_for('dashboard.index') }}"><span class="uk-margin-small-right" uk-icon="grid"></span> Dashboard</a></li>
-            
-            <li class="uk-nav-header">Transactions</li>
-            <li class="{{ 'uk-active' if request.blueprint == 'banking' }}">
-                <a href="{{ url_for('banking.index') }}"><span class="uk-margin-small-right" uk-icon="refresh"></span> Banking</a>
-                <ul class="uk-nav-sub uk-margin-small-left" style="margin-top: 0; padding-top: 2px;">
-                    <li><a href="{{ url_for('banking.rules') }}" class="uk-text-meta" style="font-size: 11px;"><span uk-icon="icon: settings; ratio: 0.6"></span> Automation Rules</a></li>
-                </ul>
-            </li>
-            <li class="{{ 'uk-active' if request.blueprint == 'invoices' }}"><a href="{{ url_for('invoices.index') }}"><span class="uk-margin-small-right" uk-icon="cart"></span> Invoices</a></li>
-            <li class="{{ 'uk-active' if request.blueprint == 'recurring' }}"><a href="{{ url_for('recurring.index') }}"><span class="uk-margin-small-right" uk-icon="future"></span> Recurring Invoices</a></li>
-            <li class="{{ 'uk-active' if request.blueprint == 'estimates' }}"><a href="{{ url_for('estimates.index') }}"><span class="uk-margin-small-right" uk-icon="file-edit"></span> Estimates</a></li>
-            <li class="{{ 'uk-active' if request.blueprint == 'bills' }}"><a href="{{ url_for('bills.index') }}"><span class="uk-margin-small-right" uk-icon="credit-card"></span> Bills</a></li>
-            <li class="{{ 'uk-active' if request.blueprint == 'journal' }}"><a href="{{ url_for('journal.index') }}"><span class="uk-margin-small-right" uk-icon="list"></span> Journal Entries</a></li>
-            
-            <li class="uk-nav-header">Relationships</li>
-            <li class="{{ 'uk-active' if request.blueprint == 'customers' }}"><a href="{{ url_for('customers.index') }}"><span class="uk-margin-small-right" uk-icon="users"></span> Customers</a></li>
-            <li class="{{ 'uk-active' if request.blueprint == 'vendors' }}"><a href="{{ url_for('vendors.index') }}"><span class="uk-margin-small-right" uk-icon="home"></span> Vendors</a></li>
-            
-            <li class="uk-nav-header">Configuration</li>
-            <li class="{{ 'uk-active' if request.blueprint == 'accounts' }}"><a href="{{ url_for('accounts.index') }}"><span class="uk-margin-small-right" uk-icon="database"></span> Chart of Accounts</a></li>
-            <li class="{{ 'uk-active' if request.blueprint == 'audit' }}"><a href="{{ url_for('audit.history') }}"><span class="uk-margin-small-right" uk-icon="history"></span> Audit Trail</a></li>
-            <li class="{{ 'uk-active' if request.blueprint == 'tags' }}"><a href="{{ url_for('tags.index') }}"><span class="uk-margin-small-right" uk-icon="tag"></span> Category Tags</a></li>
-            <li class="{{ 'uk-active' if request.blueprint == 'reports' }}"><a href="{{ url_for('reports.index') }}"><span class="uk-margin-small-right" uk-icon="file-text"></span> Financial Reports</a></li>
-            <li><a href="{{ url_for('settings.tax_rates') }}"><span class="uk-margin-small-right" uk-icon="settings"></span> Tax Settings</a></li>
-            
-            <li class="uk-nav-divider"></li>
-            <li><a href="{{ url_for('auth.logout') }}"><span class="uk-margin-small-right" uk-icon="sign-out"></span> Logout</a></li>
-        </ul>
+
+        <!-- Navigation -->
+        <nav class="uk-nav-default">
+            <ul class="uk-nav">
+                <!-- Dashboard -->
+                <li class="{{ 'uk-active' if request.blueprint == 'dashboard' }}">
+                    <a href="{{ url_for('dashboard.index') }}">
+                        <span uk-icon="icon: grid; ratio: 0.9" class="uk-margin-small-right"></span> Dashboard
+                    </a>
+                </li>
+
+
+                <!-- Accounting & Books -->
+                <li class="uk-nav-header collapsible-header" onclick="toggleNavSection('accounting')">
+                    <span><span uk-icon="icon: list; ratio: 0.8" class="uk-margin-small-right"></span> Accounting</span>
+                    <span uk-icon="icon: chevron-down; ratio: 0.8" class="chevron" id="accounting-chevron"></span>
+                </li>
+                <div id="accounting-section" class="nav-section">
+                    <li class="{{ 'uk-active' if request.blueprint == 'banking' }}"><a
+                            href="{{ url_for('banking.index') }}">Bank Transactions</a></li>
+                    <li class="{{ 'uk-active' if request.blueprint == 'receipts' }}"><a
+                            href="{{ url_for('receipts.index') }}">Receipts</a></li>
+                    <li class="{{ 'uk-active' if request.blueprint == 'reconciliation' }}"><a
+                            href="{{ url_for('reconciliation.index') }}">Reconcile</a></li>
+                    <li><a href="{{ url_for('banking.rules') }}">Rules</a></li>
+                    <li class="{{ 'uk-active' if request.blueprint == 'accounts' }}"><a
+                            href="{{ url_for('accounts.index') }}">Chart of Accounts</a></li>
+                    <li class="{{ 'uk-active' if request.blueprint == 'recurring_journal' }}"><a
+                            href="{{ url_for('recurring_journal.index') }}">Recurring Transactions</a></li>
+                    <li class="{{ 'uk-active' if request.blueprint == 'journal' }}"><a
+                            href="{{ url_for('journal.index') }}">Journal Entries</a></li>
+                    <li class="{{ 'uk-active' if request.blueprint == 'tags' }}"><a
+                            href="{{ url_for('tags.index') }}">Manage Tags</a></li>
+                </div>
+
+                <!-- Expenses & Vendors -->
+                <li class="uk-nav-header collapsible-header" onclick="toggleNavSection('expenses')">
+                    <span><span uk-icon="icon: credit-card; ratio: 0.8" class="uk-margin-small-right"></span> Expenses &
+                        Bills</span>
+                    <span uk-icon="icon: chevron-down; ratio: 0.8" class="chevron" id="expenses-chevron"></span>
+                </li>
+                <div id="expenses-section" class="nav-section">
+                    <li class="{{ 'uk-active' if request.path == url_for('bills.overview') }}"><a
+                            href="{{ url_for('bills.overview') }}">Overview</a></li>
+                    <li class="{{ 'uk-active' if request.blueprint == 'expenses' }}"><a
+                            href="{{ url_for('expenses.transactions') }}">Expense Transactions</a></li>
+                    <li class="{{ 'uk-active' if request.blueprint == 'vendors' }}"><a
+                            href="{{ url_for('vendors.index') }}">Vendors</a></li>
+                    <li class="{{ 'uk-active' if request.path == url_for('bills.index') }}"><a
+                            href="{{ url_for('bills.index') }}">Bills</a></li>
+                    <li class="{{ 'uk-active' if request.path == url_for('bills.payments') }}"><a
+                            href="{{ url_for('bills.payments') }}">Bill Payments</a></li>
+                </div>
+
+                <!-- Sales & Revenue -->
+                <li class="uk-nav-header collapsible-header" onclick="toggleNavSection('sales')">
+                    <span><span uk-icon="icon: cart; ratio: 0.8" class="uk-margin-small-right"></span> Sales &
+                        Revenue</span>
+                    <span uk-icon="icon: chevron-down; ratio: 0.8" class="chevron" id="sales-chevron"></span>
+                </li>
+                <div id="sales-section" class="nav-section">
+                    <li class="{{ 'uk-active' if request.path == url_for('sales.overview') }}"><a
+                            href="{{ url_for('sales.overview') }}">Sales Overview</a></li>
+                    <li class="{{ 'uk-active' if request.path == url_for('sales.transactions') }}"><a
+                            href="{{ url_for('sales.transactions') }}">Sales Transactions</a></li>
+                    <li class="{{ 'uk-active' if request.blueprint == 'invoices' }}"><a
+                            href="{{ url_for('invoices.index') }}">Invoices</a></li>
+                    <li class="{{ 'uk-active' if request.path == url_for('sales.products') }}"><a
+                            href="{{ url_for('sales.products') }}">Products and Services</a></li>
+                    <li class="{{ 'uk-active' if request.blueprint == 'recurring' }}"><a
+                            href="{{ url_for('recurring.index') }}">Recurring Plans</a></li>
+                </div>
+
+                <!-- Customer Hub -->
+                <li class="uk-nav-header collapsible-header" onclick="toggleNavSection('crm')">
+                    <span><span uk-icon="icon: users; ratio: 0.8" class="uk-margin-small-right"></span> Customer
+                        Hub</span>
+                    <span uk-icon="icon: chevron-down; ratio: 0.8" class="chevron" id="crm-chevron"></span>
+                </li>
+                <div id="crm-section" class="nav-section">
+                    <li class="{{ 'uk-active' if request.path == url_for('customers.overview') }}"><a
+                            href="{{ url_for('customers.overview') }}">Overview</a></li>
+                    <li class="{{ 'uk-active' if request.path == url_for('customers.index') }}"><a
+                            href="{{ url_for('customers.index') }}">Customers & Leads</a></li>
+                    <li class="{{ 'uk-active' if request.blueprint == 'estimates' }}"><a
+                            href="{{ url_for('estimates.index') }}">Estimates</a></li>
+                    <li class="{{ 'uk-active' if request.path == url_for('customers.appointments') }}"><a
+                            href="{{ url_for('customers.appointments') }}">Appointments</a></li>
+                </div>
+
+                <!-- Team & Workforce -->
+                <li class="uk-nav-header collapsible-header" onclick="toggleNavSection('team')">
+                    <span><span uk-icon="icon: sign-out; ratio: 0.8" class="uk-margin-small-right"
+                            style="transform: rotate(90deg);"></span> Company Team</span>
+                    <span uk-icon="icon: chevron-down; ratio: 0.8" class="chevron" id="team-chevron"></span>
+                </li>
+                <div id="team-section" class="nav-section">
+                    <li class="{{ 'uk-active' if request.path == url_for('team.overview') }}"><a
+                            href="{{ url_for('team.overview') }}">Overview</a></li>
+                    <li class="{{ 'uk-active' if request.path == url_for('team.employees') }}"><a
+                            href="{{ url_for('team.employees') }}">Employees</a></li>
+                    <li class="{{ 'uk-active' if request.path == url_for('team.contractors') }}"><a
+                            href="{{ url_for('team.contractors') }}">Contractors</a></li>
+                </div>
+
+                <!-- Intelligence & Reports -->
+                <li class="uk-nav-header collapsible-header" onclick="toggleNavSection('reports')">
+                    <span><span uk-icon="icon: file-text; ratio: 0.8" class="uk-margin-small-right"></span> Reports &
+                        Audit</span>
+                    <span uk-icon="icon: chevron-down; ratio: 0.8" class="chevron" id="reports-chevron"></span>
+                </li>
+                <div id="reports-section" class="nav-section">
+                    <li class="{{ 'uk-active' if request.blueprint == 'reports' }}"><a
+                            href="{{ url_for('reports.index') }}">Financial Statements</a></li>
+                    <li class="{{ 'uk-active' if request.blueprint == 'audit' }}"><a
+                            href="{{ url_for('audit.history') }}">Audit Trail</a></li>
+                </div>
+            </ul>
+
+        </nav>
+
+        <!-- Logout & Status -->
+        <div
+            style="position: absolute; bottom: 0; left: 0; width: 100%; padding: 16px; border-top: 1px solid rgba(255,255,255,0.06);">
+            <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-small-bottom">
+                <div class="uk-flex uk-flex-middle">
+                    <span class="uk-icon uk-text-success uk-margin-small-right" style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);"></span>
+                    <span style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Systems Active</span>
+                </div>
+                <span style="font-size: 10px; color: var(--text-muted); opacity: 0.7;">v2.4.0</span>
+            </div>
+            <a href="{{ url_for('auth.logout') }}" class="uk-flex uk-flex-middle"
+                style="color: #ef4444; font-size: 13px; text-decoration: none; font-weight: 500;">
+                <span uk-icon="icon: sign-out; ratio: 0.8" class="uk-margin-small-right"></span> Sign Out
+            </a>
+        </div>
     </div>
     {% endif %}
 
-    <main class="{% if current_user.is_authenticated %}main-content{% else %}uk-flex uk-flex-center uk-flex-middle uk-height-viewport{% endif %}">
+    <main
+        class="{% if current_user.is_authenticated %}main-content{% else %}uk-flex uk-flex-center uk-flex-middle uk-height-viewport{% endif %}"
+        id="main-content">
         {% if current_user.is_authenticated %}
         <div class="top-bar">
-            <div class="uk-inline uk-width-1-3">
-                <span class="uk-form-icon" uk-icon="icon: search"></span>
-                <input class="uk-input uk-form-blank" type="text" placeholder="Global search...">
+            <button class="sidebar-toggle-mobile" onclick="toggleMobileSidebar()" style="display: none;">
+                <span uk-icon="icon: menu; ratio: 1.2"></span>
+            </button>
+
+            <div class="uk-flex uk-flex-middle uk-width-expand">
+                <!-- Breadcrumbs (Fast Value Add) -->
+                <div class="uk-margin-medium-right uk-visible@m">
+                    <ul class="uk-breadcrumb uk-margin-remove">
+                        <li><a href="{{ url_for('dashboard.index') }}" style="font-size: 11px;">Dashboard</a></li>
+                        {% set paths = request.path.strip('/').split('/') %}
+                        {% for path in paths if path and path != 'dashboard' %}
+                        <li><span style="font-size: 11px; text-transform: capitalize;">{{ path.replace('-', ' ') }}</span></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div class="uk-inline uk-width-1-3 top-bar-search">
+                    <span class="uk-form-icon" uk-icon="icon: search; ratio: 0.85"></span>
+                    <input class="uk-input uk-form-blank" type="text" placeholder="Search anything..."
+                        style="font-size: 14px;" onfocus="this.placeholder='Type to navigate...'" onblur="this.placeholder='Search anything...'">
+                    <span class="search-badge">CTRL + K</span>
+                </div>
             </div>
-            
+
             <div class="uk-flex uk-flex-middle">
-                <span class="uk-margin-right uk-text-meta uk-visible@m">Welcome, {{ current_user.full_name or current_user.email }}</span>
+                <!-- Quick Create Button -->
+                <div class="uk-margin-medium-right">
+                    <button class="uk-button uk-button-primary uk-button-small" type="button"
+                        style="border-radius: 50%; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
+                        <span uk-icon="icon: plus; ratio: 0.9"></span>
+                    </button>
+                    <div class="quick-create-dropdown"
+                        uk-dropdown="mode: click; pos: bottom-left; offset: 12; animation: uk-animation-slide-bottom-small; duration: 200; boundary: .top-bar"
+                        style="border-radius: 12px; width: 440px; padding: 0; overflow: hidden;">
+                        <div class="uk-grid-collapse uk-child-width-1-2 quick-create-grid" uk-grid>
+                            <div class="uk-padding-small">
+                                <ul class="uk-nav uk-dropdown-nav">
+                                    <li class="uk-nav-header"
+                                        style="color: #6366f1; font-weight: 800; font-size: 11px;">CUSTOMERS & SALES
+                                    </li>
+                                    <li><a href="{{ url_for('invoices.index') }}"><span uk-icon="file-text"
+                                                class="uk-margin-small-right"></span>Invoice</a></li>
+                                    <li><a href="{{ url_for('estimates.index') }}"><span uk-icon="mail"
+                                                class="uk-margin-small-right"></span>Estimate</a></li>
+                                    <li><a href="{{ url_for('customers.index') }}"><span uk-icon="user"
+                                                class="uk-margin-small-right"></span>Customer</a></li>
+                                    <li><a href="{{ url_for('recurring.index') }}"><span uk-icon="refresh"
+                                                class="uk-margin-small-right"></span>Recurring Invoice</a></li>
+
+                                    <li class="uk-nav-divider"></li>
+                                    <li class="uk-nav-header"
+                                        style="color: #10b981; font-weight: 800; font-size: 11px;">VENDORS & EXPENSES
+                                    </li>
+                                    <li><a href="{{ url_for('bills.index') }}"><span uk-icon="cart"
+                                                class="uk-margin-small-right"></span>Bill</a></li>
+                                    <li><a href="{{ url_for('vendors.index') }}"><span uk-icon="home"
+                                                class="uk-margin-small-right"></span>Vendor</a></li>
+                                </ul>
+                            </div>
+                            <div class="uk-padding-small" style="background: #f8fafc; border-left: 1px solid #f1f5f9;">
+                                <ul class="uk-nav uk-dropdown-nav">
+                                    <li class="uk-nav-header"
+                                        style="color: #f59e0b; font-weight: 800; font-size: 11px;">ACCOUNTING</li>
+                                    <li><a href="{{ url_for('journal.create') }}"><span uk-icon="list"
+                                                class="uk-margin-small-right"></span>Journal Entry</a></li>
+                                    <li><a href="{{ url_for('banking.index') }}"><span uk-icon="database"
+                                                class="uk-margin-small-right"></span>Bank Deposit</a></li>
+                                    <li><a href="{{ url_for('accounts.index') }}"><span uk-icon="plus-circle"
+                                                class="uk-margin-small-right"></span>Add GL Account</a></li>
+                                    <li><a href="{{ url_for('tags.index') }}"><span uk-icon="tag"
+                                                class="uk-margin-small-right"></span>Category Tag</a></li>
+
+                                    <li class="uk-nav-divider"></li>
+                                    <li class="uk-nav-header"
+                                        style="color: #64748b; font-weight: 800; font-size: 11px;">OTHER</li>
+                                    <li><a href="{{ url_for('audit.history') }}"><span uk-icon="history"
+                                                class="uk-margin-small-right"></span>Audit Log</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="uk-padding-small uk-text-center"
+                            style="background: #eff6ff; border-top: 1px solid #dbeafe;">
+                            <a href="#" class="uk-text-small uk-text-bold" style="color: #2563eb;">View All Transaction
+                                Types</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                <div class="uk-margin-medium-right">
+                    <a href="#" class="uk-link-reset uk-inline" type="button">
+                        <span uk-icon="icon: bell; ratio: 1" style="color: #64748b;"></span>
+                        {% if unread_notifications_count > 0 %}
+                        <span class="uk-badge uk-position-top-right pulse-badge"
+                            style="background: #ef4444; font-size: 9px; min-width: 16px; height: 16px; line-height: 16px; border: 2px solid #fff; margin-top: -4px; margin-right: -4px;">
+                            {{ unread_notifications_count }}
+                        </span>
+                        {% endif %}
+                    </a>
+                    <div uk-dropdown="mode: click; pos: bottom-right; offset: 15; animation: uk-animation-slide-bottom-small; duration: 200;"
+                        style="width: 320px; border-radius: 12px; padding: 0; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+                        <div class="uk-padding-small" style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                            <div class="uk-flex uk-flex-between uk-flex-middle">
+                                <span class="uk-text-bold" style="font-size: 14px; color: #1e293b;">Notifications</span>
+                                <a href="#" class="uk-text-meta uk-text-primary" style="font-size: 11px;">Mark all as
+                                    read</a>
+                            </div>
+                        </div>
+                        <div class="uk-overflow-auto" style="max-height: 300px;">
+                            <ul class="uk-nav uk-dropdown-nav">
+                                {% if recent_notifications %}
+                                {% for note in recent_notifications %}
+                                <li class="uk-padding-small" style="border-bottom: 1px solid #f1f5f9;">
+                                    <div class="uk-flex">
+                                        <div class="uk-margin-small-right">
+                                            {% if note.type == 'SUCCESS' %}
+                                            <span uk-icon="check" style="color: #10b981;"></span>
+                                            {% elif note.type == 'WARNING' %}
+                                            <span uk-icon="warning" style="color: #f59e0b;"></span>
+                                            {% elif note.type == 'DANGER' %}
+                                            <span uk-icon="ban" style="color: #ef4444;"></span>
+                                            {% else %}
+                                            <span uk-icon="info" style="color: #3b82f6;"></span>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <div class="uk-text-bold"
+                                                style="font-size: 13px; color: #1e293b; line-height: 1.2;">{{ note.title
+                                                }}</div>
+                                            <div class="uk-text-meta uk-margin-small-top"
+                                                style="font-size: 11px; line-height: 1.4;">{{ note.message }}</div>
+                                            <div class="uk-text-meta uk-margin-small-top" style="font-size: 10px;">{{
+                                                note.created_at.strftime('%b %d, %H:%M') }}</div>
+                                        </div>
+                                    </div>
+                                </li>
+                                {% endfor %}
+                                {% else %}
+                                <li class="uk-padding-large uk-text-center">
+                                    <span uk-icon="icon: bell; ratio: 1.5" style="color: #e2e8f0;"></span>
+                                    <p class="uk-text-meta uk-margin-small-top">No new notifications</p>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <div class="uk-padding-small uk-text-center"
+                            style="background: #f8fafc; border-top: 1px solid #e2e8f0;">
+                            <a href="#" class="uk-text-small uk-text-bold" style="color: #6366f1;">View All
+                                Notifications</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="uk-margin-right uk-text-right uk-visible@m">
+                    <div class="uk-text-bold" style="font-size: 14px; color: #1e293b; line-height: 1;">{{
+                        current_user.full_name or 'User' }}</div>
+                    <div class="uk-text-meta" style="font-size: 11px;">{{ current_user.email }}</div>
+                </div>
                 <div class="uk-inline">
                     {% if current_user.avatar_path %}
-                    <div class="user-avatar" role="button" aria-haspopup="true" style="padding: 0; overflow: hidden; background: transparent;">
-                        <img src="{{ url_for('static', filename=current_user.avatar_path) }}" alt="User Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                    <div class="user-avatar" style="overflow: hidden; padding: 0; background: none;">
+                        <img src="{{ url_for('static', filename=current_user.avatar_path) }}"
+                            style="width: 100%; height: 100%; object-fit: cover;">
                     </div>
                     {% else %}
-                    <div class="user-avatar" role="button" aria-haspopup="true">
-                        {{ (current_user.username or "U")[0] | upper }}
+                    <div class="user-avatar">
+                        {{ (current_user.full_name or current_user.email or "U")[0] | upper }}
                     </div>
                     {% endif %}
-                    <div uk-dropdown="mode: click; pos: bottom-right; offset: 10;">
+                    <div
+                        uk-dropdown="mode: click; pos: bottom-right; offset: 10; animation: uk-animation-slide-bottom-small; duration: 150; border-radius: 12px;">
                         <ul class="uk-nav uk-dropdown-nav">
-                            <li class="uk-nav-header">User Profile</li>
-                            <li><a href="{{ url_for('settings.profile') }}"><span uk-icon="user" class="uk-margin-small-right"></span> My Account</a></li>
-                            <li><a href="{{ url_for('settings.users') }}"><span uk-icon="users" class="uk-margin-small-right"></span> Manage Users</a></li>
-                            <li><a href="#"><span uk-icon="settings" class="uk-margin-small-right"></span> Security</a></li>
+                            <li><a href="{{ url_for('settings.profile') }}"><span uk-icon="user"
+                                        class="uk-margin-small-right"></span> My Profile</a></li>
+                            <li><a href="{{ url_for('settings.users') }}"><span uk-icon="users"
+                                        class="uk-margin-small-right"></span> Settings</a></li>
+                            <li><a href="{{ url_for('help.index') }}"><span uk-icon="question"
+                                        class="uk-margin-small-right"></span> Help Center</a></li>
                             <li class="uk-nav-divider"></li>
-                            <li><a href="{{ url_for('auth.logout') }}" class="uk-text-danger"><span uk-icon="sign-out" class="uk-margin-small-right"></span> Sign Out</a></li>
+                            <li>
+                                <a href="#" id="theme-toggle" style="padding-right: 14px; display: block;">
+                                    <div class="theme-switch-wrapper">
+                                        <div class="uk-flex uk-flex-middle">
+                                            <span id="theme-icon" uk-icon="moon" class="uk-margin-small-right"
+                                                style="width: 16px;"></span>
+                                            <span id="theme-text">Dark Mode</span>
+                                        </div>
+                                        <div class="theme-switch">
+                                            <input type="checkbox" id="theme-checkbox" style="pointer-events: none;">
+                                            <span class="slider"></span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="uk-nav-divider"></li>
+                            <li><a href="{{ url_for('auth.logout') }}" class="uk-text-danger">Sign Out</a></li>
                         </ul>
                     </div>
                 </div>
@@ -170,19 +1057,67 @@
 
         <div class="uk-container uk-container-expand {% if current_user.is_authenticated %}uk-margin-top{% endif %}">
             {% with messages = get_flashed_messages(with_categories=true) %}
-              {% if messages %}
-                {% for category, message in messages %}
-                  <div class="uk-alert-{{ 'danger' if category == 'error' or category == 'danger' else 'primary' }}" uk-alert>
-                    <a class="uk-alert-close" uk-close></a>
-                    <p>{{ message }}</p>
-                  </div>
-                {% endfor %}
-              {% endif %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="uk-alert-{{ 'danger' if category == 'error' or category == 'danger' else 'primary' }}" uk-alert>
+                <a class="uk-alert-close" uk-close></a>
+                <p>{{ message }}</p>
+            </div>
+            {% endfor %}
+            {% endif %}
             {% endwith %}
 
             {% block content %}{% endblock %}
         </div>
     </main>
+
+    <!-- Command Palette Modal -->
+    <div id="command-palette" uk-modal>
+        <div class="uk-modal-dialog uk-border-rounded uk-overflow-hidden" style="width: 600px;">
+            <div class="uk-padding-small uk-background-muted" style="border-bottom: 1px solid var(--border-color);">
+                <div class="uk-inline uk-width-1-1">
+                    <span class="uk-form-icon" uk-icon="icon: search; ratio: 1.2"></span>
+                    <input id="cmd-input" class="uk-input cmd-input" type="text" placeholder="Search for actions, pages, or entities...">
+                </div>
+            </div>
+            <div id="cmd-results" class="uk-modal-body uk-padding-remove" style="max-height: 400px; overflow-y: auto;">
+                <!-- Results will be injected here -->
+            </div>
+            <div class="uk-modal-footer uk-padding-small uk-text-center" style="background: var(--bg-color); border-top: 1px solid var(--border-color);">
+                <span class="uk-text-meta" style="font-size: 11px;">
+                    <span class="uk-label uk-label-muted" style="font-size: 9px;">↑↓</span> to navigate 
+                    <span class="uk-label uk-label-muted uk-margin-small-left" style="font-size: 9px;">ENTER</span> to select 
+                    <span class="uk-label uk-label-muted uk-margin-small-left" style="font-size: 9px;">ESC</span> to close
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shortcuts Info Modal -->
+    <div id="shortcuts-modal" uk-modal>
+        <div class="uk-modal-dialog uk-modal-body uk-border-rounded">
+            <h2 class="uk-modal-title uk-text-bold">Keyboard Shortcuts</h2>
+            <div class="uk-grid-small uk-child-width-1-2" uk-grid>
+                <div>
+                    <h4 class="uk-text-bold uk-margin-small-bottom">Navigation</h4>
+                    <div class="uk-flex uk-flex-between uk-margin-small-bottom"><span>Command Palette</span> <kbd>Ctrl + K</kbd></div>
+                    <div class="uk-flex uk-flex-between uk-margin-small-bottom"><span>Dashboard</span> <kbd>G</kbd> then <kbd>D</kbd></div>
+                    <div class="uk-flex uk-flex-between uk-margin-small-bottom"><span>Banking</span> <kbd>G</kbd> then <kbd>B</kbd></div>
+                    <div class="uk-flex uk-flex-between uk-margin-small-bottom"><span>Sales</span> <kbd>G</kbd> then <kbd>S</kbd></div>
+                </div>
+                <div>
+                    <h4 class="uk-text-bold uk-margin-small-bottom">Quick Actions</h4>
+                    <div class="uk-flex uk-flex-between uk-margin-small-bottom"><span>New Invoice</span> <kbd>N</kbd> then <kbd>I</kbd></div>
+                    <div class="uk-flex uk-flex-between uk-margin-small-bottom"><span>New Bill</span> <kbd>N</kbd> then <kbd>B</kbd></div>
+                    <div class="uk-flex uk-flex-between uk-margin-small-bottom"><span>New Journal</span> <kbd>N</kbd> then <kbd>J</kbd></div>
+                    <div class="uk-flex uk-flex-between uk-margin-small-bottom"><span>Show Shortcuts</span> <kbd>?</kbd></div>
+                </div>
+            </div>
+            <p class="uk-text-right">
+                <button class="uk-button uk-button-default uk-modal-close" type="button">Got it</button>
+            </p>
+        </div>
+    </div>
 
     <!-- UIkit JS -->
     <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.5/dist/js/uikit.min.js"></script>
@@ -190,6 +1125,221 @@
     <script>
         // CSRF for AJAX/Fetch
         window.csrf_token = "{{ csrf_token() }}";
+
+        // --- Command Palette Logic ---
+        const cmdActions = [
+            { name: 'Go to Dashboard', icon: 'grid', url: "{{ url_for('dashboard.index') }}", shortcut: 'G D' },
+            { name: 'View Bank Feed', icon: 'database', url: "{{ url_for('banking.index') }}", shortcut: 'G B' },
+            { name: 'Create New Invoice', icon: 'file-edit', url: "{{ url_for('invoices.index') }}", shortcut: 'N I' },
+            { name: 'Add New Bill', icon: 'cart', url: "{{ url_for('bills.index') }}", shortcut: 'N B' },
+            { name: 'New Journal Entry', icon: 'list', url: "{{ url_for('journal.create') }}", shortcut: 'N J' },
+            { name: 'Manage Customers', icon: 'users', url: "{{ url_for('customers.index') }}", shortcut: 'G C' },
+            { name: 'View Help Center', icon: 'question', url: "{{ url_for('help.index') }}", shortcut: '?' },
+            { name: 'Organization Settings', icon: 'settings', url: "{{ url_for('settings.users') }}", shortcut: 'G S' },
+            { name: 'My Profile', icon: 'user', url: "{{ url_for('settings.profile') }}", shortcut: '' },
+            { name: 'Audit History', icon: 'history', url: "{{ url_for('audit.history') }}", shortcut: '' }
+        ];
+
+        async function renderCmdResults(query = '') {
+            const container = document.getElementById('cmd-results');
+            let results = cmdActions.filter(a => a.name.toLowerCase().includes(query.toLowerCase()));
+            
+            if (query.length >= 2) {
+                try {
+                    const response = await fetch(`{{ url_for('dashboard.global_search') }}?q=${query}`);
+                    const apiResults = await response.json();
+                    results = [...results, ...apiResults];
+                } catch (e) { console.error("Search error:", e); }
+            }
+
+            if (results.length === 0) {
+                container.innerHTML = '<div class="uk-padding-small uk-text-center uk-text-meta">No results found</div>';
+                return;
+            }
+
+            container.innerHTML = results.map((a, i) => `
+                <div class="cmd-item ${i === 0 ? 'active' : ''}" onclick="window.location.href='${a.url}'">
+                    <span uk-icon="icon: ${a.icon}; ratio: 0.8" class="uk-margin-small-right"></span>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 500;">${a.name}</div>
+                        ${a.type ? `<div style="font-size: 9px; text-transform: uppercase; opacity: 0.6;">${a.type}</div>` : ''}
+                    </div>
+                    ${a.shortcut ? `<span class="cmd-shortcut">${a.shortcut}</span>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // --- Keyboard Shortcuts Logic ---
+        let lastKey = null;
+        document.addEventListener('keydown', (e) => {
+            // Avoid shortcuts when typing in inputs
+            if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+                if (e.key === 'Escape') document.activeElement.blur();
+                return;
+            }
+
+            // Command Palette (Ctrl + K)
+            if (e.ctrlKey && e.key === 'k') {
+                e.preventDefault();
+                UIkit.modal('#command-palette').show();
+                renderCmdResults();
+                setTimeout(() => document.getElementById('cmd-input').focus(), 200);
+            }
+
+            // Shortcuts Info (?)
+            if (e.key === '?') {
+                UIkit.modal('#shortcuts-modal').show();
+            }
+
+            // Sequential Shortcuts
+            if (lastKey === 'g') {
+                if (e.key === 'd') window.location.href = "{{ url_for('dashboard.index') }}";
+                if (e.key === 'b') window.location.href = "{{ url_for('banking.index') }}";
+                if (e.key === 'c') window.location.href = "{{ url_for('customers.index') }}";
+                if (e.key === 's') window.location.href = "{{ url_for('settings.users') }}";
+            }
+            if (lastKey === 'n') {
+                if (e.key === 'i') window.location.href = "{{ url_for('invoices.index') }}";
+                if (e.key === 'b') window.location.href = "{{ url_for('bills.index') }}";
+                if (e.key === 'j') window.location.href = "{{ url_for('journal.create') }}";
+            }
+
+            lastKey = e.key.toLowerCase();
+            setTimeout(() => { if (lastKey === e.key.toLowerCase()) lastKey = null; }, 1000);
+        });
+
+        document.getElementById('cmd-input')?.addEventListener('input', (e) => {
+            renderCmdResults(e.target.value);
+        });
+
+        // --- Sidebar Collapsible Logic (Single-Open Mode) ---
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('mobile-open');
+            overlay.classList.toggle('active');
+        }
+
+        function toggleNavSection(sectionId) {
+            const section = document.getElementById(sectionId + '-section');
+            const chevron = document.getElementById(sectionId + '-chevron');
+            const isExpanding = section.classList.contains('collapsed');
+
+            if (isExpanding) {
+                document.querySelectorAll('.nav-section').forEach(nav => {
+                    nav.classList.add('collapsed');
+                    nav.classList.remove('expanded');
+                });
+                document.querySelectorAll('.chevron').forEach(ch => {
+                    ch.classList.remove('rotated');
+                });
+
+                section.classList.remove('collapsed');
+                section.classList.add('expanded');
+                chevron.classList.add('rotated');
+            }
+        }
+
+        function initializeNavSections() {
+            const sections = ['accounting', 'expenses', 'sales', 'reports', 'crm', 'team'];
+            const currentPath = window.location.pathname;
+
+            const sectionPaths = {
+                'crm': ['/customers', '/estimates'],
+                'sales': ['/invoices', '/recurring', '/sales'],
+                'expenses': ['/bills', '/vendors', '/bills/overview', '/expenses', '/bills/payments'],
+                'accounting': ['/accounts', '/journal', '/tags', '/banking/', '/receipts', '/reconcile', '/recurring-journal'],
+                'team': ['/team'],
+                'reports': ['/reports', '/audit']
+            };
+
+            sections.forEach(sectionId => {
+                const section = document.getElementById(sectionId + '-section');
+                const chevron = document.getElementById(sectionId + '-chevron');
+
+                if (section && chevron) {
+                    const isCurrentSection = sectionPaths[sectionId]?.some(path => currentPath.includes(path));
+                    if (isCurrentSection) {
+                        section.classList.remove('collapsed');
+                        section.classList.add('expanded');
+                        chevron.classList.add('rotated');
+                    } else {
+                        section.classList.add('collapsed');
+                        section.classList.remove('expanded');
+                        chevron.classList.remove('rotated');
+                    }
+                }
+            });
+        }
+
+        // --- Dark Mode Logic ---
+        function updateThemeUI(isDark) {
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+            const themeCheckbox = document.getElementById('theme-checkbox');
+            if (themeIcon) themeIcon.setAttribute('uk-icon', isDark ? 'sun' : 'moon');
+            if (themeText) themeText.innerText = isDark ? 'Light Mode' : 'Dark Mode';
+            if (themeCheckbox) themeCheckbox.checked = isDark;
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const isDark = savedTheme === 'dark';
+            
+            if (isDark) {
+                document.documentElement.classList.add('dark-mode');
+                document.body.classList.add('dark-mode');
+            }
+            updateThemeUI(isDark);
+
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            if (themeToggleBtn) {
+                themeToggleBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const willBeDark = !document.documentElement.classList.contains('dark-mode');
+                    
+                    document.documentElement.classList.toggle('dark-mode', willBeDark);
+                    document.body.classList.toggle('dark-mode', willBeDark);
+                    
+                    localStorage.setItem('theme', willBeDark ? 'dark' : 'light');
+                    updateThemeUI(willBeDark);
+                });
+            }
+        }
+
+        // --- Universal Export to CSV ---
+        function exportTableToCSV(tableId, filename) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            
+            let csv = [];
+            const rows = table.querySelectorAll("tr");
+            
+            for (let i = 0; i < rows.length; i++) {
+                let row = [], cols = rows[i].querySelectorAll("td, th");
+                for (let j = 0; j < cols.length; j++) {
+                    // Clean data
+                    let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/(\s\s+)/gm, ' ').replace(/"/g, '""');
+                    row.push('"' + data + '"');
+                }
+                csv.push(row.join(","));
+            }
+            
+            const csvFile = new Blob([csv.join("\n")], {type: "text/csv"});
+            const downloadLink = document.createElement("a");
+            downloadLink.download = filename;
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeNavSections();
+            initTheme();
+        });
     </script>
 </body>
+
 </html>

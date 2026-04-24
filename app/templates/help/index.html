@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-section uk-section-small">
+    <div class="uk-container uk-container-small">
+        <div class="uk-text-center uk-margin-large-bottom">
+            <h1 class="uk-heading-small uk-text-bold">How can we help you today?</h1>
+            <div class="uk-margin-medium-top uk-width-2-3 uk-margin-auto">
+                <form class="uk-search uk-search-default uk-width-1-1">
+                    <span uk-search-icon></span>
+                    <input class="uk-search-input uk-form-large uk-border-rounded" type="search" placeholder="Search for articles, guides, and more..." style="background: var(--card-bg); border: 1px solid var(--border-color);">
+                </form>
+            </div>
+        </div>
+
+        <div class="uk-grid-medium uk-child-width-1-3@m uk-grid-match" uk-grid>
+            <div>
+                <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-card-hover uk-text-center">
+                    <span uk-icon="icon: sign-in; ratio: 2" class="uk-text-primary"></span>
+                    <h3 class="uk-card-title uk-margin-small-top uk-text-bold">Getting Started</h3>
+                    <p class="uk-text-meta">New to VeroBooks? Learn the basics and set up your company.</p>
+                    <a href="{{ url_for('help.topic', topic_id='getting-started') }}" class="uk-button uk-button-text uk-text-primary">View Articles</a>
+                </div>
+            </div>
+            <div>
+                <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-card-hover uk-text-center">
+                    <span uk-icon="icon: database; ratio: 2" class="uk-text-primary"></span>
+                    <h3 class="uk-card-title uk-margin-small-top uk-text-bold">Banking & Ledger</h3>
+                    <p class="uk-text-meta">Connect bank accounts, import transactions, and manage your GL.</p>
+                    <a href="#" class="uk-button uk-button-text uk-text-primary">View Articles</a>
+                </div>
+            </div>
+            <div>
+                <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-card-hover uk-text-center">
+                    <span uk-icon="icon: cart; ratio: 2" class="uk-text-primary"></span>
+                    <h3 class="uk-card-title uk-margin-small-top uk-text-bold">Sales & Invoicing</h3>
+                    <p class="uk-text-meta">Create invoices, manage customers, and track payments.</p>
+                    <a href="#" class="uk-button uk-button-text uk-text-primary">View Articles</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="uk-margin-large-top">
+            <h2 class="uk-text-bold uk-margin-medium-bottom">Frequently Asked Questions</h2>
+            <ul uk-accordion="collapsible: true">
+                <li class="uk-open">
+                    <a class="uk-accordion-title uk-text-bold" href="#">How do I import my data from QuickBooks?</a>
+                    <div class="uk-accordion-content">
+                        <p>You can import your Chart of Accounts and Customers directly from QuickBooks CSV exports. Go to the Accounts or Customer Hub and look for the "Import QuickBooks Data" button.</p>
+                    </div>
+                </li>
+                <li>
+                    <a class="uk-accordion-title uk-text-bold" href="#">How do I reconcile my bank statements?</a>
+                    <div class="uk-accordion-content">
+                        <p>In the Banking section, choose a bank account and click "Reconcile". Follow the step-by-step match wizard to link your bank transactions to your ledger entries.</p>
+                    </div>
+                </li>
+                <li>
+                    <a class="uk-accordion-title uk-text-bold" href="#">Can I add multiple users to my company?</a>
+                    <div class="uk-accordion-content">
+                        <p>Yes, go to Settings > Users to invite team members and assign them roles like Administrator, Accountant, or Viewer.</p>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

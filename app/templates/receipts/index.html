@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-flex uk-flex-between uk-flex-middle uk-margin-bottom">
+    <div>
+        <h2 class="uk-margin-remove uk-text-bold" style="color: #1e293b;">Receipts</h2>
+        <p class="uk-text-meta uk-margin-remove">Upload and manage your business receipts for faster bookkeeping</p>
+    </div>
+    <div class="uk-width-large">
+        <div class="js-upload uk-placeholder uk-text-center uk-margin-remove" style="border: 2px dashed #cbd5e1; border-radius: 12px; padding: 15px; background: #fff;">
+            <form action="{{ url_for('receipts.upload') }}" method="POST" enctype="multipart/form-data" id="upload-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <span uk-icon="icon: cloud-upload; ratio: 1" style="color: #6366f1;"></span>
+                <span class="uk-text-small uk-text-middle uk-margin-small-left">Drop receipts here or</span>
+                <div uk-form-custom>
+                    <input type="file" name="receipt" onchange="document.getElementById('upload-form').submit()">
+                    <span class="uk-link uk-text-small" style="color: #6366f1; font-weight: 600;">select one</span>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="uk-card uk-card-default uk-card-body" style="border-radius: 12px; border: 1px solid #e2e8f0; padding: 0; overflow: hidden;">
+    <table class="uk-table uk-table-hover uk-table-middle uk-table-divider uk-margin-remove">
+        <thead>
+            <tr style="background: #f8fafc;">
+                <th class="uk-table-expand uk-text-bold" style="font-size: 11px; color: #64748b; padding-left: 24px;">RECEIPT</th>
+                <th class="uk-width-medium uk-text-bold" style="font-size: 11px; color: #64748b;">UPLOAD DATE</th>
+                <th class="uk-width-small uk-text-bold" style="font-size: 11px; color: #64748b;">STATUS</th>
+                <th class="uk-width-small uk-text-bold" style="font-size: 11px; color: #64748b;">AMOUNT</th>
+                <th class="uk-width-small uk-text-right" style="padding-right: 24px;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for receipt in receipts %}
+            <tr style="cursor: pointer;">
+                <td style="padding-left: 24px;">
+                    <div class="uk-flex uk-flex-middle">
+                        <div class="uk-margin-small-right" style="width: 32px; height: 32px; background: #eff6ff; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                            <span uk-icon="icon: file-text; ratio: 0.8" style="color: #3b82f6;"></span>
+                        </div>
+                        <div>
+                            <div class="uk-text-bold" style="font-size: 14px; color: #1e293b;">{{ receipt.original_name }}</div>
+                            <div class="uk-text-meta" style="font-size: 11px;">{{ receipt.vendor_name or 'Auto-extracting...' }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div style="font-size: 13px; color: #475569;">{{ receipt.upload_date.strftime('%b %d, %Y') }}</div>
+                    <div class="uk-text-meta" style="font-size: 11px;">by {{ current_user.full_name }}</div>
+                </td>
+                <td>
+                    {% if receipt.status == 'PENDING' %}
+                    <span class="uk-label uk-label-warning" style="font-size: 10px; border-radius: 4px; background: #fffbeb; color: #92400e; border: 1px solid #fef3c7; text-transform: none;">Pending</span>
+                    {% elif receipt.status == 'PROCESSED' %}
+                    <span class="uk-label uk-label-success" style="font-size: 10px; border-radius: 4px; background: #ecfdf5; color: #065f46; border: 1px solid #d1fae5; text-transform: none;">Processed</span>
+                    {% else %}
+                    <span class="uk-label uk-label-muted" style="font-size: 10px; border-radius: 4px; text-transform: none;">{{ receipt.status }}</span>
+                    {% endif %}
+                </td>
+                <td class="uk-text-bold" style="font-size: 14px; color: #1e293b;">
+                    {% if receipt.amount %}
+                        ${{ "%.2f"|format(receipt.amount) }}
+                    {% else %}
+                        --
+                    {% endif %}
+                </td>
+                <td class="uk-text-right" style="padding-right: 24px;">
+                    <div class="uk-flex uk-flex-middle uk-flex-right">
+                        <a href="{{ url_for('receipts.review', receipt_id=receipt.id) }}" class="uk-button uk-button-default uk-button-small uk-margin-small-right" style="border-radius: 6px; text-transform: none; font-size: 12px; font-weight: 600;">Review</a>
+                        <form action="{{ url_for('receipts.delete', receipt_id=receipt.id) }}" method="POST" onsubmit="return confirm('Delete this receipt permanently?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="uk-button uk-button-text uk-text-danger" uk-icon="icon: trash; ratio: 0.8" style="padding: 0;"></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="uk-text-center uk-padding-large">
+                    <div class="uk-padding-large">
+                        <span uk-icon="icon: cloud-upload; ratio: 2.5" style="color: #e2e8f0;"></span>
+                        <p class="uk-text-meta uk-margin-small-top">No receipts uploaded yet. Drag and drop your receipts here.</p>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<style>
+    .uk-placeholder {
+        transition: all 0.2s ease;
+    }
+    .uk-placeholder:hover {
+        border-color: #6366f1 !important;
+        background: #f8fafc !important;
+    }
+</style>
+{% endblock %}

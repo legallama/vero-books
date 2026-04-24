@@ -49,7 +49,9 @@
                                 <tr v-for="acc in filteredAccounts(type)" :key="acc.id" class="uk-visible-toggle">
                                     <td class="uk-text-primary uk-text-bold font-mono">[[ acc.code ]]</td>
                                     <td>
-                                        <div class="uk-text-bold">[[ acc.name ]]</div>
+                                        <div class="uk-text-bold">
+                                            <a :href="'/accounts/' + acc.id + '/register'" style="color: #1e293b; text-decoration: none;" class="uk-link-muted">[[ acc.name ]]</a>
+                                        </div>
                                         <div class="uk-text-meta">[[ acc.subtype ]]</div>
                                     </td>
                                     <td>
@@ -59,8 +61,9 @@
                                         [[ formatCurrency(0) ]]
                                     </td>
                                     <td class="uk-text-right">
-                                        <div class="uk-invisible-hover">
-                                            <button class="uk-icon-button uk-button-text" uk-icon="pencil" @click="editAccount(acc)"></button>
+                                        <div class="uk-invisible-hover" style="display: flex; gap: 4px; justify-content: flex-end;">
+                                            <a :href="'/accounts/' + acc.id + '/register'" class="uk-icon-button uk-button-text" uk-icon="file-text" uk-tooltip="View Register"></a>
+                                            <button class="uk-icon-button uk-button-text" uk-icon="pencil" @click="editAccount(acc)" uk-tooltip="Edit Account"></button>
                                         </div>
                                     </td>
                                 </tr>

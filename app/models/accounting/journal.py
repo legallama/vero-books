@@ -36,6 +36,10 @@ class JournalLine(db.Model):
     customer_id = db.Column(db.String(36)) # Optional: Link to customer
     vendor_id = db.Column(db.String(36))   # Optional: Link to vendor
     tax_rate_id = db.Column(db.String(36)) # Optional: Link to tax rate
+    
+    # Reconciliation fields
+    cleared = db.Column(db.Boolean, default=False)
+    reconciliation_id = db.Column(db.Integer, db.ForeignKey('reconciliations.id'))
 
     journal_entry = db.relationship('JournalEntry', back_populates='lines')
     account = db.relationship('Account', back_populates='journal_lines')

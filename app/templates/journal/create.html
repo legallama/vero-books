@@ -4,22 +4,103 @@
 <div id="journal-app">
     <div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
         <div>
+            {% if view_mode is defined and view_mode %}
+            <h1 class="uk-heading-small uk-margin-remove-bottom">Journal Entry {{ entry.entry_number }}</h1>
+            <p class="uk-text-meta">Viewing posted ledger entry</p>
+            {% elif edit_mode is defined and edit_mode %}
+            <h1 class="uk-heading-small uk-margin-remove-bottom">Edit Journal Entry</h1>
+            <p class="uk-text-meta">Modify draft journal entry</p>
+            {% else %}
             <h1 class="uk-heading-small uk-margin-remove-bottom">New Journal Entry</h1>
             <p class="uk-text-meta">Record complex multi-ledger adjustments</p>
+            {% endif %}
         </div>
+        {% if not (view_mode is defined and view_mode) %}
         <div class="uk-text-right">
             <p class="uk-text-meta uk-text-uppercase uk-margin-remove">Balanced Status</p>
             <h3 class="uk-margin-remove-top" :class="isBalanced ? 'uk-text-success' : 'uk-text-danger'">
                 [[ isBalanced ? '✓ Balanced' : '✗ Out of Balance' ]]
             </h3>
         </div>
+        {% endif %}
     </div>
     
+    {% if not (view_mode is defined and view_mode) %}
     <div class="uk-alert-primary" uk-alert>
         <a class="uk-alert-close" uk-close></a>
         <p><span uk-icon="info" class="uk-margin-small-right"></span> <strong>Double-Entry Accounting:</strong> Every journal entry requires at least two lines because every transaction affects two accounts. For example, buying equipment (Debit to Assets) requires spending cash (Credit to Bank). The Total Debits must exactly equal the Total Credits.</p>
     </div>
+    {% endif %}
 
+    {% if view_mode is defined and view_mode %}
+    <!-- View Mode: read-only display -->
+    <div class="uk-card uk-card-default uk-card-body uk-margin-bottom">
+        <div class="uk-grid-small" uk-grid>
+            <div class="uk-width-1-3@s">
+                <label class="uk-form-label uk-text-bold">Transaction Date</label>
+                <p class="uk-text-lead">{{ entry.entry_date.strftime('%m/%d/%Y') if entry.entry_date else 'N/A' }}</p>
+            </div>
+            <div class="uk-width-1-3@s">
+                <label class="uk-form-label uk-text-bold">Entry Number</label>
+                <p class="uk-text-lead">{{ entry.entry_number }}</p>
+            </div>
+            <div class="uk-width-1-3@s">
+                <label class="uk-form-label uk-text-bold">Status</label>
+                <p>
+                    {% if entry.status == 'POSTED' %}
+                    <span class="uk-label uk-label-success">POSTED</span>
+                    {% elif entry.status == 'REVERSED' %}
+                    <span class="uk-label uk-label-warning">REVERSED</span>
+                    {% else %}
+                    <span class="uk-label">{{ entry.status }}</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        {% if entry.memo %}
+        <div class="uk-margin-top">
+            <label class="uk-form-label uk-text-bold">Memo</label>
+            <p>{{ entry.memo }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="uk-card uk-card-default uk-card-body">
+        <table class="uk-table uk-table-divider uk-table-middle">
+            <thead>
+                <tr>
+                    <th class="uk-width-large">Account</th>
+                    <th>Description</th>
+                    <th class="uk-width-small uk-text-right">Debit</th>
+                    <th class="uk-width-small uk-text-right">Credit</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for line in entry.lines %}
+                <tr>
+                    <td class="uk-text-bold">{{ line.account.code }} - {{ line.account.name }}</td>
+                    <td>{{ line.description or '' }}</td>
+                    <td class="uk-text-right">{% if line.debit and line.debit > 0 %}${{ "{:,.2f}".format(line.debit) }}{% endif %}</td>
+                    <td class="uk-text-right">{% if line.credit and line.credit > 0 %}${{ "{:,.2f}".format(line.credit) }}{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="uk-text-bold">
+                    <td colspan="2" class="uk-text-right">Totals:</td>
+                    <td class="uk-text-right uk-text-primary">${{ "{:,.2f}".format(entry.lines | map(attribute='debit') | map('float') | sum) }}</td>
+                    <td class="uk-text-right uk-text-primary">${{ "{:,.2f}".format(entry.lines | map(attribute='credit') | map('float') | sum) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    
+    <div class="uk-margin-large-top">
+        <a href="{{ url_for('journal.index') }}" class="uk-button uk-button-default">← Back to Journal</a>
+    </div>
+
+    {% else %}
+    <!-- Create / Edit Mode -->
     <form method="POST" action="{{ url_for('journal.create') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         
@@ -27,7 +108,7 @@
             <div class="uk-grid-small" uk-grid>
                 <div class="uk-width-1-3@s">
                     <label class="uk-form-label uk-text-bold">Transaction Date</label>
-                    <input type="date" name="entry_date" value="{{ today }}" required class="uk-input">
+                    <input type="date" name="entry_date" :value="today" required class="uk-input">
                 </div>
                 <div class="uk-width-2-3@s">
                     <label class="uk-form-label uk-text-bold">Memo / Description</label>
@@ -52,9 +133,11 @@
                         <td>
                             <select :name="`lines[${index}][account_id]`" v-model="line.account_id" class="uk-select">
                                 <option value="">Select Account...</option>
-                                {% for acc in accounts %}
-                                <option value="{{ acc.id }}">{{ acc.code }} - {{ acc.name }}</option>
-                                {% endfor %}
+                                <optgroup v-for="group in accountGroups" :label="group.type" :key="group.type">
+                                    <option v-for="acc in group.items" :value="acc.id" :key="acc.id">
+                                        [[ acc.code ]] - [[ acc.name ]]
+                                    </option>
+                                </optgroup>
                             </select>
                         </td>
                         <td>
@@ -88,17 +171,38 @@
 
         <div class="uk-margin-large-top uk-text-right">
             <a href="{{ url_for('journal.index') }}" class="uk-button uk-button-default uk-margin-right">Cancel</a>
-            <button type="submit" :disabled="!isBalanced" class="uk-button uk-button-primary uk-button-large">Post to Ledger</button>
+            <button type="submit" :disabled="!isBalanced" class="uk-button uk-button-primary uk-button-large">Save Journal Entry</button>
         </div>
     </form>
+    {% endif %}
 </div>
 
+{% if not (view_mode is defined and view_mode) %}
 <script>
     const { createApp, ref, computed } = Vue;
 
     createApp({
         delimiters: ['[[', ']]'],
         setup() {
+            // Accounts passed from server as JS data — guaranteed to always populate
+            const accounts = ref([
+                {% for acc in accounts %}
+                { id: '{{ acc.id }}', code: '{{ acc.code }}', name: '{{ acc.name|e }}', type: '{{ acc.type }}' },
+                {% endfor %}
+            ]);
+
+            // Group accounts by type for organized dropdown
+            const accountGroups = computed(() => {
+                const groups = {};
+                accounts.value.forEach(acc => {
+                    if (!groups[acc.type]) groups[acc.type] = { type: acc.type, items: [] };
+                    groups[acc.type].items.push(acc);
+                });
+                return Object.values(groups);
+            });
+
+            const today = ref(new Date().toISOString().split('T')[0]);
+
             const lines = ref([
                 { account_id: '', description: '', debit: 0, credit: 0 },
                 { account_id: '', description: '', debit: 0, credit: 0 }
@@ -120,8 +224,9 @@
                 return diff < 0.01 && totalDebit.value > 0;
             });
 
-            return { lines, addLine, removeLine, totalDebit, totalCredit, isBalanced };
+            return { accounts, accountGroups, today, lines, addLine, removeLine, totalDebit, totalCredit, isBalanced };
         }
     }).mount('#journal-app');
 </script>
+{% endif %}
 {% endblock %}

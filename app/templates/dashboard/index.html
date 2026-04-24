@@ -1,52 +1,180 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div id="dashboard-app">
-    <div class="uk-grid-small uk-child-width-expand@s uk-text-center" uk-grid>
+<!-- Flatpickr -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<div id="dashboard-app" class="uk-padding-small" v-cloak>
+    <!-- Dashboard Header -->
+    <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-medium-bottom">
         <div>
-            <div class="uk-card uk-card-default uk-card-body">
-                <p class="uk-text-meta uk-text-uppercase uk-margin-remove-bottom">Cash on Hand</p>
-                <h3 class="uk-card-title uk-text-bold uk-margin-small-top">$12,450.00</h3>
-            </div>
+            <h1 class="uk-h2 uk-text-bold uk-margin-remove">Dashboard</h1>
+            <p class="uk-text-meta uk-margin-remove-top">Welcome to your financial overview.</p>
         </div>
-        <div>
-            <div class="uk-card uk-card-default uk-card-body">
-                <p class="uk-text-meta uk-text-uppercase uk-margin-remove-bottom">Open Invoices</p>
-                <h3 class="uk-card-title uk-text-bold uk-margin-small-top uk-text-warning">$8,920.00</h3>
-            </div>
-        </div>
-        <div>
-            <div class="uk-card uk-card-default uk-card-body">
-                <p class="uk-text-meta uk-text-uppercase uk-margin-remove-bottom">Unpaid Bills</p>
-                <h3 class="uk-card-title uk-text-bold uk-margin-small-top uk-text-danger">$3,410.00</h3>
-            </div>
-        </div>
-        <div>
-            <div class="uk-card uk-card-default uk-card-body">
-                <p class="uk-text-meta uk-text-uppercase uk-margin-remove-bottom">MTD Profit</p>
-                <h3 class="uk-card-title uk-text-bold uk-margin-small-top uk-text-success">$5,840.00</h3>
+        <div class="uk-flex uk-flex-middle">
+            <div class="uk-inline">
+                <span class="uk-form-icon" uk-icon="icon: calendar; ratio: 0.8"></span>
+                <input id="date-range-picker" class="uk-input uk-form-small uk-width-medium" type="text" placeholder="Select date range" style="border-radius: 8px; background: var(--card-bg); color: var(--text-color); border-color: var(--border-color); cursor: pointer;">
             </div>
         </div>
     </div>
 
-    <div class="uk-grid-large uk-margin-large-top" uk-grid>
-        <div class="uk-width-2-3@m">
-            <div class="uk-card uk-card-default uk-card-body">
-                <h3 class="uk-card-title uk-text-bold">Revenue Trend</h3>
-                <div class="uk-height-medium">
-                    <canvas id="revenueChart"></canvas>
+    <!-- Onboarding Progress (Dynamic & Interactive) -->
+    <div class="onboarding-card uk-card uk-card-default uk-padding-small uk-margin-large-bottom" style="border-radius: 12px; border: 1px solid var(--border-color);">
+        <div class="uk-grid-small uk-flex-middle" uk-grid>
+            <div class="uk-width-expand">
+                <div class="uk-flex uk-flex-between uk-flex-middle">
+                    <h4 class="uk-text-bold uk-margin-remove" style="color: #4338ca; font-size: 14px;">Complete your setup</h4>
+                    <span class="uk-text-meta" style="color: #6366f1;">{{ completed_steps }} of {{ total_steps }} steps completed</span>
+                </div>
+                <progress class="uk-progress uk-margin-small-top uk-margin-remove-bottom" value="{{ setup_percent }}" max="100" style="height: 6px; border-radius: 3px; background: #ddd6fe;"></progress>
+            </div>
+            <div class="uk-width-auto">
+                <button class="uk-button uk-button-default uk-button-small uk-border-rounded" style="text-transform: none; font-size: 11px;" uk-toggle="target: #setup-tasks-modal">View Tasks</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Setup Tasks Modal -->
+    <div id="setup-tasks-modal" uk-modal>
+        <div class="uk-modal-dialog uk-modal-body uk-border-rounded">
+            <button class="uk-modal-close-default" type="button" uk-close></button>
+            <h2 class="uk-modal-title uk-text-bold">Setup Checklist</h2>
+            <p class="uk-text-meta">Complete these steps to get the most out of VeroBooks.</p>
+            
+            <ul class="uk-list uk-list-divider uk-margin-medium-top">
+                {% for step in setup_steps %}
+                <li class="uk-flex uk-flex-middle">
+                    <div class="uk-margin-small-right">
+                        {% if step.completed %}
+                        <span uk-icon="icon: check; ratio: 1.2" style="color: #10b981;"></span>
+                        {% else %}
+                        <span uk-icon="icon: minus; ratio: 1" style="color: #94a3b8;"></span>
+                        {% endif %}
+                    </div>
+                    <div class="uk-width-expand">
+                        <span class="{{ 'uk-text-bold' if not step.completed else 'uk-text-muted' }}" style="{{ 'text-decoration: line-through;' if step.completed }}">
+                            {{ step.title }}
+                        </span>
+                    </div>
+                    {% if not step.completed %}
+                    <div>
+                        <a href="#" class="uk-button uk-button-text uk-text-primary" style="font-size: 12px;">Complete</a>
+                    </div>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="uk-grid-medium" uk-grid>
+        <div class="uk-width-expand@l">
+            <!-- Summary KPI Cards (Receivables & Payables) -->
+            <div class="uk-grid-small uk-child-width-1-2@m uk-margin-bottom" uk-grid>
+                <!-- Receivables -->
+                <div>
+                    <div class="uk-card uk-card-default uk-card-body" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                        <div class="uk-flex uk-flex-between uk-flex-middle">
+                            <h3 class="uk-card-title uk-text-bold uk-margin-remove" style="font-size: 16px; color: #475569;">Receivables</h3>
+                            <div class="uk-flex uk-flex-middle">
+                                <a href="{{ url_for('invoices.index') }}" class="uk-text-small uk-link-muted uk-margin-small-right">View All</a>
+                            </div>
+                        </div>
+                        <p class="uk-text-meta uk-margin-small-top uk-margin-remove-bottom">Pending customer payments</p>
+                        <div class="uk-margin-medium-top">
+                            <div class="uk-text-small uk-text-muted">Total unpaid: <span class="uk-text-bold uk-text-emphasis">${{ "{:,.2f}".format(receivables) }}</span></div>
+                            <progress class="uk-progress uk-margin-small-top uk-margin-remove-bottom" value="100" max="100" style="height: 8px; border-radius: 4px;"></progress>
+                        </div>
+                    </div>
+                </div>
+                <!-- Payables -->
+                <div>
+                    <div class="uk-card uk-card-default uk-card-body" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                        <div class="uk-flex uk-flex-between uk-flex-middle">
+                            <h3 class="uk-card-title uk-text-bold uk-margin-remove" style="font-size: 16px; color: #475569;">Payables</h3>
+                            <div class="uk-flex uk-flex-middle">
+                                <a href="{{ url_for('bills.index') }}" class="uk-text-small uk-link-muted uk-margin-small-right">View All</a>
+                            </div>
+                        </div>
+                        <p class="uk-text-meta uk-margin-small-top uk-margin-remove-bottom">Pending vendor bills</p>
+                        <div class="uk-margin-medium-top">
+                            <div class="uk-text-small uk-text-muted">Total unpaid: <span class="uk-text-bold uk-text-emphasis">${{ "{:,.2f}".format(payables) }}</span></div>
+                            <progress class="uk-progress uk-margin-small-top uk-margin-remove-bottom" value="100" max="100" style="height: 8px; border-radius: 4px; background: #fecaca;"></progress>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Chart Section (Cash Flow) -->
+            <div class="uk-card uk-card-default uk-card-body uk-margin-bottom" style="border-radius: 12px; border: 1px solid #e2e8f0;">
+                <div class="uk-flex uk-flex-between uk-flex-middle">
+                    <div>
+                        <h3 class="uk-card-title uk-text-bold uk-margin-remove" style="font-size: 16px; color: #475569;">Cash Flow</h3>
+                    </div>
+                    <a href="{{ url_for('banking.index') }}" class="uk-text-small uk-link-muted">View Feed</a>
+                </div>
+                <div class="uk-grid-small uk-margin-top" uk-grid>
+                    <div class="uk-width-expand">
+                        <div class="uk-height-medium">
+                            <canvas id="cashFlowChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Secondary Row (P&L and Expenses) -->
+            <div class="uk-grid-small uk-child-width-1-2@m" uk-grid>
+                <div>
+                    <div class="uk-card uk-card-default uk-card-body" style="border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <h3 class="uk-card-title uk-text-bold uk-margin-remove" style="font-size: 16px; color: #475569;">Profit & Loss</h3>
+                        <div class="uk-height-small uk-margin-top">
+                            <canvas id="plChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="uk-card uk-card-default uk-card-body" style="border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <h3 class="uk-card-title uk-text-bold uk-margin-remove" style="font-size: 16px; color: #475569;">Expenses</h3>
+                        <div class="uk-height-small uk-margin-top uk-flex uk-flex-center">
+                            <canvas id="categoryChart" v-show="cat_values.length > 0"></canvas>
+                            <div v-else class="uk-text-meta uk-flex uk-flex-middle">No data</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="uk-width-1-3@m">
-            <div class="uk-card uk-card-default uk-card-body">
-                <h3 class="uk-card-title uk-text-bold">Quick Tasks</h3>
-                <ul class="uk-list uk-list-divider">
-                    <li><a href="{{ url_for('invoices.create') }}" class="uk-link-text uk-flex uk-flex-between">Create New Invoice <span uk-icon="chevron-right"></span></a></li>
-                    <li><a href="{{ url_for('journal.create') }}" class="uk-link-text uk-flex uk-flex-between">Post Journal Entry <span uk-icon="chevron-right"></span></a></li>
-                    <li><a href="{{ url_for('banking.index') }}" class="uk-link-text uk-flex uk-flex-between">Match Bank Feed <span uk-icon="chevron-right"></span></a></li>
-                    <li><a href="{{ url_for('reports.index') }}" class="uk-link-text uk-flex uk-flex-between">View P&L Report <span uk-icon="chevron-right"></span></a></li>
+
+        <!-- Sidebar: Recent Activity -->
+        <div class="uk-width-1-3@l">
+            <div class="uk-card uk-card-default uk-card-body" style="border-radius: 12px; border: 1px solid #e2e8f0; min-height: 600px;">
+                <h3 class="uk-card-title uk-text-bold uk-margin-small-bottom" style="font-size: 16px; color: #475569;">Recent Activity</h3>
+                <p class="uk-text-meta uk-margin-remove-top">Latest system transactions</p>
+                
+                <ul class="uk-list uk-list-divider uk-margin-medium-top">
+                    {% for entry in recent_activity %}
+                    <li class="uk-padding-small uk-padding-remove-horizontal">
+                        <div class="uk-flex uk-flex-between uk-flex-middle">
+                            <span class="uk-label uk-label-muted" style="font-size: 9px; text-transform: uppercase;">{{ entry.status }}</span>
+                            <span class="uk-text-meta" style="font-size: 10px;">{{ entry.entry_date.strftime('%b %d, %H:%M') }}</span>
+                        </div>
+                        <div class="uk-text-bold uk-margin-small-top" style="font-size: 13px;">{{ entry.entry_number }}</div>
+                        <div class="uk-text-meta uk-margin-small-top" style="font-size: 11px;">
+                            {{ entry.memo[:60] if entry.memo else '' }}{{ '...' if entry.memo and entry.memo|length > 60 }}
+                        </div>
+                    </li>
+                    {% else %}
+                    <li class="uk-text-center uk-padding-large">
+                        <span uk-icon="icon: history; ratio: 2" class="uk-text-muted"></span>
+                        <p class="uk-text-meta uk-margin-small-top">No recent activity found.</p>
+                    </li>
+                    {% endfor %}
                 </ul>
+                
+                <div class="uk-margin-top uk-text-center">
+                    <a href="{{ url_for('audit.history') }}" class="uk-button uk-button-text uk-text-primary" style="font-size: 12px;">View Audit Log</a>
+                </div>
             </div>
         </div>
     </div>
@@ -54,34 +182,341 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const { createApp, onMounted } = Vue;
+    const { createApp, onMounted, ref, computed } = Vue;
     createApp({
+        delimiters: ['${', '}'],
         setup() {
+            const chart_labels = ref({{ chart_labels | tojson or '[]' }});
+            const cash_in_values = ref({{ cash_in_values | tojson or '[]' }});
+            const cash_out_values = ref({{ cash_out_values | tojson or '[]' }});
+            const income_values = ref({{ income_values | tojson or '[]' }});
+            const expense_values = ref({{ expense_values | tojson or '[]' }});
+            const cat_labels = ref({{ cat_labels | tojson or '[]' }});
+            const cat_values = ref({{ cat_values | tojson or '[]' }});
+            
+            const totalIncoming = computed(() => (cash_in_values.value || []).reduce((a, b) => a + b, 0));
+            const totalOutgoing = computed(() => (cash_out_values.value || []).reduce((a, b) => a + b, 0));
+
+            const formatCurrency = (val) => {
+                return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+            };
+
+            const getPresets = () => {
+                const now = new Date();
+                const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+                const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+                
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                
+                const startOfYear = new Date(now.getFullYear(), 0, 1);
+                const endOfYear = new Date(now.getFullYear(), 11, 31);
+                
+                return {
+                    'Today': [new Date(), new Date()],
+                    'This Week': [startOfWeek, endOfWeek],
+                    'This Month': [startOfMonth, endOfMonth],
+                    'This Quarter': [new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1), new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3 + 3, 0)],
+                    'This Year': [startOfYear, endOfYear],
+                    'Previous Month': [new Date(now.getFullYear(), now.getMonth() - 1, 1), new Date(now.getFullYear(), now.getMonth(), 0)],
+                    'Previous Year': [new Date(now.getFullYear() - 1, 0, 1), new Date(now.getFullYear() - 1, 11, 31)]
+                };
+            };
+
             onMounted(() => {
-                const ctx = document.getElementById('revenueChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'bar',
+                // Initialize Flatpickr with Sidebar
+                const fp = flatpickr("#date-range-picker", {
+                    mode: "range",
+                    showMonths: 2,
+                    dateFormat: "Y-m-d",
+                    defaultDate: ["{{ start_date }}", "{{ end_date }}"],
+                    prevArrow: "<span uk-icon='chevron-left'></span>",
+                    nextArrow: "<span uk-icon='chevron-right'></span>",
+                    onReady: function(selectedDates, dateStr, instance) {
+                        const container = instance.calendarContainer;
+                        
+                        // Create sidebar
+                        const sidebar = document.createElement("div");
+                        sidebar.className = "flatpickr-sidebar";
+                        
+                        const presets = {
+                            'This Week': 'week',
+                            'This Month': 'month',
+                            'This Quarter': 'quarter',
+                            'This Year': 'year',
+                            'Year to Date': 'ytd',
+                            'Previous Week': 'prev-week',
+                            'Previous Month': 'prev-month',
+                            'Previous Quarter': 'prev-quarter',
+                            'Previous Year': 'prev-year'
+                        };
+
+                        Object.keys(presets).forEach(label => {
+                            const btn = document.createElement("button");
+                            btn.innerHTML = label;
+                            btn.onclick = () => {
+                                const range = calculateRange(presets[label]);
+                                instance.setDate(range, true);
+                                // Mark active
+                                sidebar.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                                btn.classList.add('active');
+                            };
+                            sidebar.appendChild(btn);
+                        });
+                        
+                        // Prepend sidebar to the container
+                        container.prepend(sidebar);
+                    },
+
+                    onClose: function(selectedDates, dateStr, instance) {
+                        if (selectedDates.length === 2) {
+                            const start = instance.formatDate(selectedDates[0], "Y-m-d");
+                            const end = instance.formatDate(selectedDates[1], "Y-m-d");
+                            window.location.href = `{{ url_for('dashboard.index') }}?start_date=${start}&end_date=${end}`;
+                        }
+                    }
+                });
+
+                function calculateRange(type) {
+                    const now = new Date();
+                    let start, end;
+                    switch(type) {
+                        case 'week':
+                            start = new Date(now.setDate(now.getDate() - now.getDay()));
+                            end = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+                            break;
+                        case 'month':
+                            start = new Date(now.getFullYear(), now.getMonth(), 1);
+                            end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                            break;
+                        case 'quarter':
+                            start = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+                            end = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3 + 3, 0);
+                            break;
+                        case 'year':
+                            start = new Date(now.getFullYear(), 0, 1);
+                            end = new Date(now.getFullYear(), 11, 31);
+                            break;
+                        case 'ytd':
+                            start = new Date(now.getFullYear(), 0, 1);
+                            end = new Date();
+                            break;
+                        case 'prev-week':
+                            start = new Date(now.setDate(now.getDate() - now.getDay() - 7));
+                            end = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+                            break;
+                        case 'prev-month':
+                            start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                            end = new Date(now.getFullYear(), now.getMonth(), 0);
+                            break;
+                        case 'prev-quarter':
+                            start = new Date(now.getFullYear(), (Math.floor(now.getMonth() / 3) - 1) * 3, 1);
+                            end = new Date(now.getFullYear(), (Math.floor(now.getMonth() / 3) - 1) * 3 + 3, 0);
+                            break;
+                        case 'prev-year':
+                            start = new Date(now.getFullYear() - 1, 0, 1);
+                            end = new Date(now.getFullYear() - 1, 11, 31);
+                            break;
+                    }
+                    return [start, end];
+                }
+
+                // Cash Flow Chart
+                new Chart(document.getElementById('cashFlowChart'), {
+                    type: 'line',
                     data: {
-                        labels: {{ chart_labels | tojson }},
-                        datasets: [{
-                            label: 'Revenue',
-                            data: {{ chart_values | tojson }},
-                            backgroundColor: '#3b82f6',
-                            borderRadius: 4
-                        }]
+                        labels: chart_labels.value,
+                        datasets: [
+                            {
+                                label: 'Incoming',
+                                data: cash_in_values.value,
+                                borderColor: '#6366f1',
+                                backgroundColor: 'rgba(99, 102, 241, 0.05)',
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Outgoing',
+                                data: cash_out_values.value,
+                                borderColor: '#f43f5e',
+                                backgroundColor: 'rgba(244, 63, 94, 0.05)',
+                                fill: true,
+                                tension: 0.4
+                            }
+                        ]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
+                        plugins: { legend: { position: 'top', align: 'start' } },
                         scales: {
-                            y: { grid: { display: false } },
+                            y: { grid: { borderDash: [2, 2], color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
+                            x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                        }
+                    }
+                });
+
+                // P&L Chart
+                new Chart(document.getElementById('plChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: chart_labels.value,
+                        datasets: [
+                            { label: 'Income', data: income_values.value, backgroundColor: '#10b981', borderRadius: 4 },
+                            { label: 'Expense', data: expense_values.value, backgroundColor: '#f43f5e', borderRadius: 4 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'top', align: 'start' } },
+                        scales: {
+                            y: { grid: { borderDash: [2, 2], color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
                             x: { grid: { display: false } }
                         }
                     }
                 });
+
+                // Category Chart
+                if (cat_values.value && cat_values.value.length > 0) {
+                    new Chart(document.getElementById('categoryChart'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: cat_labels.value,
+                            datasets: [{
+                                data: cat_values.value,
+                                backgroundColor: ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#94a3b8', '#ec4899', '#8b5cf6'],
+                                borderWidth: 0,
+                                cutout: '75%'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { position: 'right' } }
+                        }
+                    });
+                }
             });
+
+            return {
+                totalIncoming,
+                totalOutgoing,
+                cat_values,
+                formatCurrency
+            };
         }
     }).mount('#dashboard-app');
 </script>
+
+<style>
+    [v-cloak] { display: none; }
+    .uk-progress::-webkit-progress-value { transition: width 0.6s ease; }
+    
+    /* Flatpickr Custom Styling */
+    .flatpickr-calendar {
+        display: flex !important;
+        flex-direction: row !important;
+        width: auto !important;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--border-color);
+        background: var(--card-bg) !important;
+        overflow: hidden;
+    }
+    .dark-mode .flatpickr-calendar,
+    .dark-mode .flatpickr-days,
+    .dark-mode .flatpickr-innerContainer,
+    .dark-mode .flatpickr-months,
+    .dark-mode .flatpickr-month {
+        background: var(--card-bg) !important;
+        color: var(--text-color) !important;
+    }
+    .flatpickr-sidebar {
+        width: 140px;
+        min-width: 140px;
+        border-right: 1px solid var(--border-color);
+        padding: 8px 0;
+        display: flex;
+        flex-direction: column;
+        background: var(--sidebar-header-bg);
+        z-index: 10;
+    }
+    .dark-mode .flatpickr-sidebar {
+        background: var(--sidebar-bg) !important;
+    }
+    .flatpickr-sidebar button {
+        background: none;
+        border: none;
+        text-align: left;
+        padding: 8px 16px;
+        font-size: 12px;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 500;
+        width: 100%;
+    }
+    .dark-mode .flatpickr-months .flatpickr-month,
+    .dark-mode .flatpickr-weekday,
+    .dark-mode .flatpickr-day {
+        color: var(--text-color) !important;
+    }
+    .dark-mode .flatpickr-day:hover {
+        background: #1e3a8a !important;
+    }
+    .dark-mode .flatpickr-day.inRange {
+        background: #1e3a8a !important;
+        box-shadow: -5px 0 0 #1e3a8a, 5px 0 0 #1e3a8a !important;
+    }
+    .dark-mode .flatpickr-day.flatpickr-disabled {
+        color: rgba(255,255,255,0.1) !important;
+    }
+    .flatpickr-sidebar button:hover {
+        background: #f1f5f9;
+        color: #6366f1;
+    }
+    .dark-mode .flatpickr-sidebar button:hover {
+        background: #1e293b;
+    }
+    .flatpickr-sidebar button.active {
+        background: #eef2ff;
+        color: #6366f1;
+        border-right: 2px solid #6366f1;
+    }
+    .dark-mode .flatpickr-sidebar button.active {
+        background: #1e3a8a;
+        color: #60a5fa;
+    }
+    .flatpickr-months {
+        background: transparent;
+    }
+    .flatpickr-day.selected {
+        background: #6366f1 !important;
+        border-color: #6366f1 !important;
+    }
+    .flatpickr-day.inRange {
+        background: #eef2ff !important;
+        box-shadow: -5px 0 0 #eef2ff, 5px 0 0 #eef2ff !important;
+    }
+    /* Wrap the calendar parts to allow them to stack correctly next to sidebar */
+    .flatpickr-calendar > .flatpickr-months,
+    .flatpickr-calendar > .flatpickr-innerContainer {
+        width: auto;
+    }
+    .flatpickr-innerContainer {
+        display: block !important;
+        padding: 0 8px 8px 8px;
+        background: transparent !important;
+    }
+    .onboarding-card {
+        background: #f5f3ff;
+    }
+    .dark-mode .onboarding-card {
+        background: var(--card-bg);
+    }
+</style>
 {% endblock %}
+
+
+
