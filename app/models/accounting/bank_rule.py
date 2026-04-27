@@ -19,8 +19,10 @@ class BankRule(db.Model):
     target_contact_id = db.Column(db.String(36), db.ForeignKey('contacts.id')) # Optional Payee
     
     is_active = db.Column(db.Boolean, default=True)
+    auto_post = db.Column(db.Boolean, default=False)
     priority = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 
     organization = db.relationship('Organization')
     target_account = db.relationship('Account')

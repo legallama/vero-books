@@ -726,8 +726,10 @@
                     <span uk-icon="icon: chevron-down; ratio: 0.8" class="chevron" id="accounting-chevron"></span>
                 </li>
                 <div id="accounting-section" class="nav-section">
-                    <li class="{{ 'uk-active' if request.blueprint == 'banking' }}"><a
+                    <li class="{{ 'uk-active' if request.blueprint == 'banking' and request.endpoint == 'banking.index' }}"><a
                             href="{{ url_for('banking.index') }}">Bank Transactions</a></li>
+                    <li class="{{ 'uk-active' if request.endpoint == 'banking.checks' }}"><a
+                            href="{{ url_for('banking.checks') }}">Checks</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'receipts' }}"><a
                             href="{{ url_for('receipts.index') }}">Receipts</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'reconciliation' }}"><a
@@ -811,7 +813,11 @@
                             href="{{ url_for('team.employees') }}">Employees</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('team.contractors') }}"><a
                             href="{{ url_for('team.contractors') }}">Contractors</a></li>
+                    <li class="{{ 'uk-active' if request.blueprint == 'payroll' }}"><a
+                            href="{{ url_for('payroll.index') }}" style="color: #4338ca !important; font-weight: 700;">
+                            <span uk-icon="icon: credit-card; ratio: 0.8" class="uk-margin-small-right"></span>Payroll Center</a></li>
                 </div>
+
 
                 <!-- Intelligence & Reports -->
                 <li class="uk-nav-header collapsible-header" onclick="toggleNavSection('reports')">
@@ -877,6 +883,16 @@
             </div>
 
             <div class="uk-flex uk-flex-middle">
+                <!-- Workflow Checklist -->
+                <div class="uk-margin-medium-right">
+                    <a href="#" class="uk-link-reset uk-flex uk-flex-middle" uk-toggle="target: #setup-tasks-modal" style="gap: 8px;">
+                        <div class="uk-flex uk-flex-middle uk-flex-center" style="width: 28px; height: 28px; background: #eef2ff; border-radius: 8px; color: #6366f1;">
+                            <span uk-icon="icon: list; ratio: 0.8"></span>
+                        </div>
+                        <span class="uk-visible@m" style="font-size: 13px; font-weight: 600; color: #475569;">Workflow</span>
+                    </a>
+                </div>
+
                 <!-- Quick Create Button -->
                 <div class="uk-margin-medium-right">
                     <button class="uk-button uk-button-primary uk-button-small" type="button"
@@ -909,6 +925,8 @@
                                                 class="uk-margin-small-right"></span>Bill</a></li>
                                     <li><a href="{{ url_for('vendors.index') }}"><span uk-icon="home"
                                                 class="uk-margin-small-right"></span>Vendor</a></li>
+                                    <li><a href="{{ url_for('banking.create_check') }}"><span uk-icon="credit-card"
+                                                class="uk-margin-small-right"></span>Check</a></li>
                                 </ul>
                             </div>
                             <div class="uk-padding-small" style="background: #f8fafc; border-left: 1px solid #f1f5f9;">
@@ -1090,6 +1108,39 @@
                     <span class="uk-label uk-label-muted uk-margin-small-left" style="font-size: 9px;">ESC</span> to close
                 </span>
             </div>
+        </div>
+    </div>
+
+    <!-- Setup Tasks Modal (Global) -->
+    <div id="setup-tasks-modal" uk-modal>
+        <div class="uk-modal-dialog uk-modal-body uk-border-rounded">
+            <button class="uk-modal-close-default" type="button" uk-close></button>
+            <h2 class="uk-modal-title uk-text-bold">Setup Checklist</h2>
+            <p class="uk-text-meta">Complete these steps to get the most out of VeroBooks.</p>
+            
+            <ul class="uk-list uk-list-divider uk-margin-medium-top">
+                {% for step in setup_steps %}
+                <li class="uk-flex uk-flex-middle">
+                    <div class="uk-margin-small-right">
+                        {% if step.completed %}
+                        <span uk-icon="icon: check; ratio: 1.2" style="color: #10b981;"></span>
+                        {% else %}
+                        <span uk-icon="icon: minus; ratio: 1" style="color: #94a3b8;"></span>
+                        {% endif %}
+                    </div>
+                    <div class="uk-width-expand">
+                        <span class="{{ 'uk-text-bold' if not step.completed else 'uk-text-muted' }}" style="{{ 'text-decoration: line-through;' if step.completed }}">
+                            {{ step.title }}
+                        </span>
+                    </div>
+                    {% if not step.completed %}
+                    <div>
+                        <a href="#" class="uk-button uk-button-text uk-text-primary" style="font-size: 12px;">Complete</a>
+                    </div>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
 
@@ -1333,6 +1384,21 @@
             document.body.appendChild(downloadLink);
             downloadLink.click();
             document.body.removeChild(downloadLink);
+        }
+
+        function copyToClipboard(text) {
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            UIkit.notification({
+                message: '<span uk-icon="icon: check"></span> Link copied to clipboard!',
+                status: 'primary',
+                pos: 'bottom-center',
+                timeout: 2000
+            });
         }
 
         document.addEventListener('DOMContentLoaded', function () {

@@ -140,3 +140,33 @@ def switch_organization(org_id):
         flash("You do not have access to that business.", "danger")
         
     return redirect(url_for('dashboard.index'))
+@settings_bp.route('/payments', methods=['GET', 'POST'])
+@login_required
+def payments():
+    org = get_current_org()
+    if request.method == 'POST':
+        org.stripe_api_key = request.form.get('stripe_api_key')
+        org.stripe_publishable_key = request.form.get('stripe_publishable_key')
+        db.session.commit()
+        flash("Payment settings updated.", "success")
+        return redirect(url_for('settings.payments'))
+        
+    return render_template('settings/payments.html', org=org)
+@settings_bp.route('/tax-nexus', methods=['GET', 'POST'])
+@login_required
+def tax_nexus():
+    from app.models.accounting.tax_nexus import TaxNexus
+    from app.services.tax_service import TaxService
+    org = get_current_org()
+    
+    # Seed mock rates if needed
+    TaxService.seed_mock_rates()
+    
+    if request.method == 'POST':
+        state_code = request.form.get('state_code')
+        TaxService.register_nexus(org.id, state_code)
+        flash(f"Nexus registered for {state_code}.", "success")
+        return redirect(url_for('settings.tax_nexus'))
+        
+    nexus_list = TaxNexus.query.filter_by(organization_id=org.id).all()
+    return render_template('settings/tax_nexus.html', nexus_list=nexus_list)

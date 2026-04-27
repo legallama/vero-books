@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Print Check #{{ check.check_number }}</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 0;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            color: #000;
+            background: #fff;
+        }
+        .page {
+            width: 8.5in;
+            height: 11in;
+            position: relative;
+            background: #fff;
+        }
+
+        /* ═══ CHECK SECTION (TOP 3.5") ═══ */
+        .check-section {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 8.5in;
+            height: 3.5in;
+            /* border-bottom: 1px dashed #ccc; */ /* Optional guide */
+        }
+
+        .print-date {
+            position: absolute;
+            top: 0.6in;
+            right: 0.8in;
+            font-size: 11pt;
+        }
+
+        .print-payee {
+            position: absolute;
+            top: 1.25in;
+            left: 0.8in;
+            font-size: 11pt;
+            width: 5in;
+        }
+
+        .print-amount-num {
+            position: absolute;
+            top: 1.25in;
+            right: 0.8in;
+            font-size: 12pt;
+            font-weight: bold;
+        }
+
+        .print-amount-words {
+            position: absolute;
+            top: 1.65in;
+            left: 0.6in;
+            font-size: 10pt;
+            text-transform: capitalize;
+        }
+
+        .print-memo {
+            position: absolute;
+            top: 3.1in;
+            left: 0.8in;
+            font-size: 9pt;
+        }
+
+        /* ═══ STUB SECTIONS ═══ */
+        .stub-section {
+            position: absolute;
+            left: 0;
+            width: 8.5in;
+            height: 3.5in;
+            padding: 0.5in 0.8in;
+            box-sizing: border-box;
+        }
+
+        .stub-1 { top: 3.5in; }
+        .stub-2 { top: 7.0in; }
+
+        .stub-header {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            font-size: 9pt;
+            font-weight: bold;
+        }
+
+        .stub-table {
+            width: 100%;
+            font-size: 9pt;
+            border-collapse: collapse;
+        }
+
+        .stub-table th { text-align: left; border-bottom: 1px solid #eee; }
+        .stub-table td { padding: 4px 0; }
+
+        /* Print Button Utility (Non-printed) */
+        @media print {
+            .no-print { display: none !important; }
+        }
+        .print-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="print-controls no-print">
+        <div style="margin-bottom: 10px; font-size: 12px; color: #64748b;">
+            Verify alignment with your printer before using real check stock.
+        </div>
+        <button class="btn" onclick="window.print()">Print Check Now</button>
+        <button class="btn" style="background: #64748b; margin-left: 8px;" onclick="window.history.back()">Go Back</button>
+    </div>
+
+    <div class="page">
+        <!-- CHECK PART -->
+        <div class="check-section">
+            <div class="print-date">{{ check.date.strftime('%m/%d/%Y') }}</div>
+            <div class="print-payee">{{ check.payee_name }}</div>
+            <div class="print-amount-num">{{ "{:,.2f}".format(check.amount) }}</div>
+            <div class="print-amount-words" id="words-display"></div>
+            <div class="print-memo">{{ check.memo or '' }}</div>
+        </div>
+
+        <!-- STUB 1 -->
+        <div class="stub-section stub-1">
+            <div class="stub-header">
+                <span>{{ check.payee_name }}</span>
+                <span>Check #{{ check.check_number }}</span>
+                <span>{{ check.date.strftime('%m/%d/%Y') }}</span>
+            </div>
+            <table class="stub-table">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th style="text-align: right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Payment for: {{ check.memo or 'General Expense' }}</td>
+                        <td style="text-align: right;">{{ "{:,.2f}".format(check.amount) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="margin-top: 20px; text-align: right; font-weight: bold;">
+                Total: ${{ "{:,.2f}".format(check.amount) }}
+            </div>
+        </div>
+
+        <!-- STUB 2 -->
+        <div class="stub-section stub-2">
+            <div class="stub-header">
+                <span>{{ check.payee_name }}</span>
+                <span>Check #{{ check.check_number }}</span>
+                <span>{{ check.date.strftime('%m/%d/%Y') }}</span>
+            </div>
+            <table class="stub-table">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th style="text-align: right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Payment for: {{ check.memo or 'General Expense' }}</td>
+                        <td style="text-align: right;">{{ "{:,.2f}".format(check.amount) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="margin-top: 20px; text-align: right; font-weight: bold;">
+                Total: ${{ "{:,.2f}".format(check.amount) }}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function numberToWords(number) {
+            const dollars = Math.floor(number);
+            const cents = Math.round((number - dollars) * 100);
+            
+            // Simplified word converter
+            function convert(n) {
+                const units = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+                const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+                
+                if (n < 20) return units[n];
+                if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 !== 0 ? " " + units[n % 10] : "");
+                if (n < 1000) return units[Math.floor(n / 100)] + " Hundred" + (n % 100 !== 0 ? " and " + convert(n % 100) : "");
+                
+                return n.toString(); // Fallback for very large numbers
+            }
+
+            let result = convert(dollars);
+            return result + " and " + (cents < 10 ? "0" + cents : cents) + "/100";
+        }
+
+        document.getElementById('words-display').innerText = numberToWords({{ check.amount }});
+    </script>
+</body>
+</html>

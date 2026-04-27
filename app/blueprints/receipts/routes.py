@@ -93,10 +93,24 @@ def upload():
             filename=unique_filename,
             original_name=filename,
             organization_id=org.id,
-            user_id=current_user.id
+            user_id=current_user.id,
+            status='PENDING'
         )
         db.session.add(new_receipt)
+        db.session.flush() # Get ID
+        
+        # Trigger 'AI' Scan
+        from app.services.ocr_service import OCRService
+        full_path = os.path.join(upload_folder, unique_filename)
+        scan_results = OCRService.scan_receipt(full_path)
+        
+        new_receipt.vendor_name = scan_results['vendor_name']
+        new_receipt.amount = float(scan_results['amount'])
+        new_receipt.receipt_date = datetime.strptime(scan_results['date'], '%Y-%m-%d').date()
+        new_receipt.status = 'REVIEW_REQUIRED'
+        
         db.session.commit()
         
-        flash('Receipt uploaded successfully!', 'success')
+        flash(f'Receipt uploaded! AI extracted {new_receipt.vendor_name} (${new_receipt.amount:,.2f}).', 'success')
         return redirect(url_for('receipts.index'))
+

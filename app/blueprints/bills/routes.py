@@ -53,9 +53,77 @@ def create():
         
     return render_template('bills/create.html', vendors=vendors, accounts=accounts)
 
+@bills_bp.route('/pay/<string:bill_id>', methods=['GET', 'POST'])
+@login_required
+def pay(bill_id):
+    org = get_current_org()
+    from app.models.banking.bank_account import BankAccount
+    from app.services.ledger_service import LedgerService
+    
+    bill = Bill.query.filter_by(id=bill_id, organization_id=org.id).first_or_404()
+    bank_accounts = BankAccount.query.filter_by(organization_id=org.id).filter(BankAccount.account_id != None).all()
+    
+    if request.method == 'POST':
+        bank_account_id = request.form.get('bank_account_id')
+        payment_date_str = request.form.get('payment_date')
+        amount_str = request.form.get('amount')
+        reference = request.form.get('reference')
+        
+        try:
+            payment_date = datetime.strptime(payment_date_str, '%Y-%m-%d').date()
+            amount = float(amount_str)
+        except:
+            flash("Invalid date or amount.", "danger")
+            return redirect(url_for('bills.pay', bill_id=bill_id))
+            
+        if amount <= 0 or amount > bill.balance_due:
+            flash(f"Payment amount must be between 0.01 and {bill.balance_due}.", "danger")
+            return redirect(url_for('bills.pay', bill_id=bill_id))
+            
+        # 1. Record in Ledger
+        from flask_login import current_user
+        success, result = LedgerService.record_bill_payment(
+            bill_id=bill.id,
+            bank_account_id=bank_account_id,
+            amount=amount,
+            payment_date=payment_date,
+            user_id=current_user.id,
+            organization_id=org.id,
+            reference=reference
+        )
+        
+        if success:
+            # 2. Record Payment Object
+            payment = BillPayment(
+                organization_id=org.id,
+                bill_id=bill.id,
+                bank_account_id=bank_account_id,
+                payment_date=payment_date,
+                amount=amount,
+                reference=reference
+            )
+            db.session.add(payment)
+            
+            # 3. Update Bill
+            bill.balance_due = float(bill.balance_due) - amount
+            if bill.balance_due <= 0:
+                bill.status = 'PAID'
+            else:
+                bill.status = 'PARTIAL'
+                
+            db.session.commit()
+            flash(f"Payment of ${amount:,.2f} recorded for Bill {bill.bill_number}.", "success")
+            return redirect(url_for('bills.index'))
+        else:
+            flash(f"Error recording payment: {result}", "danger")
+            
+    return render_template('bills/pay.html', bill=bill, bank_accounts=bank_accounts, today=date.today().strftime('%Y-%m-%d'))
+
 @bills_bp.route('/payments')
 @login_required
 def payments():
     org = get_current_org()
     payments = BillPayment.query.filter_by(organization_id=org.id).order_by(BillPayment.payment_date.desc()).all()
     return render_template('bills/payments.html', payments=payments)
+
+

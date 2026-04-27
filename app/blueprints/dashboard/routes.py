@@ -22,17 +22,7 @@ def index():
         flash("Please select or create an organization to continue.", "warning")
         return redirect(url_for('auth.logout'))
     
-    # --- Dynamic Setup Progress Calculation ---
-    setup_steps = [
-        {'id': 'org', 'title': 'Complete Company Profile', 'completed': bool(org.legal_name or org.phone)},
-        {'id': 'accounts', 'title': 'Review Chart of Accounts', 'completed': Account.query.filter_by(organization_id=org.id).count() > 10},
-        {'id': 'bank', 'title': 'Set Up Bank Account', 'completed': Account.query.filter_by(organization_id=org.id, subtype='Bank').count() > 0},
-        {'id': 'team', 'title': 'Invite Team Members', 'completed': len(org.memberships) > 1},
-        {'id': 'trans', 'title': 'Record First Transaction', 'completed': JournalEntry.query.filter_by(organization_id=org.id).count() > 0}
-    ]
-    completed_steps = len([s for s in setup_steps if s['completed']])
-    setup_percent = (completed_steps / len(setup_steps)) * 100
-    # ------------------------------------------
+    # Get date range from request or default to current year
     
     # Get date range from request or default to current year
     start_date_str = request.args.get('start_date')
@@ -164,11 +154,31 @@ def index():
                           cat_values=cat_values,
                           start_date=start_date.strftime('%Y-%m-%d'),
                           end_date=end_date.strftime('%Y-%m-%d'),
-                          total_steps=len(setup_steps),
-                          setup_percent=setup_percent,
                           recent_activity=recent_activity)
 
+
+@dashboard_bp.route('/run-automation', methods=['POST'])
+@login_required
+def run_automation():
+    from app.services.auth_service import get_current_org
+    from app.services.recurring_service import RecurringService
+    from flask_login import current_user
+    from flask import flash, redirect, url_for
+    
+    org = get_current_org()
+    results = RecurringService.process_all(org.id, current_user.id)
+    
+    msg = f"Automation complete. Created {results['invoices_created']} invoices and {results['journals_created']} journals."
+    if results['errors']:
+        msg += f" Encountered {len(results['errors'])} errors."
+        for err in results['errors']:
+            flash(err, "warning")
+            
+    flash(msg, "success")
+    return redirect(url_for('dashboard.index'))
+
 @dashboard_bp.route('/api/global-search')
+
 @login_required
 def global_search():
     from flask import request, jsonify

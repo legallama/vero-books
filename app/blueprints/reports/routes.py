@@ -40,3 +40,52 @@ def balance_sheet():
     org = get_current_org()
     report = LedgerService.get_balance_sheet(org.id)
     return render_template('reports/balance_sheet.html', report=report)
+@reports_bp.route('/aging-ar')
+@login_required
+def aging_ar():
+    org = get_current_org()
+    from app.models.sales.invoice import Invoice
+    from datetime import date
+    
+    invoices = Invoice.query.filter(
+        Invoice.organization_id == org.id,
+        Invoice.status.in_(['OPEN', 'PARTIAL'])
+    ).all()
+    
+    today = date.today()
+    buckets = {'current': [], '1-30': [], '31-60': [], '61-90': [], '90+': []}
+    
+    for inv in invoices:
+        diff = (today - inv.due_date).days
+        if diff <= 0: buckets['current'].append(inv)
+        elif diff <= 30: buckets['1-30'].append(inv)
+        elif diff <= 60: buckets['31-60'].append(inv)
+        elif diff <= 90: buckets['61-90'].append(inv)
+        else: buckets['90+'].append(inv)
+        
+    return render_template('reports/aging_ar.html', buckets=buckets, today=today)
+
+@reports_bp.route('/aging-ap')
+@login_required
+def aging_ap():
+    org = get_current_org()
+    from app.models.purchases.bill import Bill
+    from datetime import date
+    
+    bills = Bill.query.filter(
+        Bill.organization_id == org.id,
+        Bill.status.in_(['OPEN', 'PARTIAL'])
+    ).all()
+    
+    today = date.today()
+    buckets = {'current': [], '1-30': [], '31-60': [], '61-90': [], '90+': []}
+    
+    for bill in bills:
+        diff = (today - bill.due_date).days
+        if diff <= 0: buckets['current'].append(bill)
+        elif diff <= 30: buckets['1-30'].append(bill)
+        elif diff <= 60: buckets['31-60'].append(bill)
+        elif diff <= 90: buckets['61-90'].append(bill)
+        else: buckets['90+'].append(bill)
+        
+    return render_template('reports/aging_ap.html', buckets=buckets, today=today)

@@ -1,49 +1,69 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="uk-margin-large-bottom">
-    <h1 class="uk-heading-small uk-margin-remove-bottom">Audit Trail</h1>
-    <p class="uk-text-meta">A comprehensive history of every transaction and administrative action.</p>
-</div>
-
-<div class="uk-card uk-card-default">
-    <div class="uk-card-header uk-flex uk-flex-between uk-flex-middle">
-        <h3 class="uk-card-title uk-text-bold">Activity History</h3>
+<div class="uk-container uk-container-expand uk-margin-top">
+    <div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
         <div>
-            <button class="uk-button uk-button-default uk-button-small" onclick="UIkit.notification({message: 'Exporting audit trail...', status: 'primary', pos: 'top-right'})">Export CSV</button>
+            <h1 class="uk-h2 uk-text-bold uk-margin-remove">Audit Trail</h1>
+            <p class="uk-text-meta">A comprehensive history of all administrative and financial actions.</p>
         </div>
     </div>
-    <div class="uk-overflow-auto">
-        <table class="uk-table uk-table-divider uk-table-hover uk-table-middle">
-            <thead>
-                <tr>
-                    <th class="uk-width-medium">Timestamp</th>
-                    <th>User</th>
-                    <th>Action</th>
-                    <th>Entity</th>
-                    <th class="uk-width-large">Summary / Description</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for log in logs %}
-                <tr>
-                    <td class="uk-text-meta">{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                    <td class="uk-text-bold">{{ (log.user.full_name or log.user.email) if log.user else 'System' }}</td>
-                    <td>
-                        <span class="uk-label {{ 'uk-label-success' if log.action == 'CREATE' else 'uk-label-warning' if log.action == 'UPDATE' else 'uk-label-danger' }}">
-                            {{ log.action }}
-                        </span>
-                    </td>
-                    <td class="uk-text-meta">{{ log.entity_type }}</td>
-                    <td>{{ log.reason or 'Modified ' + log.entity_type + ' record.' }}</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5" class="uk-text-center uk-text-muted uk-padding-large italic">No activity recorded yet.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+
+    <div class="uk-card uk-card-default uk-border-rounded">
+        <div class="uk-overflow-auto">
+            <table class="uk-table uk-table-divider uk-table-hover uk-table-middle">
+                <thead>
+                    <tr>
+                        <th style="width: 180px;">Timestamp</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Entity</th>
+                        <th>Description / Reason</th>
+                        <th style="width: 140px;">IP Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="uk-text-meta">{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>
+                            <div class="uk-flex uk-flex-middle">
+                                <div class="uk-margin-small-right">
+                                    <div style="width: 28px; height: 28px; background: #eef2ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #6366f1; font-weight: bold; font-size: 11px;">
+                                        {{ log.user.full_name[:1] if log.user and log.user.full_name else '?' }}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="uk-text-bold" style="font-size: 13px;">{{ log.user.full_name if log.user else 'System' }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="uk-label {{ 'uk-label-success' if log.action == 'CREATE' else ('uk-label-warning' if log.action == 'UPDATE' else ('uk-label-danger' if log.action == 'DELETE' else 'uk-label-muted')) }}" style="font-size: 9px;">
+                                {{ log.action }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="uk-text-bold" style="font-size: 12px; color: #475569;">{{ log.entity_type }}</div>
+                            <div class="uk-text-meta" style="font-size: 10px;">ID: {{ log.entity_id[:8] }}...</div>
+                        </td>
+                        <td>
+                            <div style="max-width: 400px; font-size: 13px; color: #1e293b;">
+                                {{ log.reason or 'No additional details.' }}
+                            </div>
+                        </td>
+                        <td class="uk-text-meta" style="font-size: 11px;">
+                            {{ log.ip_address or 'Unknown' }}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="uk-text-center uk-padding-large uk-text-muted italic">No audit logs found for this organization.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}

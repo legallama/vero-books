@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-section uk-section-xsmall">
+    <div class="uk-margin-large-bottom">
+        <h1 class="uk-h2 uk-text-bold">Settings</h1>
+        <p class="uk-text-meta">Configure your company profile, team, and financial integrations.</p>
+    </div>
+
+    <div class="uk-grid-medium uk-child-width-1-3@m" uk-grid>
+        <!-- Company Profile -->
+        <div>
+            <a href="{{ url_for('settings.profile') }}" class="uk-link-reset">
+                <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-card-hover">
+                    <div class="uk-flex uk-flex-middle">
+                        <span uk-icon="icon: home; ratio: 1.5" class="uk-text-primary"></span>
+                        <div class="uk-margin-small-left">
+                            <h4 class="uk-text-bold uk-margin-remove">Organization</h4>
+                            <p class="uk-text-meta uk-margin-remove" style="font-size: 11px;">Legal name, logo, and address.</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Team Management -->
+        <div>
+            <a href="{{ url_for('settings.users') }}" class="uk-link-reset">
+                <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-card-hover">
+                    <div class="uk-flex uk-flex-middle">
+                        <span uk-icon="icon: users; ratio: 1.5" class="uk-text-primary"></span>
+                        <div class="uk-margin-small-left">
+                            <h4 class="uk-text-bold uk-margin-remove">Users & Roles</h4>
+                            <p class="uk-text-meta uk-margin-remove" style="font-size: 11px;">Manage team access and permissions.</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Tax Rates -->
+        <div>
+            <a href="{{ url_for('settings.tax_rates') }}" class="uk-link-reset">
+                <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-card-hover">
+                    <div class="uk-flex uk-flex-middle">
+                        <span uk-icon="icon: table; ratio: 1.5" class="uk-text-primary"></span>
+                        <div class="uk-margin-small-left">
+                            <h4 class="uk-text-bold uk-margin-remove">Tax Rates</h4>
+                            <p class="uk-text-meta uk-margin-remove" style="font-size: 11px;">Configure sales tax for invoices.</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Payments (NEW) -->
+        <div>
+            <a href="{{ url_for('settings.payments') }}" class="uk-link-reset">
+                <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-card-hover" style="border: 1px solid #c7d2fe; background: #f5f3ff;">
+                    <div class="uk-flex uk-flex-middle">
+                        <span uk-icon="icon: credit-card; ratio: 1.5" style="color: #635bff;"></span>
+                        <div class="uk-margin-small-left">
+                            <h4 class="uk-text-bold uk-margin-remove">Payments & Stripe</h4>
+                            <p class="uk-text-meta uk-margin-remove" style="font-size: 11px;">Accept online payments on invoices.</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Tax & Nexus (NEW) -->
+        <div>
+            <a href="{{ url_for('settings.tax_nexus') }}" class="uk-link-reset">
+                <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-card-hover" style="border: 1px solid #fde68a; background: #fffbeb;">
+                    <div class="uk-flex uk-flex-middle">
+                        <span uk-icon="icon: world; ratio: 1.5" style="color: #d97706;"></span>
+                        <div class="uk-margin-small-left">
+                            <h4 class="uk-text-bold uk-margin-remove">Sales Tax & Nexus</h4>
+                            <p class="uk-text-meta uk-margin-remove" style="font-size: 11px;">Automated multi-state tax engine.</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Chart of Accounts -->
+
+        <div>
+            <a href="{{ url_for('accounts.index') }}" class="uk-link-reset">
+                <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-card-hover">
+                    <div class="uk-flex uk-flex-middle">
+                        <span uk-icon="icon: list; ratio: 1.5" class="uk-text-primary"></span>
+                        <div class="uk-margin-small-left">
+                            <h4 class="uk-text-bold uk-margin-remove">Chart of Accounts</h4>
+                            <p class="uk-text-meta uk-margin-remove" style="font-size: 11px;">Organize your categories and ledger.</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .uk-card-hover:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        border-color: #6366f1 !important;
+    }
+</style>
+{% endblock %}

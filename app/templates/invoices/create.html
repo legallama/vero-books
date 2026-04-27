@@ -1,127 +1,206 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div id="invoice-app">
-    <div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
-        <div>
-            <h1 class="uk-heading-small uk-margin-remove-bottom">New Invoice</h1>
-            <p class="uk-text-meta">Generate a professional billing statement for your client</p>
-        </div>
-        <div class="uk-text-right">
-            <p class="uk-text-meta uk-text-uppercase uk-margin-remove">Total Amount</p>
-            <h2 class="uk-margin-remove-top uk-text-bold uk-text-primary">$[[ totalAmount.toFixed(2) ]]</h2>
-        </div>
-    </div>
-
-    <form method="POST" action="{{ url_for('invoices.create') }}">
+<div id="invoice-app" class="uk-container uk-container-expand uk-margin-top" v-cloak>
+    <form action="{{ url_for('invoices.create') }}" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        
-        <div class="uk-card uk-card-default uk-card-body uk-margin-bottom">
-            <div class="uk-grid-small" uk-grid>
-                <div class="uk-width-1-2@s">
-                    <label class="uk-form-label uk-text-bold">Select Customer</label>
-                    <select name="customer_id" required class="uk-select">
-                        <option value="">Choose a customer...</option>
-                        {% for customer in customers %}
-                        <option value="{{ customer.id }}">{{ customer.display_name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="uk-width-1-4@s">
-                    <label class="uk-form-label uk-text-bold">Issue Date</label>
-                    <input type="date" name="issue_date" value="{{ today }}" required class="uk-input">
-                </div>
-                <div class="uk-width-1-4@s">
-                    <label class="uk-form-label uk-text-bold">Due Date</label>
-                    <input type="date" name="due_date" value="{{ default_due }}" required class="uk-input">
-                </div>
+        <input type="hidden" name="line_count" :value="lines.length">
+
+        <!-- Top Actions Bar -->
+        <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-medium-bottom">
+            <div>
+                <h1 class="uk-h2 uk-text-bold uk-margin-remove">{{ 'New Credit Memo' if is_credit_memo else 'New Invoice' }}</h1>
+                <p class="uk-text-meta">{{ 'Issue a refund or credit to your customer.' if is_credit_memo else 'Create a professional invoice for your customer.' }}</p>
+            </div>
+            <div class="uk-flex" style="gap: 10px;">
+                <a href="{{ url_for('invoices.index') }}" class="uk-button uk-button-default uk-border-rounded">Cancel</a>
+                <button type="submit" class="uk-button uk-button-primary uk-border-rounded uk-text-bold">Save & Post {{ 'Memo' if is_credit_memo else 'Invoice' }}</button>
             </div>
         </div>
 
-        <div class="uk-card uk-card-default uk-card-body">
-            <table class="uk-table uk-table-middle uk-table-divider">
-                <thead>
-                    <tr>
-                        <th class="uk-width-expand">Description</th>
-                        <th class="uk-width-medium">Income Account</th>
-                        <th class="uk-width-small uk-text-center">Qty</th>
-                        <th class="uk-width-small uk-text-center">Price</th>
-                        <th class="uk-width-small uk-text-right">Amount</th>
-                        <th class="uk-table-shrink"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="(line, index) in lines" :key="index">
-                        <td>
-                            <input type="text" :name="`lines[${index}][description]`" v-model="line.description" required placeholder="Service or product description" class="uk-input">
-                        </td>
-                        <td>
-                            <select :name="`lines[${index}][account_id]`" v-model="line.account_id" class="uk-select">
-                                <option value="">Select Account...</option>
-                                {% for acc in accounts %}
-                                <option value="{{ acc.id }}">{{ acc.name }}</option>
+        <div class="uk-grid-medium" uk-grid>
+            <!-- Main Invoice Form -->
+            <div class="uk-width-expand@m">
+                <div class="uk-card uk-card-default uk-padding-large uk-border-rounded shadow-sm" style="min-height: 800px; background: white;">
+                    <!-- Branding & Number -->
+                    <div class="uk-flex uk-flex-between uk-flex-top">
+                        <div>
+                            <div style="width: 60px; height: 60px; background: {{ '#f43f5e' if is_credit_memo else '#6366f1' }}; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 24px;">V</div>
+                            <h2 class="uk-text-bold uk-margin-small-top" style="color: #1e293b;">{{ current_org.name }}</h2>
+                        </div>
+                        <div class="uk-text-right">
+                            <h1 class="uk-heading-small uk-text-bold uk-text-uppercase" style="color: #cbd5e1; letter-spacing: 2px;">{{ 'Credit' if is_credit_memo else 'Invoice' }}</h1>
+                            <div class="uk-text-meta"># AUTO-GENERATED</div>
+                        </div>
+                    </div>
+
+
+                    <hr class="uk-margin-large">
+
+                    <!-- Client & Terms -->
+                    <div class="uk-grid-large uk-child-width-1-2@s" uk-grid>
+                        <div>
+                            <label class="uk-form-label uk-text-bold" style="color: #64748b; font-size: 11px; text-transform: uppercase;">Bill To</label>
+                            <div class="uk-margin-small-top">
+                                <select class="uk-select uk-form-large uk-border-rounded uk-text-bold" name="customer_id" v-model="customerId" @change="fetchTaxRate" required>
+                                    <option value="">Select Customer...</option>
+                                    {% for customer in customers %}
+                                    <option value="{{ customer.id }}">{{ customer.display_name }}</option>
+                                    {% endfor %}
+                                </select>
+
+                            </div>
+                        </div>
+                        <div>
+                            <div class="uk-grid-small uk-child-width-1-2" uk-grid>
+                                <div>
+                                    <label class="uk-form-label uk-text-bold" style="color: #64748b; font-size: 11px; text-transform: uppercase;">Invoice Date</label>
+                                    <input class="uk-input uk-border-rounded uk-margin-small-top" type="date" name="issue_date" value="{{ today }}" required>
+                                </div>
+                                <div>
+                                    <label class="uk-form-label uk-text-bold" style="color: #64748b; font-size: 11px; text-transform: uppercase;">Due Date</label>
+                                    <input class="uk-input uk-border-rounded uk-margin-small-top" type="date" name="due_date" value="{{ default_due }}" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Line Items Table -->
+                    <div class="uk-margin-large-top">
+                        <table class="uk-table uk-table-middle uk-table-divider">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%;">Description</th>
+                                    <th style="width: 25%;">Account</th>
+                                    <th class="uk-text-center" style="width: 10%;">Qty</th>
+                                    <th class="uk-text-right" style="width: 15%;">Price</th>
+                                    <th class="uk-text-right" style="width: 10%;">Amount</th>
+                                    <th style="width: 40px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(line, index) in lines" :key="index">
+                                    <td>
+                                        <input class="uk-input uk-form-blank uk-text-bold" :name="'lines['+index+'][description]'" v-model="line.description" placeholder="Service or product description..." required>
+                                    </td>
+                                    <td>
+                                        <select class="uk-select uk-form-blank" :name="'lines['+index+'][account_id]'" v-model="line.account_id" required>
+                                            <option value="">Select Account...</option>
+                                            {% for acc in accounts %}
+                                            <option value="{{ acc.id }}">{{ acc.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input class="uk-input uk-form-blank uk-text-center" type="number" :name="'lines['+index+'][quantity]'" v-model.number="line.quantity" step="1">
+                                    </td>
+                                    <td>
+                                        <input class="uk-input uk-form-blank uk-text-right" type="number" :name="'lines['+index+'][unit_price]'" v-model.number="line.unit_price" step="0.01">
+                                    </td>
+                                    <td class="uk-text-right uk-text-bold">
+                                        $[[ (line.quantity * line.unit_price).toFixed(2) ]]
+                                    </td>
+                                    <td>
+                                        <button type="button" @click="removeLine(index)" class="uk-icon-button" uk-icon="trash" style="color: #ef4444; border: none; background: transparent;" v-if="lines.length > 1"></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button type="button" @click="addLine" class="uk-button uk-button-text uk-text-primary uk-text-bold">
+                            <span uk-icon="plus" class="uk-margin-small-right"></span>Add Line Item
+                        </button>
+                    </div>
+
+                    <!-- Totals & Notes -->
+                    <div class="uk-grid-large uk-margin-large-top" uk-grid>
+                        <div class="uk-width-expand@m">
+                            <label class="uk-form-label uk-text-bold" style="color: #64748b; font-size: 11px; text-transform: uppercase;">Internal Notes / Customer Message</label>
+                            <textarea class="uk-textarea uk-border-rounded uk-margin-small-top" name="notes" rows="4" placeholder="Thanks for your business!"></textarea>
+                        </div>
+                        <div class="uk-width-medium@m">
+                            <div class="uk-padding-small uk-background-muted uk-border-rounded">
+                                <div class="uk-flex uk-flex-between uk-margin-small-bottom">
+                                    <span class="uk-text-meta">Subtotal</span>
+                                    <span class="uk-text-bold">$[[ subtotal.toFixed(2) ]]</span>
+                                </div>
+                                <div class="uk-flex uk-flex-between uk-margin-small-bottom">
+                                    <span class="uk-text-meta">Sales Tax ([[ (taxRate * 100).toFixed(2) ]]%)</span>
+                                    <span class="uk-text-bold" :class="{'uk-text-primary': taxRate > 0}">$[[ taxTotal.toFixed(2) ]]</span>
+                                </div>
+                                <div v-if="taxRate > 0" class="uk-text-meta uk-text-right uk-margin-small-bottom" style="font-size: 10px;">
+                                    <span uk-icon="icon: check; ratio: 0.6" class="uk-text-primary"></span> Magic Tax Applied
+                                </div>
+                                <hr>
+                                <div class="uk-flex uk-flex-between uk-flex-middle">
+                                    <span class="uk-h4 uk-margin-remove uk-text-bold">Total</span>
+                                    <span class="uk-h3 uk-margin-remove uk-text-bold uk-text-primary">$[[ total.toFixed(2) ]]</span>
+                                </div>
+                                <input type="hidden" name="tax_total" :value="taxTotal.toFixed(2)">
+                                <input type="hidden" name="total" :value="total.toFixed(2)">
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Context -->
+            <div class="uk-width-medium@l">
+                <div class="uk-card uk-card-default uk-padding-small uk-border-rounded">
+                    <h4 class="uk-text-bold" style="font-size: 14px;">Invoice Settings</h4>
+                    <ul class="uk-list uk-list-divider uk-text-meta">
+                        <li class="uk-flex uk-flex-between">
+                            <span>Status</span>
+                            <span class="uk-label uk-label-warning">DRAFT</span>
+                        </li>
+                        <li>
+                            <label class="uk-form-label uk-text-bold uk-margin-small-bottom" style="display: block;">Tags / Projects</label>
+                            <select class="uk-select uk-form-small uk-border-rounded" name="tag_ids" multiple style="height: 100px;">
+                                {% for tag in available_tags %}
+                                <option value="{{ tag.id }}">{{ tag.name }}</option>
                                 {% endfor %}
                             </select>
-                        </td>
-                        <td>
-                            <input type="number" step="0.01" :name="`lines[${index}][quantity]`" v-model.number="line.quantity" class="uk-input uk-text-center">
-                        </td>
-                        <td>
-                            <input type="number" step="0.01" :name="`lines[${index}][unit_price]`" v-model.number="line.unit_price" class="uk-input uk-text-center">
-                        </td>
-                        <td class="uk-text-right uk-text-bold">
-                            $[[ (line.quantity * line.unit_price).toFixed(2) ]]
-                        </td>
-                        <td>
-                            <button type="button" @click="removeLine(index)" class="uk-icon-button uk-button-danger" uk-icon="trash" v-if="lines.length > 1"></button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <div class="uk-margin-top">
-                <button type="button" @click="addLine" class="uk-button uk-button-text uk-text-primary">+ Add Line Item</button>
-            </div>
-        </div>
+                            <p class="uk-text-meta uk-margin-small-top" style="font-size: 10px;">Hold Ctrl/Cmd to select multiple.</p>
+                        </li>
+                        <li class="uk-flex uk-flex-between">
+                            <span>Currency</span>
+                            <span>USD</span>
+                        </li>
+                    </ul>
 
-        <div class="uk-margin-large-top uk-text-right">
-            <a href="{{ url_for('invoices.index') }}" class="uk-button uk-button-default uk-margin-right">Cancel</a>
-            <button type="submit" :disabled="totalAmount <= 0" class="uk-button uk-button-primary uk-button-large">Save Invoice</button>
+                    <div class="uk-margin-top">
+                        <button type="button" class="uk-button uk-button-default uk-button-small uk-width-1-1 uk-border-rounded">Preview PDF</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </form>
 </div>
 
+<style>
+    #invoice-app .uk-input:focus, #invoice-app .uk-select:focus {
+        background: #f8fafc;
+        border-color: #6366f1;
+    }
+    .uk-table th {
+        font-size: 11px;
+        text-transform: uppercase;
+        font-weight: 800;
+        color: #94a3b8;
+    }
+    [v-cloak] { display: none; }
+</style>
+
 <script>
     const { createApp, ref, computed } = Vue;
-
     createApp({
         delimiters: ['[[', ']]'],
         setup() {
             const lines = ref([
                 { description: '', account_id: '', quantity: 1, unit_price: 0 }
             ]);
-
-            const addLine = () => lines.value.push({ description: '', account_id: '', quantity: 1, unit_price: 0 });
-            const removeLine = (index) => lines.value.splice(index, 1);
-
-            const totalAmount = computed(() => {
-                return lines.value.reduce((sum, line) => sum + (line.quantity * line.unit_price || 0), 0);
-            });
-
-            return { lines, addLine, removeLine, totalAmount };
-        }
-    }).mount('#invoice-app');
-</script>
-
-<script>
-    const { createApp, ref, computed } = Vue;
-
-    createApp({
-        delimiters: ['[[', ']]'],
-        setup() {
-            const lines = ref([
-                { description: '', account_id: '', quantity: 1, unit_price: 0 }
-            ]);
+            const customerId = ref('');
+            const taxRate = ref(0);
 
             const addLine = () => {
                 lines.value.push({ description: '', account_id: '', quantity: 1, unit_price: 0 });
@@ -131,17 +210,45 @@
                 lines.value.splice(index, 1);
             };
 
-            const totalAmount = computed(() => {
-                return lines.value.reduce((sum, line) => sum + (line.quantity * line.unit_price || 0), 0);
+            const subtotal = computed(() => {
+                return lines.value.reduce((acc, line) => acc + (line.quantity * line.unit_price), 0);
             });
 
-            return {
-                lines,
-                addLine,
-                removeLine,
-                totalAmount
+            const fetchTaxRate = async () => {
+                if (!customerId.value) {
+                    taxRate.value = 0;
+                    return;
+                }
+                try {
+                    const response = await fetch("{{ url_for('sales.get_tax_rate') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ customer_id: customerId.value })
+                    });
+                    const data = await response.json();
+                    taxRate.value = data.rate;
+                    UIkit.notification({
+                        message: `<span uk-icon='check'></span> Tax rate updated to ${(taxRate.value * 100).toFixed(2)}%`,
+                        status: 'primary',
+                        pos: 'bottom-center'
+                    });
+                } catch (e) {
+                    console.error("Error fetching tax rate", e);
+                }
             };
+
+            const taxTotal = computed(() => {
+                return subtotal.value * taxRate.value;
+            });
+
+            const total = computed(() => subtotal.value + taxTotal.value);
+
+            return { lines, customerId, taxRate, taxTotal, addLine, removeLine, subtotal, total, fetchTaxRate };
         }
     }).mount('#invoice-app');
+
 </script>
 {% endblock %}

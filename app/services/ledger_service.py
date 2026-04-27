@@ -271,3 +271,66 @@ class LedgerService:
             'equity_total': equity_total,
             'is_balanced': asset_total == (liability_total + equity_total)
         }
+    @staticmethod
+    def record_bill_payment(bill_id, bank_account_id, amount, payment_date, user_id, organization_id, reference=None):
+        """
+        Records a payment against a bill in the General Ledger.
+        DR Accounts Payable (Liability)
+        CR Bank Account (Asset)
+        """
+        from app.models.purchases.bill import Bill
+        from app.models.banking.bank_account import BankAccount
+        from app.models.accounting.account import Account
+        
+        bill = Bill.query.filter_by(id=bill_id, organization_id=organization_id).first()
+        bank_acc = BankAccount.query.filter_by(id=bank_account_id, organization_id=organization_id).first()
+        
+        if not bill or not bank_acc or not bank_acc.account_id:
+            return False, "Bill or linked Bank Account not found."
+            
+        # Find the Accounts Payable account for this org
+        ap_account = Account.query.filter_by(organization_id=organization_id, name='Accounts Payable').first()
+        if not ap_account:
+            return False, "Accounts Payable account not found. Please set up your Chart of Accounts."
+
+        # Create Journal Entry
+        je = JournalEntry(
+            organization_id=organization_id,
+            entry_number=f"PAY-{bill.bill_number}-{int(datetime.utcnow().timestamp())}",
+            entry_date=datetime.combine(payment_date, datetime.min.time()),
+            memo=f"Payment for Bill {bill.bill_number}: {reference or ''}",
+            source_type='BILL_PAYMENT',
+            source_id=bill.id,
+            status='DRAFT',
+            created_by=user_id
+        )
+        db.session.add(je)
+        db.session.flush()
+        
+        # Line 1: Debit Accounts Payable (Reduce liability)
+        line1 = JournalLine(
+            journal_entry_id=je.id,
+            account_id=ap_account.id,
+            debit=amount,
+            description=f"Payment for Bill {bill.bill_number}"
+        )
+        
+        # Line 2: Credit Bank Account (Reduce asset)
+        line2 = JournalLine(
+            journal_entry_id=je.id,
+            account_id=bank_acc.account_id,
+            credit=amount,
+            description=f"Payment for Bill {bill.bill_number}"
+        )
+        
+        db.session.add(line1)
+        db.session.add(line2)
+        db.session.flush()
+        
+        # Post the entry
+        success, msg = LedgerService.post_journal_entry(je.id, user_id, organization_id)
+        if not success:
+            db.session.rollback()
+            return False, msg
+            
+        return True, je.id

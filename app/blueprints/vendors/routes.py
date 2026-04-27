@@ -10,7 +10,9 @@ from app.services.auth_service import get_current_org
 def index():
     org = get_current_org()
     vendors = Vendor.query.filter_by(organization_id=org.id).order_by(Vendor.display_name).all()
-    return render_template('vendors/index.html', vendors=vendors)
+    vendors_json = [v.to_dict() for v in vendors]
+    return render_template('vendors/index.html', vendors=vendors_json)
+
 
 @vendors_bp.route('/create', methods=['POST'])
 @login_required

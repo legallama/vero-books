@@ -35,31 +35,44 @@
         <table class="uk-table uk-table-divider uk-table-hover uk-table-middle">
             <thead>
                 <tr>
-                    <th>Date</th>
+                    <th>Issue Date</th>
                     <th>Bill #</th>
                     <th>Vendor</th>
                     <th>Due Date</th>
-                    <th class="uk-text-right">Amount</th>
+                    <th class="uk-text-right">Total</th>
+                    <th class="uk-text-right">Balance</th>
                     <th class="uk-text-center">Status</th>
+                    <th class="uk-table-shrink"></th>
                 </tr>
             </thead>
             <tbody>
                 {% for bill in bills %}
                 <tr class="uk-visible-toggle">
-                    <td>{{ bill.date.strftime('%Y-%m-%d') }}</td>
-                    <td class="uk-text-primary font-mono">{{ bill.bill_number }}</td>
-                    <td class="uk-text-bold">{{ bill.vendor.display_name }}</td>
+                    <td>{{ bill.issue_date.strftime('%Y-%m-%d') }}</td>
+                    <td class="uk-text-primary uk-text-bold">{{ bill.bill_number }}</td>
+                    <td>{{ bill.vendor.display_name }}</td>
                     <td class="uk-text-meta">{{ bill.due_date.strftime('%Y-%m-%d') }}</td>
-                    <td class="uk-text-right uk-text-bold uk-text-danger">${{ "%.2f"|format(bill.total) }}</td>
+                    <td class="uk-text-right uk-text-muted">${{ "%.2f"|format(bill.total) }}</td>
+                    <td class="uk-text-right uk-text-bold uk-text-danger">${{ "%.2f"|format(bill.balance_due) }}</td>
                     <td class="uk-text-center">
-                        <span class="uk-label {{ 'uk-label-warning' if bill.status == 'UNPAID' else 'uk-label-success' }}">
+                        <span class="uk-label {{ 'uk-label-warning' if bill.status == 'OPEN' else ('uk-label-success' if bill.status == 'PAID' else 'uk-label-muted') }}">
                             {{ bill.status }}
                         </span>
                     </td>
-                    <td class="uk-text-right">
-                        <div class="uk-invisible-hover">
-                            <a href="#" class="uk-icon-button" uk-icon="file-text" uk-tooltip="View Details"></a>
-                            <a href="#" class="uk-icon-button" uk-icon="pencil" uk-tooltip="Edit"></a>
+                    <td class="uk-text-nowrap">
+                        <div class="uk-flex" style="gap: 5px;">
+                            {% if bill.status in ['OPEN', 'PARTIAL'] %}
+                            <a href="{{ url_for('bills.pay', bill_id=bill.id) }}" class="uk-button uk-button-primary uk-button-small uk-border-rounded" style="font-size: 10px; line-height: 24px; padding: 0 10px;">Pay</a>
+                            {% endif %}
+                            <button class="uk-icon-button" uk-icon="more-vertical; ratio: 0.8" type="button"></button>
+                            <div uk-dropdown="mode: click; pos: bottom-right">
+                                <ul class="uk-nav uk-dropdown-nav">
+                                    <li><a href="#"><span uk-icon="file-text" class="uk-margin-small-right"></span>View Details</a></li>
+                                    <li><a href="#"><span uk-icon="pencil" class="uk-margin-small-right"></span>Edit Bill</a></li>
+                                    <li class="uk-nav-divider"></li>
+                                    <li><a href="#" class="uk-text-danger"><span uk-icon="trash" class="uk-margin-small-right"></span>Void Bill</a></li>
+                                </ul>
+                            </div>
                         </div>
                     </td>
                 </tr>

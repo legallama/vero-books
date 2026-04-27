@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-container uk-container-large uk-margin-top">
+    <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-medium-bottom">
+        <div>
+            <h1 class="uk-heading-small uk-text-bold uk-margin-remove">Checks</h1>
+            <p class="uk-text-meta uk-margin-remove">Manage system-generated checks and payments.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('banking.create_check') }}" class="uk-button uk-button-primary uk-border-rounded">
+                <span uk-icon="icon: plus; ratio: 0.8" class="uk-margin-small-right"></span>New Check
+            </a>
+        </div>
+    </div>
+
+    <div class="uk-card uk-card-default uk-border-rounded uk-overflow-hidden">
+        <div class="uk-overflow-auto">
+            <table class="uk-table uk-table-hover uk-table-divider uk-table-middle uk-margin-remove">
+                <thead>
+                    <tr class="uk-background-muted">
+                        <th class="uk-table-shrink">Date</th>
+                        <th class="uk-table-shrink">Number</th>
+                        <th>Payee</th>
+                        <th>Bank Account</th>
+                        <th>Memo</th>
+                        <th class="uk-text-right">Amount</th>
+                        <th class="uk-text-center">Status</th>
+                        <th class="uk-table-shrink"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for check in checks %}
+                    <tr>
+                        <td class="uk-text-nowrap">{{ check.date.strftime('%Y-%m-%d') }}</td>
+                        <td><span class="uk-label uk-label-muted uk-border-rounded">{{ check.check_number }}</span></td>
+                        <td class="uk-text-bold">{{ check.payee_name }}</td>
+                        <td>{{ check.bank_account.name }}</td>
+                        <td class="uk-text-truncate" style="max-width: 200px;">{{ check.memo or '-' }}</td>
+                        <td class="uk-text-right uk-text-bold uk-text-danger">${{ "{:,.2f}".format(check.amount) }}</td>
+                        <td class="uk-text-center">
+                            <span class="uk-label uk-border-rounded {{ 'uk-label-success' if check.status == 'CLEARED' else 'uk-label-warning' if check.status == 'PRINTED' else 'uk-label-muted' }}">
+                                {{ check.status }}
+                            </span>
+                        </td>
+                        <td class="uk-text-right">
+                            <div class="uk-flex uk-flex-right" style="gap: 5px;">
+                                <a href="{{ url_for('banking.print_check', check_id=check.id) }}" target="_blank" class="uk-icon-button" uk-icon="icon: print; ratio: 0.8" uk-tooltip="Print Check" style="color: #3b82f6;"></a>
+                                <a href="{{ url_for('banking.edit_check', check_id=check.id) }}" class="uk-icon-button" uk-icon="icon: pencil; ratio: 0.8" uk-tooltip="Edit Check" style="color: #64748b;"></a>
+                                <form action="{{ url_for('banking.delete_check', check_id=check.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this check? The associated ledger entry will be reversed or removed.');" class="uk-display-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="uk-icon-button" uk-icon="icon: trash; ratio: 0.8" uk-tooltip="Delete Check" style="color: #ef4444; border: none; cursor: pointer;"></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="uk-text-center uk-padding-large">
+                            <div class="uk-flex uk-flex-column uk-flex-middle">
+                                <span uk-icon="icon: history; ratio: 2" class="uk-text-muted uk-margin-small-bottom"></span>
+                                <p class="uk-text-muted uk-margin-remove">No checks found. Create your first check to get started.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

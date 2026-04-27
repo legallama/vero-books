@@ -14,6 +14,8 @@ class Organization(db.Model):
     fiscal_year_start_month = db.Column(db.Integer, default=1)
     timezone = db.Column(db.String(50), default='UTC')
     is_active = db.Column(db.Boolean, default=True)
+    stripe_api_key = db.Column(db.String(255))
+    stripe_publishable_key = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     memberships = db.relationship('OrganizationMembership', back_populates='organization')

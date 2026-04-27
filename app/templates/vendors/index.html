@@ -1,67 +1,196 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div id="vendor-app">
-    <div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+<div id="vendor-app" class="uk-container uk-container-large uk-margin-top">
+    <!-- Header -->
+    <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-large-bottom">
         <div>
-            <h1 class="uk-heading-small uk-margin-remove-bottom">Vendors</h1>
-            <p class="uk-text-meta">Track suppliers and independent contractors</p>
+            <h1 class="uk-heading-small uk-text-bold uk-margin-remove">Vendors</h1>
+            <p class="uk-text-meta uk-margin-remove">Manage your suppliers, contractors, and service providers.</p>
         </div>
-        <button class="uk-button uk-button-primary" @click="showModal = true">+ Add Vendor</button>
+        <div class="uk-flex" style="gap: 10px;">
+            <div class="uk-inline">
+                <span class="uk-form-icon" uk-icon="icon: search; ratio: 0.8"></span>
+                <input class="uk-input uk-form-width-medium uk-border-rounded" type="text" v-model="searchQuery" placeholder="Search vendors...">
+            </div>
+            <button class="uk-button uk-button-primary uk-border-rounded uk-text-bold" @click="showModal = true">
+                <span uk-icon="icon: plus; ratio: 0.8" class="uk-margin-small-right"></span>Add Vendor
+            </button>
+        </div>
     </div>
 
-    <div class="uk-grid-medium uk-child-width-1-3@m" uk-grid>
-        {% for vendor in vendors %}
-        <div>
-            <div class="uk-card uk-card-default uk-card-body uk-card-hover">
-                <div class="uk-flex uk-flex-between uk-flex-top">
-                    <div class="uk-border-circle uk-background-muted uk-flex uk-flex-center uk-flex-middle" style="width: 40px; height: 40px; color: #f43f5e; font-weight: 800;">
-                        {{ vendor.display_name[0] | upper }}
-                    </div>
+    <!-- Stats Row -->
+    <div class="uk-grid-small uk-margin-bottom" uk-grid>
+        <div class="uk-width-1-4@m">
+            <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-padding-small uk-flex uk-flex-middle">
+                <div class="uk-border-circle uk-background-muted uk-flex uk-flex-center uk-flex-middle uk-margin-small-right" style="width: 40px; height: 40px; color: #3b82f6;">
+                    <span uk-icon="users"></span>
                 </div>
-                <h3 class="uk-card-title uk-margin-small-top uk-text-bold">{{ vendor.display_name }}</h3>
-                <p class="uk-text-meta uk-margin-remove-top">{{ vendor.email or 'No contact provided' }}</p>
-                <div class="uk-margin-top uk-padding-small uk-background-muted uk-border-rounded">
-                    <p class="uk-text-meta uk-text-uppercase uk-margin-remove">Total Payables</p>
-                    <p class="uk-text-bold uk-margin-remove uk-text-danger">$0.00</p>
-                </div>
-                <div class="uk-margin-top">
-                    <a href="#" class="uk-button uk-button-text">Bill History</a>
+                <div>
+                    <div class="uk-text-meta uk-text-uppercase" style="font-size: 10px; font-weight: 700;">Total Vendors</div>
+                    <div class="uk-text-bold" style="font-size: 18px;">{{ vendors|length }}</div>
                 </div>
             </div>
         </div>
-        {% endfor %}
+        <div class="uk-width-1-4@m">
+            <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-padding-small uk-flex uk-flex-middle">
+                <div class="uk-border-circle uk-background-muted uk-flex uk-flex-center uk-flex-middle uk-margin-small-right" style="width: 40px; height: 40px; color: #f43f5e;">
+                    <span uk-icon="credit-card"></span>
+                </div>
+                <div>
+                    <div class="uk-text-meta uk-text-uppercase" style="font-size: 10px; font-weight: 700;">Open Payables</div>
+                    <div class="uk-text-bold" style="font-size: 18px;">$0.00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendor Table -->
+    <div class="uk-card uk-card-default uk-border-rounded uk-overflow-hidden">
+        <div class="uk-overflow-auto">
+            <table class="uk-table uk-table-hover uk-table-divider uk-table-middle uk-margin-remove">
+                <thead>
+                    <tr class="uk-background-muted">
+                        <th class="uk-table-shrink"></th>
+                        <th>Vendor Name</th>
+                        <th>Company</th>
+                        <th>Email Address</th>
+                        <th class="uk-text-right">Balance</th>
+                        <th class="uk-text-center">Status</th>
+                        <th class="uk-table-shrink"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="vendor in filteredVendors" :key="vendor.id">
+                        <td>
+                            <div class="vendor-avatar" :style="{ backgroundColor: getAvatarColor(vendor.display_name) }">
+                                [[ vendor.display_name[0].toUpperCase() ]]
+                            </div>
+                        </td>
+                        <td>
+                            <div class="uk-text-bold" style="color: #1e293b;">[[ vendor.display_name ]]</div>
+                        </td>
+                        <td class="uk-text-meta">[[ vendor.company_name || '-' ]]</td>
+                        <td>
+                            <a :href="'mailto:' + vendor.email" class="uk-link-reset uk-text-meta" v-if="vendor.email">[[ vendor.email ]]</a>
+                            <span class="uk-text-muted" v-else>-</span>
+                        </td>
+                        <td class="uk-text-right uk-text-bold">
+                            $0.00
+                        </td>
+                        <td class="uk-text-center">
+                            <span class="uk-label uk-label-success uk-border-rounded" style="font-size: 10px;">Active</span>
+                        </td>
+                        <td class="uk-text-nowrap">
+                            <button class="uk-icon-button" uk-icon="icon: more-vertical; ratio: 0.8" type="button"></button>
+                            <div uk-dropdown="mode: click; pos: bottom-right">
+                                <ul class="uk-nav uk-dropdown-nav">
+                                    <li><a href="#"><span uk-icon="pencil" class="uk-margin-small-right"></span>Edit Details</a></li>
+                                    <li><a href="#"><span uk-icon="file-text" class="uk-margin-small-right"></span>View Ledger</a></li>
+                                    <li><a href="#"><span uk-icon="cart" class="uk-margin-small-right"></span>Create Bill</a></li>
+                                    <li class="uk-nav-divider"></li>
+                                    <li><a href="#" class="uk-text-danger"><span uk-icon="trash" class="uk-margin-small-right"></span>Deactivate</a></li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr v-if="filteredVendors.length === 0">
+                        <td colspan="7" class="uk-text-center uk-padding-large">
+                            <div class="uk-flex uk-flex-column uk-flex-middle">
+                                <span uk-icon="icon: users; ratio: 2" class="uk-text-muted uk-margin-small-bottom"></span>
+                                <p class="uk-text-muted uk-margin-remove">No vendors found matching your search.</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Quick Create Modal -->
-    <div v-if="showModal" class="uk-flex uk-flex-top uk-flex-center uk-position-fixed uk-position-z-index uk-height-viewport uk-width-1-1" style="background: rgba(0,0,0,0.6); top:0; left:0; padding-top: 100px;">
-        <div class="uk-card uk-card-default uk-card-body uk-width-large uk-animation-scale-up uk-animation-fast">
-            <h3 class="uk-card-title uk-text-bold">Quick New Vendor</h3>
-            <form action="{{ url_for('vendors.create') }}" method="POST" class="uk-form-stacked">
+    <div v-if="showModal" class="uk-flex uk-flex-top uk-flex-center uk-position-fixed uk-position-z-index uk-height-viewport uk-width-1-1" style="background: rgba(0,0,0,0.5); top:0; left:0; padding-top: 80px; backdrop-filter: blur(4px);">
+        <div class="uk-card uk-card-default uk-card-body uk-width-large uk-animation-scale-up uk-animation-fast" style="border-radius: 12px;">
+            <h3 class="uk-card-title uk-text-bold">Add New Vendor</h3>
+            <p class="uk-text-meta">Register a new supplier or service provider.</p>
+            
+            <form action="{{ url_for('vendors.create') }}" method="POST" class="uk-form-stacked uk-margin-top">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="uk-margin">
-                    <label class="uk-form-label uk-text-bold">Vendor Name</label>
-                    <input class="uk-input" type="text" name="display_name" required placeholder="e.g. Utility Co">
+                    <label class="uk-form-label uk-text-bold">Vendor Display Name</label>
+                    <input class="uk-input uk-border-rounded" type="text" name="display_name" required placeholder="e.g. Utility Co">
+                </div>
+                <div class="uk-margin">
+                    <label class="uk-form-label uk-text-bold">Company Name (Optional)</label>
+                    <input class="uk-input uk-border-rounded" type="text" name="company_name" placeholder="e.g. Utility Services LLC">
                 </div>
                 <div class="uk-margin">
                     <label class="uk-form-label uk-text-bold">Contact Email</label>
-                    <input class="uk-input" type="email" name="email" placeholder="support@utility.com">
+                    <input class="uk-input uk-border-rounded" type="email" name="email" placeholder="support@utility.com">
                 </div>
                 <div class="uk-margin-large-top uk-text-right">
                     <button type="button" @click="showModal = false" class="uk-button uk-button-text uk-margin-right">Cancel</button>
-                    <button type="submit" class="uk-button uk-button-primary">Create Vendor</button>
+                    <button type="submit" class="uk-button uk-button-primary uk-border-rounded uk-text-bold">Create Vendor</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
+<style>
+    .vendor-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 800;
+        font-size: 14px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .uk-table th {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        color: #64748b;
+    }
+    .uk-table td {
+        font-size: 13.5px;
+    }
+</style>
+
 <script>
-    const { createApp, ref } = Vue;
+    const { createApp, ref, computed } = Vue;
     createApp({
+        delimiters: ['[[', ']]'],
         setup() {
             const showModal = ref(false);
-            return { showModal };
+            const searchQuery = ref('');
+            
+            // Pass the vendors from Jinja to Vue
+            const vendors = ref({{ vendors | tojson | safe }});
+            
+            const filteredVendors = computed(() => {
+                if (!searchQuery.value) return vendors.value;
+                const q = searchQuery.value.toLowerCase();
+                return vendors.value.filter(v => 
+                    v.display_name.toLowerCase().includes(q) || 
+                    (v.company_name && v.company_name.toLowerCase().includes(q)) ||
+                    (v.email && v.email.toLowerCase().includes(q))
+                );
+            });
+
+            const getAvatarColor = (name) => {
+                const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#6366f1', '#8b5cf6', '#ec4899'];
+                let hash = 0;
+                for (let i = 0; i < name.length; i++) {
+                    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                return colors[Math.abs(hash) % colors.length];
+            };
+
+            return { showModal, searchQuery, filteredVendors, getAvatarColor };
         }
     }).mount('#vendor-app');
 </script>

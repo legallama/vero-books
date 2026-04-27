@@ -11,11 +11,14 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     
     # Import models to ensure they are registered
-    from app.models.admin import organization, user, notification, team
-    from app.models.accounting import account, journal, tax, payment, bank_rule, receipt, reconciliation, recurring_journal
+    from app.models.admin import organization, user, notification, team, payroll
+
+    from app.models.accounting import account, journal, tax, payment, bank_rule, receipt, reconciliation, recurring_journal, tax_nexus
+
     from app.models.crm import contact
     from app.models.sales import invoice, estimate, recurring, product
     from app.models.purchases import bill
+    from app.models.banking import bank_account, check
     from app.models.audit import log
 
     login_manager.init_app(app)
@@ -68,6 +71,12 @@ def create_app(config_class=Config):
     app.register_blueprint(team_bp, url_prefix='/team')
     app.register_blueprint(recurring_journal_bp, url_prefix='/recurring-journal')
     app.register_blueprint(help_bp)
+    from app.blueprints.payroll import payroll_bp
+    app.register_blueprint(payroll_bp)
+    from app.blueprints.payments import payments_bp
+    app.register_blueprint(payments_bp)
+
+
 
     @app.errorhandler(400)
     def handle_csrf_error(e):
@@ -82,6 +91,8 @@ def create_app(config_class=Config):
         from app.services.auth_service import get_current_org
         from flask_login import current_user
         from app.models.admin.notification import Notification
+        from app.models.accounting.account import Account
+        from app.models.accounting.journal import JournalEntry
         
         org = get_current_org()
         data = dict(current_org=org)
@@ -96,11 +107,27 @@ def create_app(config_class=Config):
                 user_id=current_user.id, 
                 organization_id=org.id
             ).order_by(Notification.created_at.desc()).limit(5).all()
+
+            # Global Setup Progress
+            setup_steps = [
+                {'id': 'org', 'title': 'Complete Company Profile', 'completed': bool(org.legal_name or org.phone)},
+                {'id': 'accounts', 'title': 'Review Chart of Accounts', 'completed': Account.query.filter_by(organization_id=org.id).count() > 10},
+                {'id': 'bank', 'title': 'Set Up Bank Account', 'completed': Account.query.filter_by(organization_id=org.id).filter(Account.subtype == 'Bank').count() > 0},
+                {'id': 'team', 'title': 'Invite Team Members', 'completed': len(org.memberships) > 1},
+                {'id': 'trans', 'title': 'Record First Transaction', 'completed': JournalEntry.query.filter_by(organization_id=org.id).count() > 0}
+            ]
+            data['setup_steps'] = setup_steps
+            data['completed_steps'] = len([s for s in setup_steps if s['completed']])
+            data['total_steps'] = len(setup_steps)
+            data['setup_percent'] = (data['completed_steps'] / data['total_steps']) * 100
         else:
             data['unread_notifications_count'] = 0
             data['recent_notifications'] = []
+            data['setup_steps'] = []
+            data['setup_percent'] = 0
             
         return data
+
 
     with app.app_context():
         db.create_all()

@@ -18,7 +18,9 @@
                         <th>Rule Name</th>
                         <th>Conditions</th>
                         <th>Target Account</th>
+                        <th class="uk-text-center">Auto-Post</th>
                         <th class="uk-text-center">Status</th>
+
                         <th class="uk-table-shrink"></th>
                     </tr>
                 </thead>
@@ -37,10 +39,18 @@
                             <div class="uk-text-meta">{{ rule.target_account.code }}</div>
                         </td>
                         <td class="uk-text-center">
+                            {% if rule.auto_post %}
+                            <span uk-icon="icon: check; ratio: 0.8" class="uk-text-success" uk-tooltip="Zero-touch Posting Enabled"></span>
+                            {% else %}
+                            <span uk-icon="icon: minus; ratio: 0.8" class="uk-text-muted"></span>
+                            {% endif %}
+                        </td>
+                        <td class="uk-text-center">
                             <span class="uk-label {{ 'uk-label-success' if rule.is_active else 'uk-label-muted' }}">
                                 {{ 'Active' if rule.is_active else 'Paused' }}
                             </span>
                         </td>
+
                         <td class="uk-text-right">
                             <form action="{{ url_for('banking.delete_rule', rule_id=rule.id) }}" method="POST" onsubmit="return confirm('Delete this automation rule?');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -103,6 +113,15 @@
                         {% endfor %}
                     </select>
                 </div>
+
+                <div class="uk-margin">
+                    <label class="uk-flex uk-flex-middle">
+                        <input class="uk-checkbox uk-margin-small-right" type="checkbox" name="auto_post" value="true">
+                        <span class="uk-text-bold" style="color: #6366f1;">Auto-Post to Ledger</span>
+                    </label>
+                    <p class="uk-text-meta uk-margin-remove-top">If checked, transactions matching this rule will be added to the General Ledger automatically upon import.</p>
+                </div>
+
 
                 <div class="uk-margin-large-top uk-text-right">
                     <button type="button" @click="showModal = false" class="uk-button uk-button-text uk-margin-right">Cancel</button>

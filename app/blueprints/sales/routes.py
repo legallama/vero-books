@@ -39,3 +39,25 @@ def products():
     org = get_current_org()
     products = Product.query.filter_by(organization_id=org.id).all()
     return render_template('sales/products.html', products=products)
+@sales_bp.route('/api/tax-rate', methods=['POST'])
+@login_required
+def get_tax_rate():
+    from flask import request, jsonify
+    from app.services.tax_service import TaxService
+    from app.models.crm.contact import Customer
+    
+    org = get_current_org()
+    data = request.get_json()
+    customer_id = data.get('customer_id')
+    zip_code = data.get('zip_code')
+    
+    if not zip_code and customer_id:
+        customer = Customer.query.filter_by(id=customer_id, organization_id=org.id).first()
+        if customer:
+            zip_code = customer.zip_code
+            
+    if not zip_code:
+        return jsonify({'rate': 0.00})
+        
+    rate = TaxService.get_rate_for_zip(zip_code, org.id)
+    return jsonify({'rate': float(rate)})

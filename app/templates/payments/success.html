@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful | {{ invoice.invoice_number }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.21.5/dist/css/uikit.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f4f7fa; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .success-card { background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); padding: 48px; text-align: center; max-width: 500px; }
+        .check-icon { width: 80px; height: 80px; background: #ecfdf5; color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
+    </style>
+</head>
+<body>
+
+    <div class="success-card">
+        <div class="check-icon">
+            <span uk-icon="icon: check; ratio: 3"></span>
+        </div>
+        <h1 class="uk-text-bold" style="color: #1e293b; margin-bottom: 8px;">Payment Successful!</h1>
+        <p class="uk-text-meta" style="font-size: 16px;">Thank you for your payment of <strong style="color: #1e293b;">${{ "{:,.2f}".format(invoice.total) }}</strong>.</p>
+        
+        <div class="uk-margin-large-top uk-padding-small uk-background-muted uk-border-rounded">
+            <div class="uk-flex uk-flex-between uk-margin-small-bottom">
+                <span class="uk-text-meta">Invoice Number</span>
+                <span class="uk-text-bold">#{{ invoice.invoice_number }}</span>
+            </div>
+            <div class="uk-flex uk-flex-between uk-margin-small-bottom">
+                <span class="uk-text-meta">Transaction ID</span>
+                <span class="uk-text-meta">STRIPE-MOCKED-{{ invoice.invoice_number }}</span>
+            </div>
+            <div class="uk-flex uk-flex-between">
+                <span class="uk-text-meta">Date</span>
+                <span class="uk-text-meta">{{ invoice.issue_date.strftime('%b %d, %Y') }}</span>
+            </div>
+        </div>
+
+        <div class="uk-margin-large-top">
+            <button onclick="window.print()" class="uk-button uk-button-default uk-border-rounded uk-width-1-1">Print Receipt</button>
+        </div>
+    </div>
+
+    <!-- UIkit JS -->
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.5/dist/js/uikit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.5/dist/js/uikit-icons.min.js"></script>
+</body>
+</html>

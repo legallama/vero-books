@@ -92,7 +92,19 @@
                             </div>
                         </div>
                         <div class="account-balance {{ 'balance-negative' if (acc.balance|float) < 0 }}">
-                            ${{ "{:,.2f}".format(acc.balance|abs) }}
+                            <div class="uk-flex uk-flex-column uk-flex-right">
+                                <div class="uk-text-right">
+                                    <form action="{{ url_for('banking.delete_account', bank_acc_id=acc.id) }}" method="POST" onsubmit="return confirm('Permanently remove this account?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="uk-button uk-button-link" style="color: #cbd5e1; transition: color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#cbd5e1'">
+                                            <span uk-icon="icon: trash; ratio: 0.7"></span>
+                                        </button>
+                                    </form>
+                                </div>
+                                <div class="uk-margin-small-top">
+                                    ${{ "{:,.2f}".format(acc.balance|abs) }}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -117,16 +129,24 @@
                     <div class="account-card-footer">
                         <div>
                             {% if acc.uncategorized_count > 0 %}
-                            <span class="uncategorized-badge">{{ acc.uncategorized_count }} uncategorized</span>
+                            <span class="uncategorized-badge">{{ acc.uncategorized_count }} to review</span>
                             {% else %}
-                            <span class="all-clear-badge">All categorized</span>
+                            <span class="all-clear-badge">All clear</span>
                             {% endif %}
                         </div>
-                        <div class="uk-text-meta" style="font-size: 11px;">
-                            {% if acc.last_tx %}
-                            Last activity: {{ acc.last_tx.strftime('%m/%d/%Y') }}
+                        <div class="uk-flex uk-flex-middle" style="gap: 8px;">
+                            {% if acc.account_id %}
+                            <div class="uk-flex uk-flex-middle" uk-tooltip="Linked to: {{ acc.gl_account.name }}">
+                                <span uk-icon="icon: link; ratio: 0.6" style="color: #10b981;"></span>
+                                <form action="{{ url_for('banking.unlink_gl', bank_acc_id=acc.id) }}" method="POST" style="margin-left: 4px;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="uk-button uk-button-link uk-text-meta" style="font-size: 10px; text-transform: none; color: #ef4444;">Unlink</button>
+                                </form>
+                            </div>
                             {% else %}
-                            No activity
+                            <button @click="openLinkModal('{{ acc.id }}', '{{ acc.name }}')" class="uk-button uk-button-text uk-text-meta" style="font-size: 10px; text-transform: none; color: #3b82f6;">
+                                <span uk-icon="icon: link; ratio: 0.5" class="uk-margin-small-right"></span>Link GL
+                            </button>
                             {% endif %}
                         </div>
                     </div>
@@ -183,7 +203,9 @@
                         <th style="width: 100px;">Date</th>
                         <th>Description / Payee</th>
                         <th style="width: 160px;">Account</th>
+                        <th style="width: 80px;" class="uk-text-center">Receipt</th>
                         <th class="uk-text-center" style="width: 180px;">Status</th>
+
                         <th class="uk-text-right" style="width: 120px;">Amount</th>
                         <th class="uk-table-shrink"></th>
                     </tr>
@@ -287,6 +309,36 @@
             </form>
         </div>
     </div>
+
+    <!-- ═══ Link GL Modal ═══ -->
+    <div v-if="showLinkModal" class="uk-flex uk-flex-top uk-flex-center uk-position-fixed uk-position-z-index uk-height-viewport uk-width-1-1" style="background: rgba(0,0,0,0.5); top:0; left:0; padding-top: 80px; backdrop-filter: blur(4px);">
+        <div class="uk-card uk-card-default uk-card-body uk-width-large uk-animation-scale-up uk-animation-fast" style="border-radius: 14px;">
+            <h3 class="uk-card-title uk-text-bold" style="font-size: 18px;">Link to General Ledger</h3>
+            <p class="uk-text-meta" style="font-size: 13px;">Connect <strong>[[ selectedBankAccName ]]</strong> to an account in your Chart of Accounts.</p>
+            
+            <form :action="'/banking/accounts/' + selectedBankAccId + '/link-gl'" method="POST" class="uk-form-stacked uk-margin-top">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="uk-margin">
+                    <label class="uk-form-label uk-text-bold" style="font-size: 12px;">Select GL Account</label>
+                    <select class="uk-select" name="gl_account_id" required style="border-radius: 6px;">
+                        <option value="">Select Account...</option>
+                        {% for acc in gl_accounts %}
+                        {% if acc.type == 'Asset' or acc.type == 'Liability' %}
+                        <option value="{{ acc.id }}">{{ acc.code }} - {{ acc.name }} ({{ acc.type }})</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    <p class="uk-text-meta uk-margin-small-top" style="font-size: 11px;">Usually a "Bank" type asset account.</p>
+                </div>
+
+                <div class="uk-margin-large-top uk-text-right">
+                    <button type="button" @click="showLinkModal = false" class="uk-button uk-button-text uk-margin-right" style="font-size: 13px;">Cancel</button>
+                    <button type="submit" class="uk-button uk-button-primary" style="border-radius: 6px;">Save Link</button>
+                </div>
+            </form>
+        </div>
+    </div>
     
     <!-- ═══ Manual Transaction Modal ═══ -->
     <div v-if="showTxModal" class="uk-flex uk-flex-top uk-flex-center uk-position-fixed uk-position-z-index uk-height-viewport uk-width-1-1" style="background: rgba(0,0,0,0.5); top:0; left:0; padding-top: 80px; backdrop-filter: blur(4px);">
@@ -329,7 +381,31 @@
                     <button type="submit" class="uk-button uk-button-primary" style="border-radius: 6px;">Record Transaction</button>
                 </div>
             </form>
+            <!-- ═══ Receipt Modal ═══ -->
+    <div v-if="showReceiptModal" class="uk-flex uk-flex-top uk-flex-center uk-position-fixed uk-position-z-index uk-height-viewport uk-width-1-1" style="background: rgba(0,0,0,0.5); top:0; left:0; padding-top: 80px; backdrop-filter: blur(4px);">
+        <div class="uk-card uk-card-default uk-card-body uk-width-large uk-animation-scale-up uk-animation-fast" style="border-radius: 14px;">
+            <h3 class="uk-card-title uk-text-bold" style="font-size: 18px;">Attach Receipt</h3>
+            <p class="uk-text-meta" style="font-size: 13px;">Link a digital receipt to <strong>[[ selectedTxDescription ]]</strong>.</p>
+            
+            <form action="{{ url_for('banking.attach_receipt') }}" method="POST" class="uk-form-stacked uk-margin-top">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="tx_id" :value="selectedTxId">
+                
+                <div class="uk-margin">
+                    <label class="uk-form-label uk-text-bold" style="font-size: 12px;">Receipt URL / Link</label>
+                    <input class="uk-input" type="url" name="receipt_url" placeholder="https://example.com/receipt.pdf" required style="border-radius: 6px;">
+                    <p class="uk-text-meta uk-margin-small-top" style="font-size: 11px;">In a full version, you would upload the file here. For now, provide a link.</p>
+                </div>
+
+                <div class="uk-margin-large-top uk-text-right">
+                    <button type="button" @click="showReceiptModal = false" class="uk-button uk-button-text uk-margin-right" style="font-size: 13px;">Cancel</button>
+                    <button type="submit" class="uk-button uk-button-primary" style="border-radius: 6px;">Attach Receipt</button>
+                </div>
+            </form>
         </div>
+    </div>
+</div>
+
     </div>
 </div>
 
@@ -458,10 +534,28 @@
         setup() {
             const showModal = ref(false);
             const showTxModal = ref(false);
+            const showLinkModal = ref(false);
+            const showReceiptModal = ref(false);
             const txType = ref('deposit');
             const today = ref(new Date().toISOString().split('T')[0]);
             
+            const selectedBankAccId = ref('');
+            const selectedBankAccName = ref('');
             const selectedTxs = ref([]);
+            const selectedTxId = ref('');
+            const selectedTxDescription = ref('');
+
+            const openLinkModal = (id, name) => {
+                selectedBankAccId.value = id;
+                selectedBankAccName.value = name;
+                showLinkModal.value = true;
+            };
+
+            const openReceiptModal = (id, desc) => {
+                selectedTxId.value = id;
+                selectedTxDescription.value = desc;
+                showReceiptModal.value = true;
+            };
             
             const toggleAll = (e) => {
                 const checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
@@ -497,8 +591,15 @@
                 form.submit();
             };
 
-            return { showModal, showTxModal, txType, today, selectedTxs, toggleAll, deleteSelected };
+            return { 
+                showModal, showTxModal, showLinkModal, showReceiptModal,
+                txType, today, 
+                selectedBankAccId, selectedBankAccName, selectedTxs,
+                selectedTxId, selectedTxDescription,
+                openLinkModal, openReceiptModal, toggleAll, deleteSelected 
+            };
         }
+
     }).mount('#banking-app');
 </script>
 {% endblock %}

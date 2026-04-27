@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-container uk-container-expand uk-margin-top">
+    <div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+        <div>
+            <h1 class="uk-heading-small uk-margin-remove-bottom">Accounts Receivable Aging</h1>
+            <p class="uk-text-meta">Unpaid invoices grouped by how long they've been outstanding.</p>
+        </div>
+        <div class="uk-flex" style="gap: 10px;">
+            <button class="uk-button uk-button-default" onclick="window.print()">
+                <span uk-icon="print" class="uk-margin-small-right"></span>Print Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Grid -->
+    <div class="uk-grid-small uk-child-width-expand@s uk-margin-medium-bottom" uk-grid>
+        {% for label, list in buckets.items() %}
+        <div>
+            <div class="uk-card uk-card-default uk-card-small uk-card-body uk-border-rounded {{ 'uk-background-muted' if label == 'current' else ('uk-background-danger uk-light' if label == '90+' else '') }}">
+                <p class="uk-text-meta uk-text-uppercase uk-text-bold uk-margin-remove-bottom">{{ label }}</p>
+                {% set total = list | sum(attribute='balance_due') %}
+                <h3 class="uk-margin-remove-top uk-text-bold">${{ "{:,.2f}".format(total) }}</h3>
+                <p class="uk-text-meta uk-margin-remove">{{ list | length }} invoices</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="uk-card uk-card-default uk-border-rounded">
+        <div class="uk-overflow-auto">
+            <table class="uk-table uk-table-divider uk-table-hover uk-table-middle">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th class="uk-text-right">Current</th>
+                        <th class="uk-text-right">1-30 Days</th>
+                        <th class="uk-text-right">31-60 Days</th>
+                        <th class="uk-text-right">61-90 Days</th>
+                        <th class="uk-text-right">90+ Days</th>
+                        <th class="uk-text-right uk-text-bold">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {# Ideally we'd group by customer, but for this MVP let's list all invoices #}
+                    {% for label, list in buckets.items() %}
+                        {% for inv in list %}
+                        <tr>
+                            <td>
+                                <div class="uk-text-bold">{{ inv.customer.display_name }}</div>
+                                <div class="uk-text-meta">#{{ inv.invoice_number }} (Due: {{ inv.due_date.strftime('%Y-%m-%d') }})</div>
+                            </td>
+                            <td class="uk-text-right">{{ "${:,.2f}".format(inv.balance_due) if label == 'current' else '-' }}</td>
+                            <td class="uk-text-right">{{ "${:,.2f}".format(inv.balance_due) if label == '1-30' else '-' }}</td>
+                            <td class="uk-text-right">{{ "${:,.2f}".format(inv.balance_due) if label == '31-60' else '-' }}</td>
+                            <td class="uk-text-right">{{ "${:,.2f}".format(inv.balance_due) if label == '61-90' else '-' }}</td>
+                            <td class="uk-text-right">{{ "${:,.2f}".format(inv.balance_due) if label == '90+' else '-' }}</td>
+                            <td class="uk-text-right uk-text-bold">${{ "{:,.2f}".format(inv.balance_due) }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="uk-background-muted">
+                        <td class="uk-text-bold">TOTALS</td>
+                        <td class="uk-text-right uk-text-bold">${{ "{:,.2f}".format(buckets['current'] | sum(attribute='balance_due')) }}</td>
+                        <td class="uk-text-right uk-text-bold">${{ "{:,.2f}".format(buckets['1-30'] | sum(attribute='balance_due')) }}</td>
+                        <td class="uk-text-right uk-text-bold">${{ "{:,.2f}".format(buckets['31-60'] | sum(attribute='balance_due')) }}</td>
+                        <td class="uk-text-right uk-text-bold">${{ "{:,.2f}".format(buckets['61-90'] | sum(attribute='balance_due')) }}</td>
+                        <td class="uk-text-right uk-text-bold">${{ "{:,.2f}".format(buckets['90+'] | sum(attribute='balance_due')) }}</td>
+                        {% set total_all = 0 %}
+                        {% for l in buckets.values() %}{% set total_all = total_all + (l | sum(attribute='balance_due')) %}{% endfor %}
+                        <td class="uk-text-right uk-text-bold uk-text-primary uk-text-large">${{ "{:,.2f}".format(total_all) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

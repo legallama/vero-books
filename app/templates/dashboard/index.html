@@ -30,44 +30,21 @@
                 </div>
                 <progress class="uk-progress uk-margin-small-top uk-margin-remove-bottom" value="{{ setup_percent }}" max="100" style="height: 6px; border-radius: 3px; background: #ddd6fe;"></progress>
             </div>
-            <div class="uk-width-auto">
-                <button class="uk-button uk-button-default uk-button-small uk-border-rounded" style="text-transform: none; font-size: 11px;" uk-toggle="target: #setup-tasks-modal">View Tasks</button>
+            <div class="uk-width-auto uk-flex uk-flex-middle" style="gap: 10px;">
+                <form action="{{ url_for('dashboard.run_automation') }}" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="uk-button uk-button-default uk-button-small uk-border-rounded" style="text-transform: none; font-size: 11px;" uk-tooltip="Process recurring invoices & journals">
+                        <span uk-icon="icon: clock; ratio: 0.7" class="uk-margin-small-right"></span>Process Recurring
+                    </button>
+                </form>
+                <button class="uk-button uk-button-primary uk-button-small uk-border-rounded" style="text-transform: none; font-size: 11px;" uk-toggle="target: #setup-tasks-modal">View Tasks</button>
             </div>
+
         </div>
     </div>
 
-    <!-- Setup Tasks Modal -->
-    <div id="setup-tasks-modal" uk-modal>
-        <div class="uk-modal-dialog uk-modal-body uk-border-rounded">
-            <button class="uk-modal-close-default" type="button" uk-close></button>
-            <h2 class="uk-modal-title uk-text-bold">Setup Checklist</h2>
-            <p class="uk-text-meta">Complete these steps to get the most out of VeroBooks.</p>
-            
-            <ul class="uk-list uk-list-divider uk-margin-medium-top">
-                {% for step in setup_steps %}
-                <li class="uk-flex uk-flex-middle">
-                    <div class="uk-margin-small-right">
-                        {% if step.completed %}
-                        <span uk-icon="icon: check; ratio: 1.2" style="color: #10b981;"></span>
-                        {% else %}
-                        <span uk-icon="icon: minus; ratio: 1" style="color: #94a3b8;"></span>
-                        {% endif %}
-                    </div>
-                    <div class="uk-width-expand">
-                        <span class="{{ 'uk-text-bold' if not step.completed else 'uk-text-muted' }}" style="{{ 'text-decoration: line-through;' if step.completed }}">
-                            {{ step.title }}
-                        </span>
-                    </div>
-                    {% if not step.completed %}
-                    <div>
-                        <a href="#" class="uk-button uk-button-text uk-text-primary" style="font-size: 12px;">Complete</a>
-                    </div>
-                    {% endif %}
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
+
+
 
     <div class="uk-grid-medium" uk-grid>
         <div class="uk-width-expand@l">

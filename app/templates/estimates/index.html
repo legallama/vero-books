@@ -19,6 +19,7 @@
                     <th>Date</th>
                     <th class="uk-text-center">Status</th>
                     <th class="uk-text-right">Amount</th>
+                    <th class="uk-table-shrink"></th>
                 </tr>
             </thead>
             <tbody>
@@ -28,10 +29,20 @@
                     <td class="uk-text-bold">{{ estimate.customer.display_name }}</td>
                     <td class="uk-text-meta">{{ estimate.issue_date.strftime('%Y-%m-%d') }}</td>
                     <td class="uk-text-center">
-                        <span class="uk-label uk-label-warning">{{ estimate.status }}</span>
+                        <span class="uk-label {{ 'uk-label-success' if estimate.status == 'INVOICED' else 'uk-label-warning' }}">{{ estimate.status }}</span>
                     </td>
                     <td class="uk-text-right uk-text-bold">${{ "{:,.2f}".format(estimate.total) }}</td>
+                    <td class="uk-text-nowrap">
+                        {% if estimate.status != 'INVOICED' %}
+                        <form action="{{ url_for('estimates.convert_to_invoice', estimate_id=estimate.id) }}" method="POST" style="display: inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="uk-button uk-button-primary uk-button-small uk-border-rounded" style="font-size: 10px; line-height: 24px; padding: 0 10px;">Convert</button>
+                        </form>
+                        {% endif %}
+                        <button class="uk-icon-button" uk-icon="more-vertical; ratio: 0.8" type="button"></button>
+                    </td>
                 </tr>
+
                 {% else %}
                 <tr>
                     <td colspan="5" class="uk-text-center uk-text-muted uk-padding-large italic">No estimates found.</td>

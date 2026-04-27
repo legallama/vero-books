@@ -22,9 +22,10 @@ def index():
     
     # Get last reconciliation for each account
     for acc in bank_accounts:
-        acc.last_recon = Reconciliation.query.filter_by(account_id=acc.id).order_by(Reconciliation.statement_date.desc()).first()
+        acc.last_recon = Reconciliation.query.filter_by(account_id=acc.id, status='COMPLETED').order_by(Reconciliation.statement_date.desc()).first()
     
     return render_template('reconciliation/index.html', accounts=bank_accounts)
+
 
 @reconciliation_bp.route('/start/<string:account_id>', methods=['GET', 'POST'])
 @login_required
@@ -108,3 +109,29 @@ def toggle_line(recon_id, line_id):
         
     db.session.commit()
     return {'success': True, 'cleared': line.cleared}
+@reconciliation_bp.route('/summary/<int:recon_id>')
+@login_required
+def summary(recon_id):
+    org = get_current_org()
+    recon = Reconciliation.query.filter_by(id=recon_id, organization_id=org.id).first_or_404()
+    
+    # Get all lines cleared in this reconciliation
+    cleared_lines = JournalLine.query.filter_by(reconciliation_id=recon.id).all()
+    
+    # Calculate totals
+    total_cleared_debits = sum(float(l.debit) for l in cleared_lines)
+    total_cleared_credits = sum(float(l.credit) for l in cleared_lines)
+    
+    # Uncleared items for this account (to show the 'Book Balance' gap)
+    uncleared_lines = JournalLine.query.filter_by(account_id=recon.account_id, cleared=False).all()
+    total_uncleared_debits = sum(float(l.debit) for l in uncleared_lines)
+    total_uncleared_credits = sum(float(l.credit) for l in uncleared_lines)
+    
+    return render_template('reconciliation/summary.html', 
+                           recon=recon, 
+                           cleared_lines=cleared_lines,
+                           total_cleared_debits=total_cleared_debits,
+                           total_cleared_credits=total_cleared_credits,
+                           uncleared_lines=uncleared_lines,
+                           total_uncleared_debits=total_uncleared_debits,
+                           total_uncleared_credits=total_uncleared_credits)

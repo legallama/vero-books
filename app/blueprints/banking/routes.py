@@ -66,7 +66,30 @@ def index():
             if match:
                 tx.suggested_account = rule.target_account
                 tx.rule_name = rule.name
+                tx.auto_post_enabled = rule.auto_post
                 break # First match wins based on priority
+        
+        # Heuristic Magic Suggestion (If no rule matched)
+        if not tx.suggested_account and tx.status == 'UNCATEGORIZED':
+            last_match = BankTransaction.query.filter(
+                BankTransaction.organization_id == org.id,
+                BankTransaction.description == tx.description,
+                BankTransaction.status == 'MATCHED',
+                BankTransaction.id != tx.id
+            ).order_by(BankTransaction.date.desc()).first()
+            
+            if last_match and last_match.matched_source_id:
+                from app.models.accounting.journal import JournalEntry
+                je = JournalEntry.query.get(last_match.matched_source_id)
+                if je:
+                    # Find the 'offset' account (not the bank account)
+                    for line in je.lines:
+                        if line.account_id != tx.bank_account.account_id:
+                            tx.suggested_account = line.account
+                            tx.rule_name = "Based on your history"
+                            break
+
+
                 
     gl_accounts = Account.query.filter_by(organization_id=org.id).order_by(Account.name).all()
     
@@ -99,6 +122,187 @@ def create_account():
     db.session.commit()
     flash("Bank account linked.", "success")
     return redirect(url_for('banking.index'))
+
+@banking_bp.route('/accounts/<bank_acc_id>/link-gl', methods=['POST'])
+@login_required
+def link_gl(bank_acc_id):
+    org = get_current_org()
+    from app.models.banking.bank_account import BankAccount
+    from app.models.accounting.account import Account
+    
+    bank_acc = BankAccount.query.filter_by(id=bank_acc_id, organization_id=org.id).first_or_404()
+    gl_account_id = request.form.get('gl_account_id')
+    
+    if gl_account_id:
+        gl_acc = Account.query.filter_by(id=gl_account_id, organization_id=org.id).first_or_404()
+        bank_acc.account_id = gl_acc.id
+        db.session.commit()
+        flash(f"Account '{bank_acc.name}' is now linked to GL account '{gl_acc.name}'.", "success")
+    else:
+        flash("No GL account selected.", "warning")
+        
+    return redirect(url_for('banking.index'))
+
+@banking_bp.route('/accounts/<bank_acc_id>/unlink-gl', methods=['POST'])
+@login_required
+def unlink_gl(bank_acc_id):
+    org = get_current_org()
+    from app.models.banking.bank_account import BankAccount
+    
+    bank_acc = BankAccount.query.filter_by(id=bank_acc_id, organization_id=org.id).first_or_404()
+    bank_acc.account_id = None
+    db.session.commit()
+    
+    flash(f"Account '{bank_acc.name}' has been unlinked from the General Ledger.", "info")
+    return redirect(url_for('banking.index'))
+
+@banking_bp.route('/accounts/<bank_acc_id>/delete', methods=['POST'])
+@login_required
+def delete_account(bank_acc_id):
+    org = get_current_org()
+    from app.models.banking.bank_account import BankAccount, BankTransaction
+    
+    bank_acc = BankAccount.query.filter_by(id=bank_acc_id, organization_id=org.id).first_or_404()
+    
+    # Safety check: Don't delete if there are transactions
+    tx_count = BankTransaction.query.filter_by(bank_account_id=bank_acc_id).count()
+    if tx_count > 0:
+        flash(f"Cannot delete account '{bank_acc.name}' because it has {tx_count} transactions. Please remove transactions first.", "danger")
+        return redirect(url_for('banking.index'))
+        
+    db.session.delete(bank_acc)
+    db.session.commit()
+    
+    flash(f"Bank account '{bank_acc.name}' has been removed.", "success")
+    return redirect(url_for('banking.index'))
+
+@banking_bp.route('/checks/<check_id>/print')
+@login_required
+def print_check(check_id):
+    org = get_current_org()
+    from app.models.banking.check import Check
+    check = Check.query.filter_by(id=check_id, organization_id=org.id).first_or_404()
+    
+    # We might want to convert amount to words here if the template needs it
+    # For now, we'll do it in the template or pass a helper
+    return render_template('banking/checks/print.html', check=check)
+
+@banking_bp.route('/checks/<check_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_check(check_id):
+    org = get_current_org()
+    from app.models.banking.bank_account import BankAccount
+    from app.models.accounting.account import Account
+    from app.models.crm.contact import Vendor
+    from app.models.banking.check import Check
+    from app.models.accounting.journal import JournalEntry, JournalLine
+    from app.services.ledger_service import LedgerService
+    from datetime import datetime
+
+    check = Check.query.filter_by(id=check_id, organization_id=org.id).first_or_404()
+
+    if request.method == 'POST':
+        bank_account_id = request.form.get('bank_account_id')
+        check_number = request.form.get('check_number')
+        date_str = request.form.get('date')
+        payee_name = request.form.get('payee_name')
+        amount_str = request.form.get('amount', '0')
+        memo = request.form.get('memo')
+        expense_account_id = request.form.get('expense_account_id')
+
+        try:
+            amount = float(amount_str)
+        except ValueError:
+            amount = 0
+
+        if not bank_account_id or not check_number or amount <= 0 or not expense_account_id:
+            flash("Missing or invalid required fields.", "danger")
+            return redirect(url_for('banking.edit_check', check_id=check_id))
+
+        check_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else datetime.utcnow().date()
+        bank_acc = BankAccount.query.get(bank_account_id)
+
+        # 1. Update Check Record
+        check.bank_account_id = bank_account_id
+        check.check_number = check_number
+        check.date = check_date
+        check.payee_name = payee_name
+        check.amount = amount
+        check.memo = memo
+
+        # 2. Update/Replace Journal Entry
+        # If already posted, we should ideally reverse and create new, 
+        # but for simplicity in this MVP, we will update the existing one.
+        if check.journal_entry_id:
+            je = JournalEntry.query.get(check.journal_entry_id)
+            if je:
+                je.entry_number = f"CHK-{check_number}"
+                je.entry_date = datetime.combine(check_date, datetime.min.time())
+                je.memo = memo or f"Check #{check_number} to {payee_name}"
+                
+                # Clear old lines and add new ones
+                for line in je.lines:
+                    db.session.delete(line)
+                
+                bank_line = JournalLine(journal_entry_id=je.id, account_id=bank_acc.account_id, credit=amount, description=f"Check #{check_number} to {payee_name}")
+                expense_line = JournalLine(journal_entry_id=je.id, account_id=expense_account_id, debit=amount, description=memo or f"Check #{check_number}")
+                db.session.add(bank_line)
+                db.session.add(expense_line)
+        
+        db.session.commit()
+        flash(f"Check #{check_number} updated successfully.", "success")
+        return redirect(url_for('banking.checks'))
+
+    bank_accounts = BankAccount.query.filter_by(organization_id=org.id, account_type='Checking').all()
+    expense_accounts = Account.query.filter_by(organization_id=org.id).order_by(Account.code).all()
+    vendors = Vendor.query.filter_by(organization_id=org.id).all()
+    
+    # Try to find the current expense account from the journal entry
+    current_expense_account_id = None
+    if check.journal_entry:
+        for line in check.journal_entry.lines:
+            if line.debit > 0:
+                current_expense_account_id = line.account_id
+                break
+
+    return render_template('banking/checks/edit.html', 
+                           check=check,
+                           bank_accounts=bank_accounts, 
+                           expense_accounts=expense_accounts,
+                           vendors=vendors,
+                           current_expense_account_id=current_expense_account_id)
+
+from app.services.auth_service import get_current_org, require_role
+
+@banking_bp.route('/checks/<check_id>/delete', methods=['POST'])
+@login_required
+@require_role(['ADMIN', 'ACCOUNTANT'])
+def delete_check(check_id):
+
+    org = get_current_org()
+    from app.models.banking.check import Check
+    from app.services.ledger_service import LedgerService
+    
+    check = Check.query.filter_by(id=check_id, organization_id=org.id).first_or_404()
+    check_num = check.check_number
+
+    # Reverse the journal entry if it exists and is posted
+    if check.journal_entry_id:
+        je = check.journal_entry
+        if je.status == 'POSTED':
+            LedgerService.reverse_journal_entry(je.id, current_user.id, org.id, f"Check #{check_num} deleted")
+        else:
+            db.session.delete(je)
+
+    db.session.delete(check)
+    db.session.commit()
+    
+    flash(f"Check #{check_num} has been deleted and its ledger entry reversed/removed.", "info")
+    return redirect(url_for('banking.checks'))
+
+
+
+
 
 @banking_bp.route('/transactions/manual', methods=['POST'])
 @login_required
@@ -294,7 +498,13 @@ def import_statements():
                             status='UNCATEGORIZED'
                         )
                         db.session.add(new_tx)
+                        db.session.flush() # Ensure tx has ID
                         imported_txs += 1
+                        
+                        # Apply Smart Rules
+                        from app.services.banking_service import BankingService
+                        BankingService.apply_rules_to_transaction(new_tx, org.id, current_user.id)
+
                         
             db.session.commit()
             flash(f"Successfully imported {imported_txs} transactions from QBO/OFX.", "success")
@@ -459,8 +669,10 @@ def create_rule():
         field_to_match=request.form.get('field'),
         match_type=request.form.get('match_type'),
         match_value=request.form.get('match_value'),
-        target_account_id=request.form.get('target_account_id')
+        target_account_id=request.form.get('target_account_id'),
+        auto_post=request.form.get('auto_post') == 'true'
     )
+
     db.session.add(new_rule)
     db.session.commit()
     flash("Bank rule created successfully.", "success")
@@ -476,3 +688,135 @@ def delete_rule(rule_id):
     db.session.commit()
     flash("Bank rule removed.", "success")
     return redirect(url_for('banking.rules'))
+
+@banking_bp.route('/checks')
+@login_required
+def checks():
+    org = get_current_org()
+    from app.models.banking.check import Check
+    checks = Check.query.filter_by(organization_id=org.id).order_by(Check.date.desc(), Check.check_number.desc()).all()
+    return render_template('banking/checks/index.html', checks=checks)
+
+@banking_bp.route('/checks/create', methods=['GET', 'POST'])
+@login_required
+def create_check():
+    org = get_current_org()
+    from app.models.banking.bank_account import BankAccount
+    from app.models.accounting.account import Account
+    from app.models.crm.contact import Vendor
+    from app.models.banking.check import Check
+    from app.models.accounting.journal import JournalEntry, JournalLine
+    from app.services.ledger_service import LedgerService
+    from datetime import datetime
+
+    if request.method == 'POST':
+        bank_account_id = request.form.get('bank_account_id')
+        check_number = request.form.get('check_number')
+        date_str = request.form.get('date')
+        payee_name = request.form.get('payee_name')
+        amount_str = request.form.get('amount', '0')
+        memo = request.form.get('memo')
+        expense_account_id = request.form.get('expense_account_id')
+
+        try:
+            amount = float(amount_str)
+        except ValueError:
+            amount = 0
+
+        # Basic validation
+        if not bank_account_id or not check_number or amount <= 0 or not expense_account_id:
+            flash("Missing or invalid required fields.", "danger")
+            return redirect(url_for('banking.create_check'))
+
+        check_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else datetime.utcnow().date()
+
+        # Get the GL account for the bank account
+        bank_acc = BankAccount.query.get(bank_account_id)
+        if not bank_acc or not bank_acc.account_id:
+            flash("Bank account is not linked to a GL account.", "danger")
+            return redirect(url_for('banking.create_check'))
+
+        # 1. Create Journal Entry
+        je = JournalEntry(
+            organization_id=org.id,
+            entry_number=f"CHK-{check_number}",
+            entry_date=datetime.combine(check_date, datetime.min.time()),
+            memo=memo or f"Check #{check_number} to {payee_name}",
+            source_type='CHECK',
+            status='DRAFT',
+            created_by=current_user.id
+        )
+        db.session.add(je)
+        db.session.flush()
+        
+        # Line 1: Credit Bank Account
+        bank_line = JournalLine(
+            journal_entry_id=je.id,
+            account_id=bank_acc.account_id,
+            credit=amount,
+            description=f"Check #{check_number} to {payee_name}"
+        )
+        
+        # Line 2: Debit Expense Account
+        expense_line = JournalLine(
+            journal_entry_id=je.id,
+            account_id=expense_account_id,
+            debit=amount,
+            description=memo or f"Check #{check_number}"
+        )
+        
+        db.session.add(bank_line)
+        db.session.add(expense_line)
+        db.session.flush()
+
+        # 2. Create Check Record
+        new_check = Check(
+            organization_id=org.id,
+            bank_account_id=bank_account_id,
+            check_number=check_number,
+            date=check_date,
+            payee_name=payee_name,
+            amount=amount,
+            memo=memo,
+            status='PRINTED',
+            journal_entry_id=je.id
+        )
+        db.session.add(new_check)
+        
+        # 3. Post to Ledger
+        success, msg = LedgerService.post_journal_entry(je.id, current_user.id, org.id)
+        
+        if success:
+            db.session.commit()
+            flash(f"Check #{check_number} created and posted.", "success")
+        else:
+            db.session.rollback()
+            flash(f"Error posting check: {msg}", "danger")
+            
+        return redirect(url_for('banking.checks'))
+
+    bank_accounts = BankAccount.query.filter_by(organization_id=org.id, account_type='Checking').all()
+    expense_accounts = Account.query.filter_by(organization_id=org.id).order_by(Account.code).all()
+    vendors = Vendor.query.filter_by(organization_id=org.id).all()
+    
+    return render_template('banking/checks/create.html', 
+                           bank_accounts=bank_accounts, 
+                           expense_accounts=expense_accounts,
+                           vendors=vendors)
+
+@banking_bp.route('/transactions/attach-receipt', methods=['POST'])
+@login_required
+def attach_receipt():
+    org = get_current_org()
+    tx_id = request.form.get('tx_id')
+    receipt_url = request.form.get('receipt_url')
+    
+    from app.models.banking.bank_account import BankTransaction
+    tx = BankTransaction.query.filter_by(id=tx_id, organization_id=org.id).first_or_404()
+    tx.receipt_url = receipt_url
+    db.session.commit()
+    
+    flash("Receipt successfully attached to transaction.", "success")
+    return redirect(url_for('banking.index'))
+
+

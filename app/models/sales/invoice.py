@@ -9,7 +9,9 @@ class Invoice(db.Model):
     organization_id = db.Column(db.String(36), db.ForeignKey('organizations.id'), nullable=False)
     customer_id = db.Column(db.String(36), db.ForeignKey('customers.id'), nullable=False)
     invoice_number = db.Column(db.String(50), nullable=False)
+    type = db.Column(db.String(20), default='INVOICE') # INVOICE, CREDIT_MEMO
     issue_date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date)
+
     due_date = db.Column(db.Date, nullable=False)
     status = db.Column(db.String(20), default='DRAFT') # DRAFT, SENT, PAID, OVERDUE, VOID
     subtotal = db.Column(db.Numeric(15, 2), default=0.00)
@@ -17,6 +19,7 @@ class Invoice(db.Model):
     total = db.Column(db.Numeric(15, 2), default=0.00)
     balance_due = db.Column(db.Numeric(15, 2), default=0.00)
     notes = db.Column(db.Text)
+    public_token = db.Column(db.String(64), unique=True, default=lambda: uuid.uuid4().hex)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     organization = db.relationship('Organization')

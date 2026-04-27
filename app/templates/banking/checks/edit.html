@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-container uk-container-large uk-margin-top">
+    <div class="uk-margin-medium-bottom">
+        <div class="uk-flex uk-flex-between uk-flex-middle">
+            <div>
+                <a href="{{ url_for('banking.checks') }}" class="uk-button uk-button-text uk-margin-small-bottom">
+                    <span uk-icon="icon: arrow-left; ratio: 0.8" class="uk-margin-small-right"></span>Back to Checks
+                </a>
+                <h1 class="uk-heading-small uk-text-bold uk-margin-remove">Edit Check</h1>
+                <p class="uk-text-meta">Modify an existing check and update the ledger entry.</p>
+            </div>
+            <div class="uk-text-right">
+                <div class="uk-text-meta">Current Balance</div>
+                <div class="uk-text-lead uk-text-bold" id="selected-balance">${{ "{:,.2f}".format(check.bank_account.balance or 0) }}</div>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('banking.edit_check', check_id=check.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <!-- The Check Mockup -->
+        <div class="check-container uk-margin-medium-bottom">
+            <div class="check-body">
+                <!-- Top Row: Bank Info & Check Number -->
+                <div class="uk-grid-small" uk-grid>
+                    <div class="uk-width-expand">
+                        <div class="bank-info">
+                            <select name="bank_account_id" class="uk-select bank-selector" required onchange="updateBalance(this)">
+                                {% for acc in bank_accounts %}
+                                <option value="{{ acc.id }}" data-balance="{{ acc.balance }}" {{ 'selected' if acc.id == check.bank_account_id }}>{{ acc.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="uk-width-auto">
+                        <div class="check-num-box">
+                            <span class="label">NO.</span>
+                            <input type="text" name="check_number" class="check-num-input" placeholder="1001" value="{{ check.check_number }}" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Second Row: Date -->
+                <div class="uk-flex uk-flex-right uk-margin-small-top">
+                    <div class="date-box">
+                        <span class="label">DATE</span>
+                        <input type="date" name="date" class="date-input" value="{{ check.date.strftime('%Y-%m-%d') }}" required>
+                    </div>
+                </div>
+
+                <!-- Third Row: Payee & Amount -->
+                <div class="uk-grid-small uk-margin-medium-top uk-flex-middle" uk-grid>
+                    <div class="uk-width-expand">
+                        <div class="payee-box">
+                            <span class="label">PAY TO THE<br>ORDER OF</span>
+                            <div class="payee-input-container">
+                                <input type="text" name="payee_name" list="vendor-list" class="payee-input" placeholder="Recipient Name" value="{{ check.payee_name }}" required>
+                                <datalist id="vendor-list">
+                                    {% for v in vendors %}
+                                    <option value="{{ v.display_name }}">
+                                    {% endfor %}
+                                </datalist>
+                                <div class="handwriting-line"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="uk-width-auto">
+                        <div class="amount-box">
+                            <span class="currency-symbol">$</span>
+                            <input type="number" step="0.01" name="amount" class="amount-input" placeholder="0.00" value="{{ "{:.2f}".format(check.amount) }}" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fourth Row: Written Amount Mockup -->
+                <div class="uk-margin-small-top">
+                    <div class="written-amount-line">
+                        <span id="written-amount" class="handwriting-text"></span>
+                        <div class="uk-flex-1 handwriting-line" style="margin-left: 10px;"></div>
+                        <span class="label" style="margin-left: 10px;">DOLLARS</span>
+                    </div>
+                </div>
+
+                <!-- Fifth Row: Memo & Signature -->
+                <div class="uk-grid-medium uk-margin-large-top" uk-grid>
+                    <div class="uk-width-2-3">
+                        <div class="memo-box">
+                            <span class="label">MEMO</span>
+                            <div class="memo-input-container">
+                                <input type="text" name="memo" class="memo-input" placeholder="What is this for?" value="{{ check.memo or '' }}">
+                                <div class="handwriting-line"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="uk-width-1-3">
+                        <div class="signature-box">
+                            <div class="signature-line"></div>
+                            <span class="label">AUTHORIZED SIGNATURE</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom: MICR Line Mockup -->
+                <div class="micr-line uk-margin-large-top uk-text-center">
+                    ⑆ 123456789 ⑆ 000012345678 ⑈ {{ check.check_number }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Expense Categorization Section -->
+        <div class="uk-card uk-card-default uk-border-rounded uk-card-body uk-margin-bottom">
+            <h3 class="uk-card-title uk-text-bold" style="font-size: 16px;">
+                <span uk-icon="icon: list; ratio: 0.9" class="uk-margin-small-right"></span>Accounting Allocation
+            </h3>
+            <div class="uk-grid-small" uk-grid>
+                <div class="uk-width-1-1">
+                    <label class="uk-form-label uk-text-bold">Expense Category (Chart of Accounts)</label>
+                    <select name="expense_account_id" class="uk-select uk-border-rounded" required>
+                        <option value="">Select Category...</option>
+                        {% for acc in expense_accounts %}
+                        <option value="{{ acc.id }}" {{ 'selected' if acc.id == current_expense_account_id }}>{{ acc.code }} - {{ acc.name }} ({{ acc.type }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="uk-flex uk-flex-right">
+            <button type="submit" class="uk-button uk-button-primary uk-button-large uk-border-rounded uk-text-bold" style="min-width: 200px;">
+                <span uk-icon="icon: check; ratio: 0.8" class="uk-margin-small-right"></span>Update Check & Ledger
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    :root {
+        --check-bg: #f8fafc;
+        --check-accent: #3b82f6;
+        --label-color: #64748b;
+        --line-color: #cbd5e1;
+    }
+    .check-container { background: white; border-radius: 12px; padding: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; position: relative; overflow: hidden; }
+    .check-container::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px); background-size: 10px 10px; opacity: 0.3; pointer-events: none; }
+    .check-body { position: relative; z-index: 1; }
+    .label { font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 800; color: var(--label-color); letter-spacing: 0.1em; text-transform: uppercase; }
+    .bank-selector { background: transparent !important; border: none !important; font-size: 18px !important; font-weight: 800 !important; padding: 0 !important; color: #1e293b !important; height: auto !important; }
+    .check-num-input, .date-input, .payee-input, .amount-input, .memo-input { background: transparent; border: none; outline: none; font-size: 16px; font-weight: 600; color: #1e293b; }
+    .handwriting-line { border-bottom: 1px solid var(--line-color); width: 100%; margin-top: 4px; }
+    .payee-box { display: flex; align-items: center; gap: 15px; }
+    .payee-input-container { flex: 1; position: relative; }
+    .payee-input { width: 100%; font-size: 20px; padding-bottom: 5px; }
+    .amount-box { border: 2px solid var(--line-color); padding: 8px 12px; display: flex; align-items: center; background: #fff; border-radius: 4px; min-width: 150px; }
+    .currency-symbol { font-weight: 800; margin-right: 8px; color: #1e293b; }
+    .amount-input { width: 100%; text-align: right; font-size: 22px; font-weight: 800; }
+    .written-amount-line { display: flex; align-items: flex-end; margin-top: 25px; }
+    .handwriting-text { font-style: italic; font-size: 16px; color: #3b82f6; min-width: 50px; }
+    .micr-line { font-family: 'Courier New', Courier, monospace; font-size: 24px; color: #94a3b8; letter-spacing: 5px; opacity: 0.6; }
+    .signature-line { border-bottom: 2px solid var(--line-color); height: 40px; margin-bottom: 5px; }
+    .check-num-box { text-align: right; }
+    .check-num-input { text-align: right; width: 80px; font-size: 20px; color: #64748b; }
+</style>
+
+<script>
+    function updateBalance(select) {
+        const balance = select.options[select.selectedIndex].getAttribute('data-balance');
+        const display = document.getElementById('selected-balance');
+        if (balance) {
+            const val = parseFloat(balance);
+            display.innerText = '$' + val.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+    }
+    const amountInput = document.querySelector('.amount-input');
+    const writtenAmount = document.getElementById('written-amount');
+    function generateWords(val) {
+        const dollars = Math.floor(val);
+        const cents = Math.round((val - dollars) * 100);
+        if (val > 0) writtenAmount.innerText = `Approximately ${dollars} and ${cents}/100`;
+    }
+    amountInput.addEventListener('input', (e) => generateWords(parseFloat(e.target.value)));
+    generateWords(parseFloat(amountInput.value));
+</script>
+{% endblock %}

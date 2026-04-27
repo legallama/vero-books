@@ -25,8 +25,9 @@
             <h3 class="uk-card-title uk-text-bold">Management</h3>
             <ul class="uk-list uk-list-divider uk-margin-top">
                 <li><a href="{{ url_for('reports.trial_balance') }}" class="uk-link-text uk-flex uk-flex-between">Trial Balance <span uk-icon="chevron-right"></span></a></li>
-                <li class="uk-text-muted">A/R Aging Summary</li>
-                <li class="uk-text-muted">A/P Aging Summary</li>
+                <li><a href="{{ url_for('reports.aging_ar') }}" class="uk-link-text uk-flex uk-flex-between">A/R Aging Summary <span uk-icon="chevron-right"></span></a></li>
+                <li><a href="{{ url_for('reports.aging_ap') }}" class="uk-link-text uk-flex uk-flex-between">A/P Aging Summary <span uk-icon="chevron-right"></span></a></li>
+
             </ul>
         </div>
     </div>

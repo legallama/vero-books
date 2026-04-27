@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-section uk-section-xsmall">
+    <!-- Header -->
+    <div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+        <div>
+            <h1 class="uk-margin-remove-bottom uk-text-bold" style="font-size: 28px;">Reconciliation Summary</h1>
+            <p class="uk-text-meta">{{ recon.account.name }} | Statement Date: {{ recon.statement_date.strftime('%b %d, %Y') }}</p>
+        </div>
+        <div>
+            <button onclick="window.print()" class="uk-button uk-button-default uk-border-rounded">
+                <span uk-icon="icon: print; ratio: 0.8" class="uk-margin-small-right"></span>Print Report
+            </button>
+            <a href="{{ url_for('reconciliation.index') }}" class="uk-button uk-button-primary uk-border-rounded uk-margin-small-left">Back to List</a>
+        </div>
+    </div>
+
+    <!-- Report Body (White Card) -->
+    <div class="uk-card uk-card-default uk-card-body report-card" style="border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.05); padding: 48px;">
+        <div class="uk-text-center uk-margin-large-bottom">
+            <h2 class="uk-text-bold uk-margin-remove" style="color: #1e293b;">Bank Reconciliation Report</h2>
+            <p class="uk-text-meta" style="text-transform: uppercase; letter-spacing: 1px;">Audit Period Ending {{ recon.statement_date.strftime('%B %d, %Y') }}</p>
+        </div>
+
+        <!-- Reconciliation Table -->
+        <div class="uk-overflow-auto">
+            <table class="uk-table uk-table-middle">
+                <tbody>
+                    <tr class="recon-row-bold">
+                        <td>Statement Ending Balance</td>
+                        <td class="uk-text-right">${{ "{:,.2f}".format(recon.statement_balance) }}</td>
+                    </tr>
+                    
+                    <tr>
+                        <td class="uk-padding-remove-bottom uk-text-meta" colspan="2">Outstanding Items</td>
+                    </tr>
+                    {% for line in uncleared_lines %}
+                    <tr>
+                        <td style="padding-left: 24px;">
+                            {{ line.journal_entry.entry_date.strftime('%m/%d/%Y') }} - {{ line.description or line.journal_entry.memo }}
+                        </td>
+                        <td class="uk-text-right">
+                            {% if recon.account.type == 'Asset' %}
+                                {{ "- " if line.credit > 0 else "+ " }}${{ "{:,.2f}".format(line.credit if line.credit > 0 else line.debit) }}
+                            {% else %}
+                                {{ "+ " if line.credit > 0 else "- " }}${{ "{:,.2f}".format(line.credit if line.credit > 0 else line.debit) }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    
+                    <tr class="recon-row-subtotal">
+                        <td>Total Outstanding (Uncleared)</td>
+                        <td class="uk-text-right">
+                            {% set total_outstanding = total_uncleared_debits - total_uncleared_credits %}
+                            {% if recon.account.type == 'Liability' %}{% set total_outstanding = -total_outstanding %}{% endif %}
+                            ${{ "{:,.2f}".format(total_outstanding) }}
+                        </td>
+                    </tr>
+
+                    <tr class="recon-row-bold uk-margin-large-top" style="border-top: 2px solid #1e293b;">
+                        <td style="font-size: 18px;">Register Balance (Calculated)</td>
+                        <td class="uk-text-right" style="font-size: 18px;">
+                            ${{ "{:,.2f}".format(recon.statement_balance + total_outstanding) }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="uk-margin-large-top uk-padding-small uk-background-muted uk-border-rounded">
+            <div class="uk-grid-small uk-flex-middle" uk-grid>
+                <div class="uk-width-auto">
+                    <span uk-icon="icon: check; ratio: 1.5" class="uk-text-success"></span>
+                </div>
+                <div class="uk-width-expand">
+                    <p class="uk-margin-remove uk-text-bold">Audit Success</p>
+                    <p class="uk-margin-remove uk-text-meta">This account is fully reconciled. The book balance perfectly matches the adjusted statement balance.</p>
+                </div>
+                <div class="uk-width-auto uk-text-right">
+                    <div class="uk-text-meta" style="font-size: 10px;">RECONCILED BY</div>
+                    <div class="uk-text-bold" style="font-size: 12px;">{{ current_user.full_name }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .report-card {
+        background-image: radial-gradient(#f1f5f9 0.5px, transparent 0.5px);
+        background-size: 20px 20px;
+    }
+    .recon-row-bold {
+        font-weight: 800;
+        color: #0f172a;
+        font-size: 16px;
+    }
+    .recon-row-subtotal {
+        font-weight: 600;
+        color: #475569;
+        border-top: 1px solid #e2e8f0;
+    }
+    .uk-table td {
+        border-bottom: 1px solid #f1f5f9;
+        padding: 12px 0;
+    }
+    @media print {
+        .top-bar, .sidebar, .uk-button, .sidebar-overlay { display: none !important; }
+        .main-content { margin-left: 0 !important; width: 100% !important; }
+        .report-card { border: none !important; box-shadow: none !important; padding: 0 !important; }
+    }
+</style>
+{% endblock %}

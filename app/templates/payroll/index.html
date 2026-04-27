@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-section uk-section-xsmall">
+    <!-- Header -->
+    <div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+        <div>
+            <h1 class="uk-margin-remove-bottom uk-text-bold" style="font-size: 28px; color: #1e293b;">Payroll Center</h1>
+            <p class="uk-text-meta">Manage your team, taxes, and pay runs in one place.</p>
+        </div>
+        <div class="uk-flex" style="gap: 12px;">
+            <a href="{{ url_for('payroll.create_employee') }}" class="uk-button uk-button-default uk-border-rounded">
+                <span uk-icon="icon: plus; ratio: 0.8" class="uk-margin-small-right"></span>Add Employee
+            </a>
+            <a href="{{ url_for('payroll.run_payroll') }}" class="uk-button uk-button-primary uk-border-rounded" style="background: #4338ca;">
+                <span uk-icon="icon: play; ratio: 0.8" class="uk-margin-small-right"></span>Run Payroll
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="uk-grid-small uk-child-width-1-3@m uk-margin-large-bottom" uk-grid>
+        <div>
+            <div class="uk-card uk-card-default uk-card-body stat-card" style="border-radius: 12px; border-left: 4px solid #6366f1;">
+                <div class="uk-text-meta uk-text-uppercase uk-text-bold" style="font-size: 11px;">Active Employees</div>
+                <div class="uk-text-bold uk-margin-small-top" style="font-size: 24px;">{{ employees|length }}</div>
+            </div>
+        </div>
+        <div>
+            <div class="uk-card uk-card-default uk-card-body stat-card" style="border-radius: 12px; border-left: 4px solid #10b981;">
+                <div class="uk-text-meta uk-text-uppercase uk-text-bold" style="font-size: 11px;">Last Payroll Run</div>
+                <div class="uk-text-bold uk-margin-small-top" style="font-size: 24px;">
+                    {% if recent_runs %}
+                        {{ recent_runs[0].payment_date.strftime('%b %d, %Y') }}
+                    {% else %}
+                        No runs yet
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="uk-card uk-card-default uk-card-body stat-card" style="border-radius: 12px; border-left: 4px solid #f59e0b;">
+                <div class="uk-text-meta uk-text-uppercase uk-text-bold" style="font-size: 11px;">Next Filing Due</div>
+                <div class="uk-text-bold uk-margin-small-top" style="font-size: 24px;">May 15, 2026</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="uk-grid-medium" uk-grid>
+        <!-- Employee List -->
+        <div class="uk-width-2-3@l">
+            <div class="uk-card uk-card-default uk-border-rounded">
+                <div class="uk-card-header uk-flex uk-flex-between uk-flex-middle">
+                    <h3 class="uk-card-title uk-text-bold" style="font-size: 18px;">Our Team</h3>
+                    <div class="uk-inline">
+                        <span class="uk-form-icon" uk-icon="icon: search; ratio: 0.8"></span>
+                        <input class="uk-input uk-form-small uk-width-small" type="text" placeholder="Search..." style="border-radius: 6px;">
+                    </div>
+                </div>
+                <div class="uk-overflow-auto">
+                    <table class="uk-table uk-table-hover uk-table-middle uk-table-divider">
+                        <thead>
+                            <tr>
+                                <th class="uk-table-expand">Name</th>
+                                <th>Pay Rate</th>
+                                <th>Frequency</th>
+                                <th>Status</th>
+                                <th class="uk-table-shrink"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for emp in employees %}
+                            <tr>
+                                <td>
+                                    <div class="uk-flex uk-flex-middle">
+                                        <div class="uk-margin-small-right" style="width: 32px; height: 32px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: #64748b;">
+                                            {{ emp.first_name[0] }}{{ emp.last_name[0] }}
+                                        </div>
+                                        <div>
+                                            <div class="uk-text-bold" style="font-size: 14px;">{{ emp.full_name }}</div>
+                                            <div class="uk-text-meta" style="font-size: 11px;">{{ emp.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="font-size: 13px;">${{ "{:,.2f}".format(emp.pay_rate) }} ({{ emp.pay_type }})</td>
+                                <td style="font-size: 13px;">{{ emp.pay_frequency }}</td>
+                                <td>
+                                    <span class="uk-label uk-label-{{ 'success' if emp.status == 'ACTIVE' else 'muted' }}" style="font-size: 10px; border-radius: 4px;">{{ emp.status }}</span>
+                                </td>
+                                <td>
+                                    <button class="uk-button uk-button-link uk-text-muted" uk-icon="icon: more-vertical; ratio: 0.8"></button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="uk-text-center uk-padding-large">
+                                    <span uk-icon="icon: users; ratio: 2" class="uk-text-muted"></span>
+                                    <p class="uk-text-meta uk-margin-small-top">No employees added yet.</p>
+                                    <a href="{{ url_for('payroll.create_employee') }}" class="uk-button uk-button-text uk-text-primary">Add your first employee</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Runs -->
+        <div class="uk-width-1-3@l">
+            <div class="uk-card uk-card-default uk-border-rounded">
+                <div class="uk-card-header">
+                    <h3 class="uk-card-title uk-text-bold" style="font-size: 18px;">History</h3>
+                </div>
+                <div class="uk-card-body uk-padding-small">
+                    <ul class="uk-list uk-list-divider">
+                        {% for run in recent_runs %}
+                        <li class="uk-padding-small">
+                            <div class="uk-flex uk-flex-between uk-flex-middle">
+                                <div>
+                                    <div class="uk-text-bold" style="font-size: 13px;">Pay Date: {{ run.payment_date.strftime('%b %d, %Y') }}</div>
+                                    <div class="uk-text-meta" style="font-size: 11px;">{{ run.paychecks|length }} paychecks issued</div>
+                                </div>
+                                <div class="uk-text-right">
+                                    <div class="uk-text-bold" style="font-size: 13px; color: #1e293b;">${{ "{:,.2f}".format(run.total_net) }}</div>
+                                    <span class="uk-text-meta" style="font-size: 10px; color: #10b981;">COMPLETED</span>
+                                </div>
+                            </div>
+                        </li>
+                        {% else %}
+                        <li class="uk-text-center uk-padding-small">
+                            <p class="uk-text-meta">No history yet.</p>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="uk-margin-top uk-text-center">
+                        <a href="#" class="uk-button uk-button-text uk-text-primary" style="font-size: 12px;">View All Reports</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tax Compliance Card -->
+            <div class="uk-card uk-card-default uk-margin-top uk-border-rounded" style="background: #f8fafc; border: 1px dashed #cbd5e1;">
+                <div class="uk-card-body uk-padding-small">
+                    <div class="uk-flex uk-flex-middle" style="gap: 12px;">
+                        <span uk-icon="icon: info; ratio: 1" class="uk-text-warning"></span>
+                        <div>
+                            <div class="uk-text-bold" style="font-size: 13px;">Quarterly 941 Due</div>
+                            <p class="uk-text-meta uk-margin-remove" style="font-size: 11px;">Your Q1 payroll tax filing is due in 18 days. VeroBooks will auto-generate the report for you.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stat-card {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        transition: transform 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+</style>
+{% endblock %}

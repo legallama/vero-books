@@ -16,5 +16,8 @@ class AuditLog(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     ip_address = db.Column(db.String(45))
 
+    user = db.relationship('User')
+
+
     def __repr__(self):
         return f'<AuditLog {self.action} {self.entity_type} {self.entity_id}>'

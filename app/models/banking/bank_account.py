@@ -37,7 +37,9 @@ class BankTransaction(db.Model):
     status = db.Column(db.String(20), default='UNCATEGORIZED') # UNCATEGORIZED, MATCHED, EXCLUDED
     matched_source_type = db.Column(db.String(50)) # INVOICE, BILL, JOURNAL_ENTRY
     matched_source_id = db.Column(db.String(36))
+    receipt_url = db.Column(db.Text)
     imported_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 
     bank_account = db.relationship('BankAccount', back_populates='transactions')
 
