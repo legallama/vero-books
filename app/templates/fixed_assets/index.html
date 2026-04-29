@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Fixed Assets</h1>
+        <p class="page-subtitle">Manage physical assets and track depreciation schedules</p>
+    </div>
+    <a href="{{ url_for('fixed_assets.create') }}" class="uk-button uk-button-primary elite-button-primary">
+        <span uk-icon="icon: plus; ratio: 0.8" class="uk-margin-small-right"></span>Add Asset
+    </a>
+</div>
+
+<div class="uk-card uk-card-default uk-border-rounded" style="box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+    <div class="uk-overflow-auto">
+        <table class="uk-table uk-table-hover uk-table-middle uk-table-divider">
+            <thead style="background: #f8fafc;">
+                <tr>
+                    <th class="uk-text-bold" style="font-size: 11px; text-transform: uppercase; color: #64748b;">Asset Name</th>
+                    <th class="uk-text-bold" style="font-size: 11px; text-transform: uppercase; color: #64748b;">Purchase Date</th>
+                    <th class="uk-text-bold" style="font-size: 11px; text-transform: uppercase; color: #64748b;">Cost</th>
+                    <th class="uk-text-bold" style="font-size: 11px; text-transform: uppercase; color: #64748b;">Method</th>
+                    <th class="uk-text-bold" style="font-size: 11px; text-transform: uppercase; color: #64748b;">Useful Life</th>
+                    <th class="uk-text-bold" style="font-size: 11px; text-transform: uppercase; color: #64748b;">Status</th>
+                    <th class="uk-table-shrink"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for asset in assets %}
+                <tr>
+                    <td>
+                        <div class="uk-text-bold" style="color: #1e293b;">{{ asset.name }}</div>
+                        <div class="uk-text-meta" style="font-size: 11px;">{{ asset.serial_number or 'No serial' }}</div>
+                    </td>
+                    <td style="font-size: 13px;">{{ asset.purchase_date.strftime('%m/%d/%Y') }}</td>
+                    <td style="font-size: 13px; font-weight: 600;">${{ "{:,.2f}".format(asset.purchase_price) }}</td>
+                    <td><span class="uk-label" style="background: #e2e8f0; color: #475569; font-size: 10px;">{{ asset.depreciation_method.replace('_', ' ') }}</span></td>
+                    <td style="font-size: 13px;">{{ asset.useful_life_months }} mo</td>
+                    <td>
+                        <span class="uk-label {{ 'uk-label-success' if asset.status == 'ACTIVE' else 'uk-label-warning' }}" style="font-size: 10px; border-radius: 4px;">
+                            {{ asset.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('fixed_assets.detail', asset_id=asset.id) }}" class="uk-icon-button" uk-icon="icon: chevron-right; ratio: 0.8" style="width: 28px; height: 28px;"></a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="uk-text-center uk-padding-large">
+                        <span uk-icon="icon: database; ratio: 2" style="color: #e2e8f0;"></span>
+                        <p class="uk-text-meta uk-margin-small-top">No fixed assets recorded yet.</p>
+                        <a href="{{ url_for('fixed_assets.create') }}" class="uk-button uk-button-default uk-button-small">Create Your First Asset</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

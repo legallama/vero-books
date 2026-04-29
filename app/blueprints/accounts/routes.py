@@ -2,6 +2,8 @@ from flask import render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 from ._bp import accounts_bp
 from ...models.accounting.account import Account, AccountType
+from ...models.accounting.budget import Budget
+from ...models.accounting.fixed_asset import FixedAsset
 from ...extensions import db
 from ...services.auth_service import get_current_org
 

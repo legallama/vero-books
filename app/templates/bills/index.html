@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+<div class="page-header">
     <div>
-        <h1 class="uk-heading-small uk-margin-remove-bottom">Bills</h1>
-        <p class="uk-text-meta">Track and manage your vendor liabilities</p>
+        <h1 class="page-title">Bills</h1>
+        <p class="page-subtitle">Track and manage your vendor liabilities</p>
     </div>
-    <a href="{{ url_for('bills.create') }}" class="uk-button uk-button-primary">+ Add New Bill</a>
+    <a href="{{ url_for('bills.create') }}" class="uk-button uk-button-primary elite-button-primary">+ Add New Bill</a>
 </div>
 
 <div class="uk-grid-small uk-child-width-expand@s uk-margin-bottom" uk-grid>

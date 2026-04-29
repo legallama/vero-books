@@ -3,19 +3,19 @@
 {% block content %}
 <div id="banking-app">
     <!-- Header -->
-    <div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-bottom">
+    <div class="page-header">
         <div>
-            <h1 class="uk-margin-remove-bottom" style="font-size: 26px; font-weight: 800; color: #0f172a;">Banking Center</h1>
-            <p class="uk-text-meta" style="font-size: 13px;">Manage accounts, import statements, and reconcile transactions</p>
+            <h1 class="page-title">Banking Center</h1>
+            <p class="page-subtitle">Manage accounts, import statements, and reconcile transactions</p>
         </div>
-        <div class="uk-flex" style="gap: 8px;">
-            <button @click="txType = 'deposit'; showTxModal = true" class="uk-button uk-button-default uk-button-small" style="border-radius: 6px; font-size: 13px;">
+        <div class="uk-flex" style="gap: 10px;">
+            <button @click="txType = 'deposit'; showTxModal = true" class="uk-button uk-button-default uk-button-small">
                 <span uk-icon="icon: plus-circle; ratio: 0.75" class="uk-margin-small-right"></span>Deposit
             </button>
-            <button @click="txType = 'withdrawal'; showTxModal = true" class="uk-button uk-button-default uk-button-small" style="border-radius: 6px; font-size: 13px;">
+            <button @click="txType = 'withdrawal'; showTxModal = true" class="uk-button uk-button-default uk-button-small">
                 <span uk-icon="icon: minus-circle; ratio: 0.75" class="uk-margin-small-right"></span>Withdrawal
             </button>
-            <button @click="showModal = true" class="uk-button uk-button-primary uk-button-small" style="border-radius: 6px; font-size: 13px;">
+            <button @click="showModal = true" class="uk-button uk-button-primary uk-button-small elite-button-primary">
                 <span uk-icon="icon: link; ratio: 0.75" class="uk-margin-small-right"></span>Link Account
             </button>
         </div>
@@ -93,14 +93,20 @@
                         </div>
                         <div class="account-balance {{ 'balance-negative' if (acc.balance|float) < 0 }}">
                             <div class="uk-flex uk-flex-column uk-flex-right">
-                                <div class="uk-text-right">
-                                    <form action="{{ url_for('banking.delete_account', bank_acc_id=acc.id) }}" method="POST" onsubmit="return confirm('Permanently remove this account?');">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <button type="submit" class="uk-button uk-button-link" style="color: #cbd5e1; transition: color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#cbd5e1'">
-                                            <span uk-icon="icon: trash; ratio: 0.7"></span>
-                                        </button>
-                                    </form>
-                                </div>
+                                    <div class="uk-flex uk-flex-right" style="gap: 8px;">
+                                        <form action="{{ url_for('banking.sync_account', bank_acc_id=acc.id) }}" method="POST">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="uk-button uk-button-link" style="color: #cbd5e1; transition: color 0.2s;" onmouseover="this.style.color='#3b82f6'" onmouseout="this.style.color='#cbd5e1'" uk-tooltip="Sync Live Feed">
+                                                <span uk-icon="icon: refresh; ratio: 0.7"></span>
+                                            </button>
+                                        </form>
+                                        <form action="{{ url_for('banking.delete_account', bank_acc_id=acc.id) }}" method="POST" onsubmit="return confirm('Permanently remove this account?');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="uk-button uk-button-link" style="color: #cbd5e1; transition: color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#cbd5e1'" uk-tooltip="Remove Account">
+                                                <span uk-icon="icon: trash; ratio: 0.7"></span>
+                                            </button>
+                                        </form>
+                                    </div>
                                 <div class="uk-margin-small-top">
                                     ${{ "{:,.2f}".format(acc.balance|abs) }}
                                 </div>
@@ -283,8 +289,21 @@
         <div class="uk-card uk-card-default uk-card-body uk-width-large uk-animation-scale-up uk-animation-fast" style="border-radius: 14px;">
             <h3 class="uk-card-title uk-text-bold" style="font-size: 18px;">Link Bank Account</h3>
             <p class="uk-text-meta" style="font-size: 13px;">Add a new financial institution to track your money flow.</p>
+
+            <div class="uk-margin-top uk-margin-bottom">
+                <button @click="openPlaid" class="uk-button uk-button-primary uk-width-1-1" style="background: #111827; border: none; border-radius: 8px; height: 44px; font-weight: 700;">
+                    <span uk-icon="icon: world; ratio: 0.8" class="uk-margin-small-right"></span>Connect with Plaid
+                </button>
+                <div class="uk-text-center uk-margin-small-top">
+                    <span class="uk-text-meta" style="font-size: 10px;">Secure, encrypted connection via Plaid Link</span>
+                </div>
+            </div>
+
+            <div class="uk-text-center uk-margin-small-bottom">
+                <span class="uk-text-meta">OR ADD MANUALLY</span>
+            </div>
             
-            <form action="{{ url_for('banking.create_account') }}" method="POST" class="uk-form-stacked uk-margin-top">
+            <form action="{{ url_for('banking.create_account') }}" method="POST" class="uk-form-stacked">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 
                 <div class="uk-margin">
@@ -591,15 +610,70 @@
                 form.submit();
             };
 
+            const openPlaid = () => {
+                window.initializePlaid(this);
+            };
+
             return { 
                 showModal, showTxModal, showLinkModal, showReceiptModal,
                 txType, today, 
                 selectedBankAccId, selectedBankAccName, selectedTxs,
                 selectedTxId, selectedTxDescription,
-                openLinkModal, openReceiptModal, toggleAll, deleteSelected 
+                openLinkModal, openReceiptModal, toggleAll, deleteSelected, openPlaid
             };
         }
 
     }).mount('#banking-app');
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+<script>
+    // Global function for Plaid Link
+    window.initializePlaid = async function(vueApp) {
+        try {
+            const response = await fetch("{{ url_for('banking.create_link_token') }}", {
+                method: "POST",
+                headers: { "X-CSRFToken": "{{ csrf_token() }}" }
+            });
+            const data = await response.json();
+            
+            if (data.error) {
+                UIkit.notification({ message: "Plaid Error: " + data.error, status: 'danger' });
+                return;
+            }
+
+            const handler = Plaid.create({
+                token: data.link_token,
+                onSuccess: async (public_token, metadata) => {
+                    // Exchange public_token for access_token
+                    const exchangeResp = await fetch("{{ url_for('banking.exchange_token') }}", {
+                        method: "POST",
+                        headers: { 
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": "{{ csrf_token() }}" 
+                        },
+                        body: JSON.stringify({ public_token, metadata })
+                    });
+                    const result = await exchangeResp.json();
+                    if (result.success) {
+                        window.location.reload();
+                    } else {
+                        UIkit.notification({ message: "Exchange Failed: " + result.error, status: 'danger' });
+                    }
+                },
+                onExit: (err, metadata) => {
+                    if (err != null) {
+                        console.error(err);
+                    }
+                },
+            });
+            handler.open();
+        } catch (e) {
+            console.error(e);
+            UIkit.notification({ message: "Failed to initialize Plaid", status: 'danger' });
+        }
+    };
 </script>
 {% endblock %}

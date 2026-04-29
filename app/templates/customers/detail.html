@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="customer-profile-app">
+    <!-- Header -->
+    <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-large-bottom">
+        <div class="uk-flex uk-flex-middle">
+            <div class="uk-border-circle uk-background-primary uk-flex uk-flex-center uk-flex-middle uk-margin-medium-right" 
+                 style="width: 64px; height: 64px; color: #fff; font-size: 24px; font-weight: 800; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
+                {{ customer.display_name[0] | upper }}
+            </div>
+            <div>
+                <h1 class="uk-heading-small uk-margin-remove-bottom uk-text-bold">{{ customer.display_name }}</h1>
+                <div class="uk-flex uk-flex-middle uk-margin-small-top">
+                    <span class="uk-label uk-label-success uk-margin-small-right" style="border-radius: 4px;">ACTIVE CLIENT</span>
+                    <span class="uk-text-meta"><span uk-icon="icon: location; ratio: 0.8"></span> {{ customer.city or 'No Location' }}{% if customer.state %}, {{ customer.state }}{% endif %}</span>
+                </div>
+            </div>
+        </div>
+        <div class="uk-flex uk-flex-middle" style="gap: 12px;">
+            <a href="{{ url_for('invoices.create', customer_id=customer.id) }}" class="uk-button uk-button-primary uk-button-small" style="border-radius: 6px;">
+                <span uk-icon="icon: plus; ratio: 0.8" class="uk-margin-small-right"></span> Create Invoice
+            </a>
+            <div class="uk-inline">
+                <button class="uk-button uk-button-default uk-button-small" type="button" style="border-radius: 6px;">Actions <span uk-icon="icon: chevron-down; ratio: 0.8"></span></button>
+                <div uk-dropdown="mode: click; pos: bottom-right; offset: 12; animation: uk-animation-slide-bottom-small;">
+                    <ul class="uk-nav uk-dropdown-nav">
+                        <li><a href="#"><span uk-icon="icon: mail; ratio: 0.8" class="uk-margin-small-right"></span> Send Statement</a></li>
+                        <li><a href="#"><span uk-icon="icon: pencil; ratio: 0.8" class="uk-margin-small-right"></span> Edit Profile</a></li>
+                        <li class="uk-nav-divider"></li>
+                        <li><a href="#" class="uk-text-danger"><span uk-icon="icon: ban; ratio: 0.8" class="uk-margin-small-right"></span> Archive Customer</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Pulse -->
+    <div class="uk-grid-medium uk-child-width-1-3@m uk-margin-large-bottom" uk-grid>
+        <div>
+            <div class="uk-card uk-card-default uk-card-body uk-border-rounded" style="border-left: 4px solid #6366f1;">
+                <p class="uk-text-meta uk-text-uppercase uk-margin-remove">Total Revenue</p>
+                <h2 class="uk-text-bold uk-margin-small-top">${{ "{:,.2f}".format(total_invoiced) }}</h2>
+                <div class="uk-text-meta"><span class="uk-text-success"><span uk-icon="icon: triangle-up"></span> Lifetime</span></div>
+            </div>
+        </div>
+        <div>
+            <div class="uk-card uk-card-default uk-card-body uk-border-rounded" style="border-left: 4px solid #10b981;">
+                <p class="uk-text-meta uk-text-uppercase uk-margin-remove">Total Collected</p>
+                <h2 class="uk-text-bold uk-margin-small-top">${{ "{:,.2f}".format(total_paid) }}</h2>
+                <div class="uk-text-meta">
+                    {% if total_invoiced > 0 %}
+                    <span class="uk-text-success">{{ (total_paid / total_invoiced * 100) | round(1) }}% of total</span>
+                    {% else %}
+                    <span>0% of total</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="uk-card uk-card-default uk-card-body uk-border-rounded" style="border-left: 4px solid #ef4444; background: #fffafb;">
+                <p class="uk-text-meta uk-text-uppercase uk-margin-remove" style="color: #991b1b;">Outstanding Balance</p>
+                <h2 class="uk-text-bold uk-margin-small-top" style="color: #b91c1c;">${{ "{:,.2f}".format(outstanding_balance) }}</h2>
+                <div class="uk-text-meta"><span class="uk-text-danger">{{ (invoices | selectattr('status', 'equalto', 'OPEN') | list | length) }} Open Invoices</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="uk-grid-medium" uk-grid>
+        <!-- Left Column: Details -->
+        <div class="uk-width-1-3@m">
+            <div class="uk-card uk-card-default uk-border-rounded uk-overflow-hidden">
+                <div class="uk-padding-small" style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                    <span class="uk-text-bold" style="font-size: 14px; color: #1e293b;">Contact Information</span>
+                </div>
+                <div class="uk-card-body">
+                    <div class="uk-margin-small">
+                        <p class="uk-text-meta uk-text-uppercase uk-margin-remove" style="font-size: 10px;">Primary Email</p>
+                        <p class="uk-margin-remove"><a href="mailto:{{ customer.email }}" class="uk-link-text">{{ customer.email or 'N/A' }}</a></p>
+                    </div>
+                    <div class="uk-margin-small">
+                        <p class="uk-text-meta uk-text-uppercase uk-margin-remove" style="font-size: 10px;">Phone Number</p>
+                        <p class="uk-margin-remove">{{ customer.phone or 'N/A' }}</p>
+                    </div>
+                    <div class="uk-margin-small">
+                        <p class="uk-text-meta uk-text-uppercase uk-margin-remove" style="font-size: 10px;">Billing Address</p>
+                        <p class="uk-margin-remove uk-text-small">
+                            {% if customer.address_line1 %}
+                                {{ customer.address_line1 }}<br>
+                                {{ customer.city }}, {{ customer.state }} {{ customer.zip_code }}<br>
+                                {{ customer.country }}
+                            {% else %}
+                                <em>No address on file</em>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <hr>
+                    <div class="uk-margin-small">
+                        <p class="uk-text-meta uk-text-uppercase uk-margin-remove" style="font-size: 10px;">Payment Terms</p>
+                        <p class="uk-margin-remove"><span class="uk-badge" style="background: #e0e7ff; color: #4338ca; font-size: 11px; padding: 2px 8px;">{{ customer.default_payment_terms }}</span></p>
+                    </div>
+                    <div class="uk-margin-small">
+                        <p class="uk-text-meta uk-text-uppercase uk-margin-remove" style="font-size: 10px;">Credit Limit</p>
+                        <p class="uk-margin-remove">${{ "{:,.2f}".format(customer.credit_limit or 0) }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="uk-card uk-card-default uk-border-rounded uk-margin-top uk-overflow-hidden">
+                <div class="uk-padding-small uk-flex uk-flex-between uk-flex-middle" style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                    <span class="uk-text-bold" style="font-size: 14px; color: #1e293b;">Internal Notes</span>
+                    <button class="uk-button uk-button-link uk-text-primary" style="font-size: 11px; text-transform: none;">Edit</button>
+                </div>
+                <div class="uk-card-body">
+                    <p class="uk-text-small uk-text-muted">
+                        {{ customer.notes or 'No internal notes for this customer.' }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Transactions -->
+        <div class="uk-width-2-3@m">
+            <div class="uk-card uk-card-default uk-border-rounded uk-overflow-hidden">
+                <ul class="uk-tab uk-margin-remove" uk-tab>
+                    <li class="uk-active"><a href="#">Invoices</a></li>
+                    <li><a href="#">Payments</a></li>
+                    <li><a href="#">Appointments</a></li>
+                </ul>
+                <div class="uk-card-body uk-padding-remove">
+                    <div class="uk-overflow-auto">
+                        <table class="uk-table uk-table-divider uk-table-hover uk-table-middle uk-margin-remove">
+                            <thead style="background: #f9fafb;">
+                                <tr>
+                                    <th class="uk-table-shrink"></th>
+                                    <th style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700;">Number</th>
+                                    <th style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700;">Date</th>
+                                    <th style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700;">Status</th>
+                                    <th style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700;" class="uk-text-right">Amount</th>
+                                    <th style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700;" class="uk-text-right">Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if invoices %}
+                                    {% for inv in invoices %}
+                                    <tr>
+                                        <td><span uk-icon="file-text" style="color: #6366f1;"></span></td>
+                                        <td class="uk-text-bold" style="font-size: 13px;">{{ inv.invoice_number }}</td>
+                                        <td style="font-size: 13px;">{{ inv.issue_date.strftime('%b %d, %Y') }}</td>
+                                        <td>
+                                            {% if inv.status == 'PAID' %}
+                                                <span class="uk-label uk-label-success" style="font-size: 10px;">PAID</span>
+                                            {% elif inv.status == 'OVERDUE' %}
+                                                <span class="uk-label uk-label-danger" style="font-size: 10px;">OVERDUE</span>
+                                            {% else %}
+                                                <span class="uk-label" style="font-size: 10px; background: #e2e8f0; color: #475569;">{{ inv.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="uk-text-right" style="font-size: 13px; font-weight: 600;">${{ "{:,.2f}".format(inv.total) }}</td>
+                                        <td class="uk-text-right" style="font-size: 13px; font-weight: 700; color: {{ '#ef4444' if inv.balance_due > 0 else '#64748b' }};">${{ "{:,.2f}".format(inv.balance_due) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="uk-text-center uk-padding-large">
+                                            <span uk-icon="icon: cloud-upload; ratio: 2" style="color: #e2e8f0;"></span>
+                                            <p class="uk-text-meta">No transactions found for this customer.</p>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="uk-padding-small uk-text-center" style="background: #f8fafc; border-top: 1px solid #e2e8f0;">
+                    <a href="#" class="uk-text-small uk-text-bold" style="color: #6366f1;">View Transaction History</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp } = Vue;
+    createApp({
+        setup() {
+            return {};
+        }
+    }).mount('#customer-profile-app');
+</script>
+
+<style>
+    .uk-tab::before {
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .uk-tab > .uk-active > a {
+        border-color: #6366f1;
+        color: #1e293b;
+        font-weight: 700;
+    }
+</style>
+{% endblock %}

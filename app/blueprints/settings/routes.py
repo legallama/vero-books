@@ -170,3 +170,36 @@ def tax_nexus():
         
     nexus_list = TaxNexus.query.filter_by(organization_id=org.id).all()
     return render_template('settings/tax_nexus.html', nexus_list=nexus_list)
+@settings_bp.route('/organizations/delete', methods=['POST'])
+@login_required
+def delete_organization():
+    org = get_current_org()
+    from app.models.admin.organization import Organization, OrganizationMembership
+    from flask import session
+    
+    # Verify ownership
+    membership = OrganizationMembership.query.filter_by(user_id=current_user.id, organization_id=org.id).first()
+    if not membership or not membership.is_owner:
+        flash("Only the business owner can delete this company.", "danger")
+        return redirect(url_for('settings.index'))
+    
+    org_name = org.name
+    
+    # In a real app, you would have cascading deletes or soft deletes.
+    # For this implementation, we will delete the memberships and the organization.
+    OrganizationMembership.query.filter_by(organization_id=org.id).delete()
+    db.session.delete(org)
+    db.session.commit()
+    
+    # Clear org from session
+    session.pop('org_id', None)
+    
+    # Try to find another organization to switch to
+    next_membership = OrganizationMembership.query.filter_by(user_id=current_user.id).first()
+    if next_membership:
+        session['org_id'] = next_membership.organization_id
+        flash(f"Business '{org_name}' has been deleted. Switched to your next available business.", "success")
+        return redirect(url_for('dashboard.index'))
+    else:
+        flash(f"Business '{org_name}' has been deleted. Please create a new business to continue.", "info")
+        return redirect(url_for('settings.create_organization'))

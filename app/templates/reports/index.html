@@ -1,15 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="uk-margin-large-bottom">
-    <h1 class="uk-heading-small uk-margin-remove-bottom">Reports Center</h1>
-    <p class="uk-text-meta">Comprehensive financial analysis and statement generation</p>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Reports Center</h1>
+        <p class="page-subtitle">Comprehensive financial analysis and statement generation</p>
+    </div>
 </div>
 
 <div class="uk-grid-match uk-grid-medium uk-child-width-1-3@m" uk-grid>
     <!-- Financial Statements -->
     <div>
-        <div class="uk-card uk-card-default uk-card-body">
+        <div class="uk-card uk-card-default premium-card uk-card-body">
             <h3 class="uk-card-title uk-text-bold">Financial Statements</h3>
             <ul class="uk-list uk-list-divider uk-margin-top">
                 <li><a href="{{ url_for('reports.profit_and_loss') }}" class="uk-link-text uk-flex uk-flex-between">Profit & Loss <span uk-icon="chevron-right"></span></a></li>
@@ -21,7 +23,7 @@
 
     <!-- Management Reports -->
     <div>
-        <div class="uk-card uk-card-default uk-card-body">
+        <div class="uk-card uk-card-default premium-card uk-card-body">
             <h3 class="uk-card-title uk-text-bold">Management</h3>
             <ul class="uk-list uk-list-divider uk-margin-top">
                 <li><a href="{{ url_for('reports.trial_balance') }}" class="uk-link-text uk-flex uk-flex-between">Trial Balance <span uk-icon="chevron-right"></span></a></li>
@@ -34,7 +36,7 @@
 
     <!-- Audit & Compliance -->
     <div>
-        <div class="uk-card uk-card-default uk-card-body">
+        <div class="uk-card uk-card-default premium-card uk-card-body">
             <h3 class="uk-card-title uk-text-bold">Audit & Tax</h3>
             <ul class="uk-list uk-list-divider uk-margin-top">
                 <li class="uk-text-muted">General Ledger Audit</li>

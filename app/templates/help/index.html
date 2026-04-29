@@ -1,82 +1,152 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="uk-section uk-section-small">
-    <div class="uk-container uk-container-small">
-        <div class="uk-text-center uk-margin-large-bottom">
-            <h1 class="uk-heading-small uk-text-bold">How can we help you today?</h1>
-            <div class="uk-margin-medium-top uk-width-2-3 uk-margin-auto">
-                <form class="uk-search uk-search-default uk-width-1-1">
-                    <span uk-search-icon></span>
-                    <input class="uk-search-input uk-form-large uk-border-rounded" type="search" placeholder="Search for articles, guides, and more..." style="background: var(--card-bg); border: 1px solid var(--border-color);">
-                </form>
-            </div>
-        </div>
-
-        <div class="uk-grid-medium uk-child-width-1-3@m uk-grid-match" uk-grid>
-            <div>
-                <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-card-hover uk-text-center">
-                    <span uk-icon="icon: sign-in; ratio: 2" class="uk-text-primary"></span>
-                    <h3 class="uk-card-title uk-margin-small-top uk-text-bold">Getting Started</h3>
-                    <p class="uk-text-meta">New to VeroBooks? Learn the basics and set up your company.</p>
-                    <a href="{{ url_for('help.topic', topic_id='getting-started') }}" class="uk-button uk-button-text uk-text-primary">View Articles</a>
-                </div>
-            </div>
-            <div>
-                <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-card-hover uk-text-center">
-                    <span uk-icon="icon: database; ratio: 2" class="uk-text-primary"></span>
-                    <h3 class="uk-card-title uk-margin-small-top uk-text-bold">Banking & Ledger</h3>
-                    <p class="uk-text-meta">Connect bank accounts, import transactions, and manage your GL.</p>
-                    <a href="#" class="uk-button uk-button-text uk-text-primary">View Articles</a>
-                </div>
-            </div>
-            <div>
-                <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-card-hover uk-text-center">
-                    <span uk-icon="icon: magic; ratio: 2" style="color: #8b5cf6;"></span>
-                    <h3 class="uk-card-title uk-margin-small-top uk-text-bold">Premium Productivity</h3>
-                    <p class="uk-text-meta">Learn about smart rules, magic suggestions, and batch automation.</p>
-                    <a href="#" class="uk-button uk-button-text uk-text-primary">Master the System</a>
+<div class="uk-section uk-section-small uk-padding-remove-top">
+    <div class="uk-container">
+        <!-- Hero Section -->
+        <!-- Hero Section -->
+        <div class="uk-card uk-card-body uk-margin-large-bottom uk-text-center" 
+             style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%) !important; border: none !important; padding: 80px 40px; border-radius: 24px; box-shadow: 0 20px 40px rgba(37, 99, 235, 0.2);">
+            <h1 class="page-title uk-margin-remove" style="color: #ffffff !important; font-size: 42px !important; letter-spacing: -0.04em !important;">Knowledge Base</h1>
+            <p class="uk-text-lead uk-margin-small-top" style="opacity: 0.9; color: #ffffff; font-family: 'Inter', sans-serif; font-size: 18px;">Master your accounting workflow with our comprehensive guides.</p>
+            
+            <div class="uk-margin-large-top uk-width-xlarge uk-align-center">
+                <div class="uk-inline uk-width-1-1">
+                    <span class="uk-form-icon" uk-icon="icon: search; ratio: 1.2" style="color: rgba(255,255,255,0.8);"></span>
+                    <input class="uk-input help-search-input" type="text" placeholder="Search for articles, features, or workflows..." 
+                           style="background: rgba(255,255,255,0.15) !important; color: #ffffff !important; border: 1px solid rgba(255,255,255,0.3) !important; border-radius: 14px !important; height: 54px; padding-left: 50px !important; font-size: 16px;">
                 </div>
             </div>
         </div>
 
+        <!-- Categories -->
+        <div class="uk-grid-medium uk-child-width-1-3@m" uk-grid>
+            <!-- Setup & Migration -->
+            <div>
+                <div class="uk-card uk-card-default premium-card uk-card-body uk-card-hover" style="height: 100%;">
+                    <div class="uk-flex uk-flex-middle uk-margin-bottom">
+                        <div class="uk-background-muted uk-border-rounded uk-flex uk-flex-center uk-flex-middle" style="width: 44px; height: 44px; color: var(--primary-color);">
+                            <span uk-icon="icon: settings; ratio: 1.1"></span>
+                        </div>
+                        <h3 class="uk-card-title uk-margin-remove uk-margin-small-left uk-text-bold" style="font-size: 18px;">Setup & Migration</h3>
+                    </div>
+                    <ul class="uk-list uk-list-hyphen uk-text-small">
+                        <li><a href="{{ url_for('help.topic', topic_id='getting-started') }}" class="uk-link-text">Getting Started Guide</a></li>
+                        <li><a href="{{ url_for('help.topic', topic_id='qbo-migration') }}" class="uk-link-text">QuickBooks Online Migration</a></li>
+                        <li><a href="#" class="uk-link-text">Configuring Chart of Accounts</a></li>
+                        <li><a href="#" class="uk-link-text">Organization & Tax Settings</a></li>
+                    </ul>
+                </div>
+            </div>
 
-        <div class="uk-margin-large-top">
-            <h2 class="uk-text-bold uk-margin-medium-bottom">Frequently Asked Questions</h2>
-            <ul uk-accordion="collapsible: true">
-                <li class="uk-open">
-                    <a class="uk-accordion-title uk-text-bold" href="#">How do I import my data from QuickBooks?</a>
-                    <div class="uk-accordion-content">
-                        <p>You can import your Chart of Accounts and Customers directly from QuickBooks CSV exports. Go to the Accounts or Customer Hub and look for the "Import QuickBooks Data" button.</p>
+            <!-- Sales & Customers -->
+            <div>
+                <div class="uk-card uk-card-default premium-card uk-card-body uk-card-hover" style="height: 100%;">
+                    <div class="uk-flex uk-flex-middle uk-margin-bottom">
+                        <div class="uk-background-muted uk-border-rounded uk-flex uk-flex-center uk-flex-middle" style="width: 44px; height: 44px; color: #10b981;">
+                            <span uk-icon="icon: cart; ratio: 1.1"></span>
+                        </div>
+                        <h3 class="uk-card-title uk-margin-remove uk-margin-small-left uk-text-bold" style="font-size: 18px;">Sales & Customers</h3>
                     </div>
-                </li>
-                <li>
-                    <a class="uk-accordion-title uk-text-bold" href="#">How do I reconcile my bank statements?</a>
-                    <div class="uk-accordion-content">
-                        <p>In the Banking section, choose a bank account and click "Reconcile". Follow the step-by-step match wizard to link your bank transactions to your ledger entries.</p>
-                    </div>
-                </li>
-                <li>
-                    <a class="uk-accordion-title uk-text-bold" href="#">What is the Command Palette?</a>
-                    <div class="uk-accordion-content">
-                        <p>Press <kbd>CTRL + K</kbd> anywhere in the system to open the Command Palette. This allows you to instantly search for customers, invoices, or accounts, and jump to different sections of the app without using the mouse.</p>
-                    </div>
-                </li>
-                <li>
-                    <a class="uk-accordion-title uk-text-bold" href="#">How do "Magic Suggestions" work in Banking?</a>
-                    <div class="uk-accordion-content">
-                        <p>VeroBooks learns from your history. If you categorize a transaction (e.g., "Starbucks") as "Office Expenses," the next time it sees that same description, it will suggest that account automatically. You can just click "Accept Match" to post it.</p>
-                    </div>
-                </li>
-                <li>
-                    <a class="uk-accordion-title uk-text-bold" href="#">How can I mass-delete or mass-void invoices?</a>
-                    <div class="uk-accordion-content">
-                        <p>On the Invoice index page, use the checkboxes to select multiple invoices. A vibrant **Bulk Action Bar** will appear at the top, allowing you to Void or Delete all selected items at once.</p>
-                    </div>
-                </li>
-            </ul>
+                    <ul class="uk-list uk-list-hyphen uk-text-small">
+                        <li><a href="{{ url_for('help.topic', topic_id='customer-profiles') }}" class="uk-link-text">Customer Profile Management</a></li>
+                        <li><a href="#" class="uk-link-text">Creating Professional Invoices</a></li>
+                        <li><a href="#" class="uk-link-text">Managing Estimates & Quotes</a></li>
+                        <li><a href="#" class="uk-link-text">Setting Up Recurring Billing</a></li>
+                    </ul>
+                </div>
+            </div>
 
+            <!-- Expenses & Vendors -->
+            <div>
+                <div class="uk-card uk-card-default premium-card uk-card-body uk-card-hover" style="height: 100%;">
+                    <div class="uk-flex uk-flex-middle uk-margin-bottom">
+                        <div class="uk-background-muted uk-border-rounded uk-flex uk-flex-center uk-flex-middle" style="width: 44px; height: 44px; color: #f59e0b;">
+                            <span uk-icon="icon: credit-card; ratio: 1.1"></span>
+                        </div>
+                        <h3 class="uk-card-title uk-margin-remove uk-margin-small-left uk-text-bold" style="font-size: 18px;">Expenses & Vendors</h3>
+                    </div>
+                    <ul class="uk-list uk-list-hyphen uk-text-small">
+                        <li><a href="#" class="uk-link-text">Recording Bills & Payments</a></li>
+                        <li><a href="#" class="uk-link-text">Managing Vendor Relationships</a></li>
+                        <li><a href="#" class="uk-link-text">OCR Receipt Scanning</a></li>
+                        <li><a href="#" class="uk-link-text">Writing & Printing Checks</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Banking & Automation -->
+            <div>
+                <div class="uk-card uk-card-default premium-card uk-card-body uk-card-hover" style="height: 100%;">
+                    <div class="uk-flex uk-flex-middle uk-margin-bottom">
+                        <div class="uk-background-muted uk-border-rounded uk-flex uk-flex-center uk-flex-middle" style="width: 44px; height: 44px; color: #3b82f6;">
+                            <span uk-icon="icon: database; ratio: 1.1"></span>
+                        </div>
+                        <h3 class="uk-card-title uk-margin-remove uk-margin-small-left uk-text-bold" style="font-size: 18px;">Banking & Automation</h3>
+                    </div>
+                    <ul class="uk-list uk-list-hyphen uk-text-small">
+                        <li><a href="{{ url_for('help.topic', topic_id='banking-automation') }}" class="uk-link-text">Linking Live Bank Feeds</a></li>
+                        <li><a href="#" class="uk-link-text">Setting Up Bank Rules</a></li>
+                        <li><a href="#" class="uk-link-text">Reconciliation Workflow</a></li>
+                        <li><a href="#" class="uk-link-text">Matching Transactions</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Assets & Budgets -->
+            <div>
+                <div class="uk-card uk-card-default premium-card uk-card-body uk-card-hover" style="height: 100%;">
+                    <div class="uk-flex uk-flex-middle uk-margin-bottom">
+                        <div class="uk-background-muted uk-border-rounded uk-flex uk-flex-center uk-flex-middle" style="width: 44px; height: 44px; color: #8b5cf6;">
+                            <span uk-icon="icon: future; ratio: 1.1"></span>
+                        </div>
+                        <h3 class="uk-card-title uk-margin-remove uk-margin-small-left uk-text-bold" style="font-size: 18px;">Assets & Budgets</h3>
+                    </div>
+                    <ul class="uk-list uk-list-hyphen uk-text-small">
+                        <li><a href="#" class="uk-link-text">Fixed Asset Depreciation</a></li>
+                        <li><a href="#" class="uk-link-text">Asset Disposal & Gain/Loss</a></li>
+                        <li><a href="#" class="uk-link-text">Fiscal Budget Planning</a></li>
+                        <li><a href="#" class="uk-link-text">Budget vs Actual Reports</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Team & Security -->
+            <div>
+                <div class="uk-card uk-card-default premium-card uk-card-body uk-card-hover" style="height: 100%;">
+                    <div class="uk-flex uk-flex-middle uk-margin-bottom">
+                        <div class="uk-background-muted uk-border-rounded uk-flex uk-flex-center uk-flex-middle" style="width: 44px; height: 44px; color: #64748b;">
+                            <span uk-icon="icon: users; ratio: 1.1"></span>
+                        </div>
+                        <h3 class="uk-card-title uk-margin-remove uk-margin-small-left uk-text-bold" style="font-size: 18px;">Team & Security</h3>
+                    </div>
+                    <ul class="uk-list uk-list-hyphen uk-text-small">
+                        <li><a href="{{ url_for('help.topic', topic_id='team-security') }}" class="uk-link-text">User Roles & Permissions</a></li>
+                        <li><a href="#" class="uk-link-text">Managing Team Members</a></li>
+                        <li><a href="#" class="uk-link-text">Developer API & Webhooks</a></li>
+                        <li><a href="#" class="uk-link-text">Two-Factor Authentication</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Support CTA -->
+        <div class="uk-margin-large-top uk-text-center">
+            <div class="uk-card uk-card-default premium-card uk-card-body uk-padding-large" style="border: 1px dashed var(--border-color) !important; background: transparent !important; box-shadow: none !important;">
+                <h3 class="uk-text-bold">Can't find what you're looking for?</h3>
+                <p class="uk-text-meta">Our professional support team is available 24/7 for Enterprise customers.</p>
+                <div class="uk-flex uk-flex-center uk-margin-top" style="gap: 12px;">
+                    <button class="uk-button uk-button-primary elite-button-primary">Contact Support</button>
+                    <button class="uk-button uk-button-default">Join the Community</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+    .help-search-input::placeholder { color: rgba(255,255,255,0.7) !important; }
+    .uk-link-text { color: var(--text-muted) !important; transition: all 0.2s; font-weight: 500; }
+    .uk-link-text:hover { color: var(--primary-color) !important; text-decoration: none; transform: translateX(4px); display: inline-block; }
+</style>
 {% endblock %}

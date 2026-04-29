@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-section uk-section-small uk-padding-remove-top">
+    <div class="uk-container uk-container-small">
+        <a href="{{ url_for('help.index') }}" class="uk-button uk-button-text uk-margin-bottom">
+            <span uk-icon="arrow-left"></span> Back to Help Center
+        </a>
+        
+        <h1 class="uk-text-bold">Banking & Automation</h1>
+        <p class="uk-text-lead uk-text-muted">Save hours every week with automated transaction matching.</p>
+
+        <hr class="uk-margin-medium-bottom">
+
+        <section class="uk-margin-large-bottom">
+            <h2 class="uk-text-bold" style="font-size: 20px;">The Live Transaction Feed</h2>
+            <p>VeroBooks connects to your bank accounts to provide a live stream of transactions. You can view this in the <strong>Banking</strong> section.</p>
+            <p>Transactions in the feed can have several statuses:</p>
+            <ul>
+                <li><span class="uk-label">UNCATEGORIZED:</span> The transaction is new and needs to be matched to an account in your ledger.</li>
+                <li><span class="uk-label uk-label-success">MATCHED:</span> The transaction has been linked to a journal entry and is reflected in your books.</li>
+            </ul>
+        </section>
+
+        <section class="uk-margin-large-bottom">
+            <h2 class="uk-text-bold" style="font-size: 20px;">Bank Rules: The Secret to Speed</h2>
+            <p>Bank Rules allow you to automate the categorization of recurring transactions. For example, you can create a rule that says: <em>"Any transaction containing 'Amazon' should be categorized as 'Office Expenses'."</em></p>
+            <div class="uk-card uk-card-default uk-card-body uk-border-rounded">
+                <h4 class="uk-text-bold">Types of Rule Logic:</h4>
+                <ul class="uk-list uk-list-divider">
+                    <li><strong>Description Matching:</strong> Match based on text in the bank's description.</li>
+                    <li><strong>Amount Matching:</strong> Match specific amounts or ranges.</li>
+                    <li><strong>Auto-Post:</strong> Enable this to have the system automatically create the journal entry and post it to your ledger without any manual clicks.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="uk-margin-large-bottom">
+            <h2 class="uk-text-bold" style="font-size: 20px;">Magic Suggestions</h2>
+            <p>Even without explicit rules, VeroBooks uses <strong>Magic Suggestions</strong>. The system learns from your history. If you've categorized "Starbucks" as "Meals & Entertainment" in the past, the system will highlight that account for you the next time a Starbucks transaction appears.</p>
+        </section>
+
+        <section class="uk-margin-large-bottom">
+            <h2 class="uk-text-bold" style="font-size: 20px;">Reconciliation</h2>
+            <p>Reconciliation ensures your VeroBooks records match your physical bank statement exactly. We recommend reconciling your primary accounts at least once a month.</p>
+            <ol class="uk-list uk-list-decimal">
+                <li>Go to <strong>Banking</strong> and select your account.</li>
+                <li>Ensure all transactions for the month are <strong>Matched</strong>.</li>
+                <li>Use the <strong>Reconcile</strong> tool to verify your ending balance against your statement.</li>
+            </ol>
+        </section>
+
+        <div class="uk-card uk-card-primary uk-card-body uk-border-rounded uk-margin-large-top" style="background: #1e293b;">
+            <h3 class="uk-text-bold">Pro Tip: Bulk Actions</h3>
+            <p>Need to clean up your feed? Use the checkboxes in the Live Feed to **Batch Delete** irrelevant transactions or **Batch Accept** multiple suggestions at once.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

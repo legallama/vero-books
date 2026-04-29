@@ -33,6 +33,10 @@ class Customer(db.Model):
     state = db.Column(db.String(50))
     zip_code = db.Column(db.String(20))
     country = db.Column(db.String(50), default='USA')
+    notes = db.Column(db.Text)
+    currency_code = db.Column(db.String(3), default='USD')
+    default_payment_terms = db.Column(db.String(50), default='Net 30')
+    credit_limit = db.Column(db.Numeric(15, 2), default=0.00)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -70,6 +74,11 @@ class Vendor(db.Model):
     state = db.Column(db.String(50))
     zip_code = db.Column(db.String(20))
     country = db.Column(db.String(50), default='USA')
+    
+    # 1099 Contractor Tracking
+    is_1099_contractor = db.Column(db.Boolean, default=False)
+    tax_id_number = db.Column(db.String(50))
+    
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 

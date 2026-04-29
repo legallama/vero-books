@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-section uk-section-small uk-padding-remove-top">
+    <div class="uk-container uk-container-small">
+        <a href="{{ url_for('help.index') }}" class="uk-button uk-button-text uk-margin-bottom">
+            <span uk-icon="arrow-left"></span> Back to Help Center
+        </a>
+        
+        <h1 class="uk-text-bold">Accounting & Reports</h1>
+        <p class="uk-text-lead uk-text-muted">Understand your financial position with professional reporting.</p>
+
+        <hr class="uk-margin-medium-bottom">
+
+        <section class="uk-margin-large-bottom">
+            <h2 class="uk-text-bold" style="font-size: 20px;">The General Ledger</h2>
+            <p>The General Ledger is the backbone of VeroBooks. Every transaction—from a simple invoice to a complex payroll entry—is ultimately recorded as a set of debits and credits in the ledger.</p>
+        </section>
+
+        <section class="uk-margin-large-bottom">
+            <h2 class="uk-text-bold" style="font-size: 20px;">Essential Reports</h2>
+            <div class="uk-grid-medium uk-child-width-1-2@s" uk-grid>
+                <div>
+                    <div class="uk-card uk-card-default uk-card-body uk-border-rounded">
+                        <h4 class="uk-text-bold">Profit & Loss (P&L)</h4>
+                        <p class="uk-text-small">Also known as the Income Statement. It shows your revenue minus your expenses over a specific period.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="uk-card uk-card-default uk-card-body uk-border-rounded">
+                        <h4 class="uk-text-bold">Balance Sheet</h4>
+                        <p class="uk-text-small">A "snapshot" in time showing what you own (Assets), what you owe (Liabilities), and your Equity.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="uk-margin-large-bottom">
+            <h2 class="uk-text-bold" style="font-size: 20px;">Manual Journal Entries</h2>
+            <p>For adjustments like depreciation, payroll accruals, or opening balance corrections, use the **Journal Entry** tool. </p>
+            <p class="uk-text-meta"><span uk-icon="icon: info; ratio: 0.8"></span> VeroBooks ensures every journal entry is balanced. You cannot post an entry where total debits do not equal total credits.</p>
+        </section>
+
+        <section class="uk-margin-large-bottom">
+            <h2 class="uk-text-bold" style="font-size: 20px;">Audit Log & Accountability</h2>
+            <p>Transparency is key to financial integrity. The **Audit Log** tracks every significant action in the system, including who created an invoice, when a bill was edited, and who performed a bank sync.</p>
+        </section>
+    </div>
+</div>
+{% endblock %}

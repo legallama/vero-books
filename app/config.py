@@ -10,3 +10,9 @@ class Config:
     
     # Custom config for tenancy
     TENANT_URL_PREFIX = '/<org_id>'
+
+    # Plaid Configuration
+    PLAID_CLIENT_ID = os.environ.get('PLAID_CLIENT_ID')
+    PLAID_SECRET = os.environ.get('PLAID_SECRET')
+    PLAID_ENV = os.environ.get('PLAID_ENV', 'sandbox')
+    PLAID_PRODUCTS = os.environ.get('PLAID_PRODUCTS', 'transactions').split(',')

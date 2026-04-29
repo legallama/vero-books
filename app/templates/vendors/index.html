@@ -3,17 +3,17 @@
 {% block content %}
 <div id="vendor-app" class="uk-container uk-container-large uk-margin-top">
     <!-- Header -->
-    <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-large-bottom">
+    <div class="page-header">
         <div>
-            <h1 class="uk-heading-small uk-text-bold uk-margin-remove">Vendors</h1>
-            <p class="uk-text-meta uk-margin-remove">Manage your suppliers, contractors, and service providers.</p>
+            <h1 class="page-title">Vendors</h1>
+            <p class="page-subtitle">Manage your suppliers, contractors, and service providers.</p>
         </div>
-        <div class="uk-flex" style="gap: 10px;">
+        <div class="uk-flex uk-flex-middle" style="gap: 10px;">
             <div class="uk-inline">
                 <span class="uk-form-icon" uk-icon="icon: search; ratio: 0.8"></span>
-                <input class="uk-input uk-form-width-medium uk-border-rounded" type="text" v-model="searchQuery" placeholder="Search vendors...">
+                <input class="uk-input uk-form-width-medium" type="text" v-model="searchQuery" placeholder="Search vendors...">
             </div>
-            <button class="uk-button uk-button-primary uk-border-rounded uk-text-bold" @click="showModal = true">
+            <button class="uk-button uk-button-primary elite-button-primary" @click="showModal = true">
                 <span uk-icon="icon: plus; ratio: 0.8" class="uk-margin-small-right"></span>Add Vendor
             </button>
         </div>
@@ -22,7 +22,7 @@
     <!-- Stats Row -->
     <div class="uk-grid-small uk-margin-bottom" uk-grid>
         <div class="uk-width-1-4@m">
-            <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-padding-small uk-flex uk-flex-middle">
+            <div class="uk-card uk-card-default premium-card uk-padding-small uk-flex uk-flex-middle">
                 <div class="uk-border-circle uk-background-muted uk-flex uk-flex-center uk-flex-middle uk-margin-small-right" style="width: 40px; height: 40px; color: #3b82f6;">
                     <span uk-icon="users"></span>
                 </div>
@@ -33,7 +33,7 @@
             </div>
         </div>
         <div class="uk-width-1-4@m">
-            <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-padding-small uk-flex uk-flex-middle">
+            <div class="uk-card uk-card-default premium-card uk-padding-small uk-flex uk-flex-middle">
                 <div class="uk-border-circle uk-background-muted uk-flex uk-flex-center uk-flex-middle uk-margin-small-right" style="width: 40px; height: 40px; color: #f43f5e;">
                     <span uk-icon="credit-card"></span>
                 </div>
@@ -46,11 +46,11 @@
     </div>
 
     <!-- Vendor Table -->
-    <div class="uk-card uk-card-default uk-border-rounded uk-overflow-hidden">
+    <div class="uk-card uk-card-default premium-card uk-overflow-hidden">
         <div class="uk-overflow-auto">
-            <table class="uk-table uk-table-hover uk-table-divider uk-table-middle uk-margin-remove">
+            <table class="uk-table uk-table-hover uk-table-divider uk-table-middle uk-margin-remove elite-table">
                 <thead>
-                    <tr class="uk-background-muted">
+                    <tr>
                         <th class="uk-table-shrink"></th>
                         <th>Vendor Name</th>
                         <th>Company</th>

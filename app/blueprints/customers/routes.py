@@ -92,3 +92,25 @@ def create():
         return render_template('customers/_customer_list.html', customers=customers)
         
     return redirect(url_for('customers.index'))
+
+@customers_bp.route('/<customer_id>')
+@login_required
+def detail(customer_id):
+    org = get_current_org()
+    customer = Customer.query.filter_by(id=customer_id, organization_id=org.id).first_or_404()
+    
+    # Financial Summary
+    from app.models.sales.invoice import Invoice
+    invoices = Invoice.query.filter_by(customer_id=customer_id).order_by(Invoice.issue_date.desc()).all()
+    
+    total_invoiced = sum(inv.total for inv in invoices)
+    total_paid = sum(inv.total - inv.balance_due for inv in invoices)
+    outstanding_balance = sum(inv.balance_due for inv in invoices)
+    
+    return render_template('customers/detail.html', 
+                          customer=customer, 
+                          invoices=invoices,
+                          total_invoiced=total_invoiced,
+                          total_paid=total_paid,
+                          outstanding_balance=outstanding_balance)
+

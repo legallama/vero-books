@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-flex uk-flex-between uk-flex-middle uk-margin-bottom">
+    <div>
+        <h2 class="uk-margin-remove uk-text-bold" style="color: #1e293b;">Developer Console</h2>
+        <p class="uk-text-meta uk-margin-remove">Manage API Keys and Webhook Subscriptions for external integrations</p>
+    </div>
+</div>
+
+<div class="uk-grid-medium" uk-grid>
+    <div class="uk-width-1-2@m">
+        <!-- API Keys -->
+        <div class="uk-card uk-card-default uk-card-body uk-margin-bottom" style="border-radius: 12px; border: 1px solid #e2e8f0;">
+            <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-bottom">
+                <h3 class="uk-card-title uk-margin-remove uk-text-bold" style="font-size: 1.1rem;">API Keys</h3>
+                <button uk-toggle="target: #modal-api-key" class="uk-button uk-button-small uk-button-primary" style="border-radius: 6px;">New Key</button>
+            </div>
+            
+            <table class="uk-table uk-table-divider uk-table-small uk-table-middle">
+                <thead>
+                    <tr>
+                        <th class="uk-text-bold" style="font-size: 11px;">NAME</th>
+                        <th class="uk-text-bold" style="font-size: 11px;">PREFIX</th>
+                        <th class="uk-text-bold" style="font-size: 11px;">STATUS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for key in api_keys %}
+                    <tr>
+                        <td class="uk-text-bold">{{ key.name }}</td>
+                        <td class="uk-text-meta"><code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">{{ key.token_prefix }}••••••</code></td>
+                        <td>
+                            {% if key.is_active %}
+                            <span class="uk-label uk-label-success" style="font-size: 10px; border-radius: 4px;">ACTIVE</span>
+                            {% else %}
+                            <span class="uk-label uk-label-danger" style="font-size: 10px; border-radius: 4px;">REVOKED</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="uk-text-center uk-text-meta uk-padding-small">No API keys generated.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="uk-width-1-2@m">
+        <!-- Webhooks -->
+        <div class="uk-card uk-card-default uk-card-body" style="border-radius: 12px; border: 1px solid #e2e8f0;">
+            <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-bottom">
+                <h3 class="uk-card-title uk-margin-remove uk-text-bold" style="font-size: 1.1rem;">Webhooks</h3>
+                <button uk-toggle="target: #modal-webhook" class="uk-button uk-button-small uk-button-primary" style="border-radius: 6px;">Add Endpoint</button>
+            </div>
+            
+            <table class="uk-table uk-table-divider uk-table-small uk-table-middle">
+                <thead>
+                    <tr>
+                        <th class="uk-text-bold" style="font-size: 11px;">URL / DESC</th>
+                        <th class="uk-text-bold" style="font-size: 11px;">EVENTS</th>
+                        <th class="uk-text-bold" style="font-size: 11px;">STATUS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hook in webhooks %}
+                    <tr>
+                        <td>
+                            <div class="uk-text-bold uk-text-truncate" style="max-width: 200px;" title="{{ hook.url }}">{{ hook.url }}</div>
+                            <div class="uk-text-meta" style="font-size: 11px;">{{ hook.description }}</div>
+                        </td>
+                        <td><span class="uk-label uk-label-muted" style="font-size: 10px; border-radius: 4px;">{{ hook.subscribed_events }}</span></td>
+                        <td>
+                            {% if hook.is_active %}
+                            <span class="uk-label uk-label-success" style="font-size: 10px; border-radius: 4px;">ACTIVE</span>
+                            {% else %}
+                            <span class="uk-label uk-label-danger" style="font-size: 10px; border-radius: 4px;">DISABLED</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="uk-text-center uk-text-meta uk-padding-small">No webhook endpoints configured.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: New API Key -->
+<div id="modal-api-key" uk-modal>
+    <div class="uk-modal-dialog uk-modal-body" style="border-radius: 12px;">
+        <h2 class="uk-modal-title uk-text-bold" style="font-size: 1.5rem;">Generate API Key</h2>
+        <form action="{{ url_for('developer.create_api_key') }}" method="POST">
+            <div class="uk-margin">
+                <label class="uk-form-label uk-text-bold">Key Name</label>
+                <div class="uk-form-controls">
+                    <input class="uk-input" type="text" name="name" placeholder="e.g., Zapier Integration" required style="border-radius: 6px;">
+                </div>
+            </div>
+            <p class="uk-text-meta">Warning: Your full API key will only be shown once after creation.</p>
+            <div class="uk-text-right">
+                <button class="uk-button uk-button-default uk-modal-close" type="button" style="border-radius: 6px;">Cancel</button>
+                <button class="uk-button uk-button-primary" type="submit" style="border-radius: 6px; background: #6366f1;">Generate Key</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: New Webhook -->
+<div id="modal-webhook" uk-modal>
+    <div class="uk-modal-dialog uk-modal-body" style="border-radius: 12px;">
+        <h2 class="uk-modal-title uk-text-bold" style="font-size: 1.5rem;">Add Webhook Endpoint</h2>
+        <form action="{{ url_for('developer.create_webhook') }}" method="POST">
+            <div class="uk-margin">
+                <label class="uk-form-label uk-text-bold">Payload URL</label>
+                <div class="uk-form-controls">
+                    <input class="uk-input" type="url" name="url" placeholder="https://..." required style="border-radius: 6px;">
+                </div>
+            </div>
+            <div class="uk-margin">
+                <label class="uk-form-label uk-text-bold">Description</label>
+                <div class="uk-form-controls">
+                    <input class="uk-input" type="text" name="description" placeholder="e.g., Slack Notifier" style="border-radius: 6px;">
+                </div>
+            </div>
+            <div class="uk-margin">
+                <label class="uk-form-label uk-text-bold">Events to Send</label>
+                <div class="uk-form-controls">
+                    <input class="uk-input" type="text" name="events" value="*" placeholder="e.g., invoice.created, payment.succeeded" style="border-radius: 6px;">
+                    <div class="uk-text-meta uk-margin-small-top">Use * for all events, or comma-separate specific events.</div>
+                </div>
+            </div>
+            <div class="uk-text-right">
+                <button class="uk-button uk-button-default uk-modal-close" type="button" style="border-radius: 6px;">Cancel</button>
+                <button class="uk-button uk-button-primary" type="submit" style="border-radius: 6px; background: #6366f1;">Add Endpoint</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

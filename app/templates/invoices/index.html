@@ -15,21 +15,20 @@
     </div>
 </div>
 
-<div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+<div class="page-header">
     <div>
-        <h1 class="uk-heading-small uk-margin-remove-bottom">Invoices</h1>
-        <p class="uk-text-meta">Track and manage your client billing</p>
+        <h1 class="page-title">Invoices</h1>
+        <p class="page-subtitle">Track and manage your client billing</p>
     </div>
-    <div class="uk-flex uk-flex-middle">
-        <button onclick="exportTableToCSV('invoices-table', 'verobooks-invoices.csv')" class="uk-button uk-button-default uk-margin-small-right uk-border-rounded">
+    <div class="uk-flex uk-flex-middle" style="gap: 10px;">
+        <button onclick="exportTableToCSV('invoices-table', 'verobooks-invoices.csv')" class="uk-button uk-button-default">
             <span uk-icon="icon: download; ratio: 0.8" class="uk-margin-small-right"></span> Export CSV
         </button>
-        <a href="{{ url_for('invoices.create_credit_memo') }}" class="uk-button uk-button-default uk-margin-small-right uk-border-rounded">
+        <a href="{{ url_for('invoices.create_credit_memo') }}" class="uk-button uk-button-default">
             <span uk-icon="icon: minus-circle; ratio: 0.8" class="uk-margin-small-right"></span> New Credit Memo
         </a>
-        <a href="{{ url_for('invoices.create') }}" class="uk-button uk-button-primary uk-border-rounded">+ New Invoice</a>
+        <a href="{{ url_for('invoices.create') }}" class="uk-button uk-button-primary elite-button-primary">+ New Invoice</a>
     </div>
-
 </div>
 
 

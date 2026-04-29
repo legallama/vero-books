@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-section uk-section-small">
+    <div class="uk-container uk-container-small">
+        <a href="{{ url_for('help.index') }}" class="uk-button uk-button-text uk-margin-bottom">
+            <span uk-icon="arrow-left"></span> Back to Help Center
+        </a>
+        
+        <h1 class="uk-text-bold">Migrating from QuickBooks Online</h1>
+        <p class="uk-text-lead uk-text-muted">Learn how to seamlessly transfer your historical data, chart of accounts, and contacts from QuickBooks Online to VeroBooks using our official integration.</p>
+        
+        <hr class="uk-margin-medium">
+        
+        <div class="uk-article">
+            <h3>Overview</h3>
+            <p>VeroBooks provides a dedicated Migration Assistant that connects directly to your Intuit QuickBooks Online account via OAuth2. This ensures your financial data is imported securely and accurately without needing to format messy CSV files.</p>
+            
+            <h3>Step 1: Obtain Your Intuit API Credentials</h3>
+            <p>Before connecting, you need to create an app in the Intuit Developer Portal:</p>
+            <ol>
+                <li>Go to <a href="https://developer.intuit.com" target="_blank">developer.intuit.com</a> and sign in.</li>
+                <li>Navigate to <strong>Dashboard &gt; Create an App</strong> and choose "QuickBooks Online and Payments".</li>
+                <li>Select the <strong>Keys & Credentials</strong> tab on the left sidebar.</li>
+                <li>Copy your <strong>Client ID</strong> and <strong>Client Secret</strong>.</li>
+            </ol>
+            
+            <h3>Step 2: Configure the Migration Assistant</h3>
+            <p>Now, enter your credentials into VeroBooks:</p>
+            <ol>
+                <li>In VeroBooks, click on <strong>QBO Migration</strong> in the left sidebar (under Developer & API).</li>
+                <li>Paste your <strong>Client ID</strong> and <strong>Client Secret</strong> into the Connection Settings panel.</li>
+                <li>Ensure the environment is set to <strong>Production</strong> (unless you are testing with a developer sandbox).</li>
+                <li>Click <strong>Save Settings</strong>.</li>
+            </ol>
+            
+            <h3>Step 3: Connect and Authorize</h3>
+            <p>Once your keys are saved, click the green <strong>Connect to QuickBooks</strong> button. You will be securely redirected to Intuit to log in and authorize VeroBooks to read your accounting data. Once authorized, you will be redirected back to VeroBooks, and your status will change to "Connected".</p>
+            
+            <h3>Step 4: Sync Your Data</h3>
+            <p>With an active connection, you can now sync your data modules:</p>
+            <ul>
+                <li><strong>Chart of Accounts:</strong> Imports all your active GL accounts to ensure your books map correctly. Start here.</li>
+                <li><strong>Customers & Vendors:</strong> Brings over all your CRM data, including billing addresses and contact information.</li>
+                <li><strong>Products & Inventory:</strong> Syncs your catalog of items and services.</li>
+                <li><strong>Historical Transactions:</strong> Imports past invoices, bills, and journal entries to populate your ledger history.</li>
+            </ul>
+            
+            <div class="uk-alert-warning" uk-alert>
+                <p><strong>Important:</strong> We recommend running a Trial Balance report in QuickBooks before migrating, and comparing it against your VeroBooks Trial Balance after the migration to ensure everything synced correctly.</p>
+            </div>
+            
+        </div>
+        
+        <div class="uk-margin-large-top uk-padding-small uk-background-muted uk-border-rounded">
+            <div class="uk-grid-small uk-flex-middle" uk-grid>
+                <div class="uk-width-expand">
+                    <h4 class="uk-margin-remove uk-text-bold">Need assistance with your migration?</h4>
+                    <p class="uk-margin-remove uk-text-small">Our onboarding specialists can guide you through the process.</p>
+                </div>
+                <div class="uk-width-auto">
+                    <a href="#" class="uk-button uk-button-primary uk-border-rounded">Contact Support</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

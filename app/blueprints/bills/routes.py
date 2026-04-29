@@ -2,6 +2,8 @@ from flask import render_template, request, flash, redirect, url_for
 from flask_login import login_required
 from . import bills_bp
 from app.models.purchases.bill import Bill, BillLine
+from app.models.purchases.purchase_order import PurchaseOrder
+from app.models.purchases.vendor_credit import VendorCredit
 from app.models.accounting.payment import BillPayment
 from app.models.crm.contact import Vendor
 from app.models.accounting.account import Account
@@ -125,5 +127,19 @@ def payments():
     org = get_current_org()
     payments = BillPayment.query.filter_by(organization_id=org.id).order_by(BillPayment.payment_date.desc()).all()
     return render_template('bills/payments.html', payments=payments)
+
+@bills_bp.route('/purchase-orders')
+@login_required
+def purchase_orders():
+    org = get_current_org()
+    pos = PurchaseOrder.query.filter_by(organization_id=org.id).order_by(PurchaseOrder.issue_date.desc()).all()
+    return render_template('bills/purchase_orders.html', purchase_orders=pos)
+
+@bills_bp.route('/vendor-credits')
+@login_required
+def vendor_credits():
+    org = get_current_org()
+    credits = VendorCredit.query.filter_by(organization_id=org.id).order_by(VendorCredit.issue_date.desc()).all()
+    return render_template('bills/vendor_credits.html', vendor_credits=credits)
 
 

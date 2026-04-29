@@ -14,6 +14,13 @@ class BankAccount(db.Model):
     bank_name = db.Column(db.String(100))
     currency_code = db.Column(db.String(3), default='USD')
     balance = db.Column(db.Numeric(15, 2), default=0.00)
+    
+    # Plaid Integration Fields
+    plaid_access_token = db.Column(db.String(255))
+    plaid_item_id = db.Column(db.String(100))
+    plaid_account_id = db.Column(db.String(100))
+    plaid_institution_id = db.Column(db.String(100))
+    
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -38,6 +45,10 @@ class BankTransaction(db.Model):
     matched_source_type = db.Column(db.String(50)) # INVOICE, BILL, JOURNAL_ENTRY
     matched_source_id = db.Column(db.String(36))
     receipt_url = db.Column(db.Text)
+    
+    # Plaid Integration Fields
+    plaid_transaction_id = db.Column(db.String(100), unique=True)
+    
     imported_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 

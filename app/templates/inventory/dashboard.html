@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-flex uk-flex-between uk-flex-middle uk-margin-bottom">
+    <div>
+        <h2 class="uk-margin-remove uk-text-bold" style="color: #1e293b;">Inventory Dashboard</h2>
+        <p class="uk-text-meta uk-margin-remove">Track stock levels and manage inventory adjustments</p>
+    </div>
+    <div>
+        <a href="{{ url_for('inventory.new_adjustment') }}" class="uk-button uk-button-primary" style="border-radius: 8px; text-transform: none; font-weight: 600; background: #6366f1;">
+            <span uk-icon="icon: plus; ratio: 0.8" class="uk-margin-small-right"></span> New Adjustment
+        </a>
+        <a href="{{ url_for('inventory.adjustments') }}" class="uk-button uk-button-default" style="border-radius: 8px; text-transform: none; font-weight: 600; margin-left: 8px;">
+            History
+        </a>
+    </div>
+</div>
+
+<div class="uk-grid-small uk-child-width-1-2@m" uk-grid>
+    <!-- Inventory Items Card -->
+    <div>
+        <div class="uk-card uk-card-default uk-card-body" style="border-radius: 12px; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6;">
+            <div class="uk-text-meta uk-text-bold" style="font-size: 11px; text-transform: uppercase; color: #64748b;">Tracked Items</div>
+            <div class="uk-flex uk-flex-middle uk-flex-between uk-margin-small-top">
+                <div class="uk-text-bold" style="font-size: 24px; color: #1e293b;">{{ products|length }}</div>
+                <div class="uk-label" style="border-radius: 4px; font-size: 11px; background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; text-transform: none;">Products</div>
+            </div>
+        </div>
+    </div>
+    <!-- Low Stock Card -->
+    <div>
+        <div class="uk-card uk-card-default uk-card-body" style="border-radius: 12px; border: 1px solid #e2e8f0; border-left: 4px solid #ef4444;">
+            <div class="uk-text-meta uk-text-bold" style="font-size: 11px; text-transform: uppercase; color: #64748b;">Low Stock Alerts</div>
+            <div class="uk-flex uk-flex-middle uk-flex-between uk-margin-small-top">
+                <div class="uk-text-bold" style="font-size: 24px; color: #ef4444;">{{ low_stock|length }}</div>
+                <div class="uk-label uk-label-danger" style="border-radius: 4px; font-size: 11px; background: #fef2f2; color: #991b1b; border: 1px solid #fee2e2; text-transform: none;">Items Low</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="uk-margin-large-top">
+    <h4 class="uk-text-bold" style="color: #1e293b;">Inventory Status</h4>
+    <div class="uk-card uk-card-default uk-card-body" style="border-radius: 12px; border: 1px solid #e2e8f0; padding: 0; overflow: hidden;">
+        <table class="uk-table uk-table-hover uk-table-middle uk-table-divider uk-margin-remove">
+            <thead>
+                <tr style="background: #f8fafc;">
+                    <th class="uk-table-expand uk-text-bold" style="font-size: 11px; color: #64748b; padding-left: 24px;">PRODUCT</th>
+                    <th class="uk-width-small uk-text-bold" style="font-size: 11px; color: #64748b;">SKU</th>
+                    <th class="uk-width-small uk-text-bold uk-text-right" style="font-size: 11px; color: #64748b;">QTY ON HAND</th>
+                    <th class="uk-width-small uk-text-bold uk-text-right" style="font-size: 11px; color: #64748b;">REORDER POINT</th>
+                    <th class="uk-width-small uk-text-right" style="padding-right: 24px;">STATUS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td style="padding-left: 24px;">
+                        <div class="uk-text-bold" style="font-size: 14px; color: #1e293b;">{{ product.name }}</div>
+                        <div class="uk-text-meta" style="font-size: 11px;">Cost: ${{ "{:,.2f}".format(product.purchase_cost) }}</div>
+                    </td>
+                    <td style="font-size: 13px; color: #64748b;">{{ product.sku or '--' }}</td>
+                    <td class="uk-text-right uk-text-bold" style="font-size: 14px; color: #1e293b;">{{ product.quantity_on_hand }}</td>
+                    <td class="uk-text-right" style="font-size: 13px; color: #64748b;">{{ product.reorder_point }}</td>
+                    <td class="uk-text-right" style="padding-right: 24px;">
+                        {% if product.quantity_on_hand <= product.reorder_point %}
+                            <span class="uk-label uk-label-danger" style="font-size: 10px; border-radius: 4px;">LOW STOCK</span>
+                        {% else %}
+                            <span class="uk-label uk-label-success" style="font-size: 10px; border-radius: 4px; background: #10b981;">IN STOCK</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="uk-text-center uk-padding-large">
+                        <div class="uk-padding-large">
+                            <span uk-icon="icon: list; ratio: 2.5" style="color: #e2e8f0;"></span>
+                            <p class="uk-text-meta uk-margin-small-top">No inventory tracked products yet. Edit a product to enable tracking.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

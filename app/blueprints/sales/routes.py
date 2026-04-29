@@ -2,8 +2,11 @@ from flask import Blueprint, render_template
 from flask_login import login_required
 from app.models.sales.invoice import Invoice
 from app.models.sales.product import Product
+from app.models.sales.sales_receipt import SalesReceipt
+from app.models.sales.credit_memo import CreditMemo
+from app.models.crm.contact import Customer
 from app.services.auth_service import get_current_org
-from datetime import date
+from datetime import date, datetime
 
 sales_bp = Blueprint('sales', __name__)
 
@@ -61,3 +64,24 @@ def get_tax_rate():
         
     rate = TaxService.get_rate_for_zip(zip_code, org.id)
     return jsonify({'rate': float(rate)})
+
+@sales_bp.route('/sales-receipts')
+@login_required
+def sales_receipts():
+    org = get_current_org()
+    receipts = SalesReceipt.query.filter_by(organization_id=org.id).order_by(SalesReceipt.issue_date.desc()).all()
+    return render_template('sales/sales_receipts.html', sales_receipts=receipts)
+
+@sales_bp.route('/credit-memos')
+@login_required
+def credit_memos():
+    org = get_current_org()
+    memos = CreditMemo.query.filter_by(organization_id=org.id).order_by(CreditMemo.issue_date.desc()).all()
+    return render_template('sales/credit_memos.html', credit_memos=memos)
+
+@sales_bp.route('/statements')
+@login_required
+def statements():
+    org = get_current_org()
+    customers = Customer.query.filter_by(organization_id=org.id, is_active=True).all()
+    return render_template('sales/statements.html', customers=customers)

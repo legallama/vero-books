@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-flex uk-flex-between uk-flex-middle uk-margin-bottom">
+    <div>
+        <a href="{{ url_for('budgets.index') }}" class="uk-button uk-button-text">
+            <span uk-icon="icon: arrow-left; ratio: 0.8" class="uk-margin-small-right"></span>Back to Budgets
+        </a>
+        <h1 class="uk-margin-remove-bottom uk-text-bold" style="font-size: 26px;">Edit: {{ budget.name }}</h1>
+        <p class="uk-text-meta" style="font-size: 13px;">Enter monthly targets for your revenue and expense accounts</p>
+    </div>
+    <div>
+        <button type="submit" form="budget-form" class="uk-button uk-button-primary" style="border-radius: 8px;">
+            <span uk-icon="icon: check; ratio: 0.8" class="uk-margin-small-right"></span>Save Changes
+        </button>
+    </div>
+</div>
+
+<div class="uk-card uk-card-default uk-border-rounded" style="box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;">
+    <form id="budget-form" action="{{ url_for('budgets.edit', budget_id=budget.id) }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <div class="uk-overflow-auto">
+            <table class="uk-table uk-table-divider uk-table-small uk-table-middle budget-grid">
+                <thead>
+                    <tr>
+                        <th class="uk-table-expand uk-text-bold" style="min-width: 200px; background: #f8fafc; position: sticky; left: 0; z-index: 10;">Account</th>
+                        {% for i in range(1, 13) %}
+                        <th class="uk-text-center uk-text-bold" style="width: 100px; font-size: 11px;">
+                            {{ ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][i-1] }}
+                        </th>
+                        {% endfor %}
+                        <th class="uk-text-right uk-text-bold" style="width: 120px; background: #f1f5f9;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for account in accounts %}
+                    <tr>
+                        <td class="uk-text-bold" style="font-size: 13px; color: #1e293b; background: #fff; position: sticky; left: 0; z-index: 5;">
+                            {{ account.code }} - {{ account.name }}
+                            <div class="uk-text-meta" style="font-size: 9px; text-transform: uppercase;">{{ account.type }}</div>
+                        </td>
+                        {% for i in range(1, 13) %}
+                        <td>
+                            <input class="uk-input uk-form-blank uk-text-right budget-input" 
+                                   type="number" step="0.01" 
+                                   name="amount_{{ account.id }}_{{ i }}" 
+                                   value="{{ budget_map.get(account.id, {}).get(i, '') }}"
+                                   placeholder="0"
+                                   style="font-size: 12px; font-variant-numeric: tabular-nums;">
+                        </td>
+                        {% endfor %}
+                        <td class="uk-text-right uk-text-bold" style="background: #f8fafc; font-size: 12px;">
+                            <span class="row-total" id="total_{{ account.id }}">$0.00</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
+</div>
+
+<style>
+    .budget-grid th, .budget-grid td { padding: 8px 12px !important; }
+    .budget-input:focus { background: #f0f9ff !important; border-bottom: 2px solid #3b82f6 !important; }
+    .budget-grid tbody tr:hover td { background-color: #f8fafc; }
+    .budget-grid tbody tr:hover td[style*="position: sticky"] { background-color: #f8fafc !important; }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputs = document.querySelectorAll('.budget-input');
+        
+        function calculateRowTotal(accountId) {
+            let total = 0;
+            const rowInputs = document.querySelectorAll(`input[name^="amount_${accountId}_"]`);
+            rowInputs.forEach(input => {
+                total += parseFloat(input.value || 0);
+            });
+            const totalDisplay = document.getElementById(`total_${accountId}`);
+            if (totalDisplay) {
+                totalDisplay.innerText = '$' + total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+        }
+
+        inputs.forEach(input => {
+            const accountId = input.name.split('_')[1];
+            input.addEventListener('input', () => calculateRowTotal(accountId));
+            // Initial calculation
+            calculateRowTotal(accountId);
+        });
+    });
+</script>
+{% endblock %}

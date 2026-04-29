@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-flex uk-flex-between uk-flex-middle uk-margin-bottom">
+    <div>
+        <h2 class="uk-margin-remove uk-text-bold" style="color: #1e293b;">Inventory Adjustments</h2>
+        <p class="uk-text-meta uk-margin-remove">History of all manual stock changes</p>
+    </div>
+    <div>
+        <a href="{{ url_for('inventory.dashboard') }}" class="uk-button uk-button-default" style="border-radius: 8px; text-transform: none; font-weight: 600; margin-right: 8px;">
+            <span uk-icon="icon: arrow-left; ratio: 0.8" class="uk-margin-small-right"></span> Back to Dashboard
+        </a>
+        <a href="{{ url_for('inventory.new_adjustment') }}" class="uk-button uk-button-primary" style="border-radius: 8px; text-transform: none; font-weight: 600; background: #6366f1;">
+            <span uk-icon="icon: plus; ratio: 0.8" class="uk-margin-small-right"></span> New Adjustment
+        </a>
+    </div>
+</div>
+
+<div class="uk-card uk-card-default uk-card-body" style="border-radius: 12px; border: 1px solid #e2e8f0; padding: 0; overflow: hidden;">
+    <table class="uk-table uk-table-hover uk-table-middle uk-table-divider uk-margin-remove">
+        <thead>
+            <tr style="background: #f8fafc;">
+                <th class="uk-table-expand uk-text-bold" style="font-size: 11px; color: #64748b; padding-left: 24px;">DATE</th>
+                <th class="uk-width-small uk-text-bold" style="font-size: 11px; color: #64748b;">REFERENCE</th>
+                <th class="uk-width-small uk-text-bold" style="font-size: 11px; color: #64748b;">REASON</th>
+                <th class="uk-width-small uk-text-bold" style="font-size: 11px; color: #64748b;">ACCOUNT</th>
+                <th class="uk-width-small uk-text-bold uk-text-right" style="font-size: 11px; color: #64748b; padding-right: 24px;">ITEMS ADJUSTED</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for adjustment in adjustments %}
+            <tr>
+                <td style="padding-left: 24px;">
+                    <div class="uk-text-bold" style="font-size: 14px; color: #1e293b;">{{ adjustment.date.strftime('%b %d, %Y') }}</div>
+                    <div class="uk-text-meta" style="font-size: 11px;">{{ adjustment.notes or 'No notes' }}</div>
+                </td>
+                <td style="font-size: 13px; color: #64748b;">{{ adjustment.reference_number }}</td>
+                <td><span class="uk-label uk-label-muted" style="font-size: 10px; border-radius: 4px; text-transform: uppercase;">{{ adjustment.reason }}</span></td>
+                <td style="font-size: 13px; color: #64748b;">{{ adjustment.adjustment_account.name if adjustment.adjustment_account else '--' }}</td>
+                <td class="uk-text-right uk-text-bold" style="font-size: 14px; color: #1e293b; padding-right: 24px;">{{ adjustment.lines|length }} items</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="uk-text-center uk-padding-large">
+                    <div class="uk-padding-large">
+                        <span uk-icon="icon: history; ratio: 2.5" style="color: #e2e8f0;"></span>
+                        <p class="uk-text-meta uk-margin-small-top">No inventory adjustments have been made yet.</p>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

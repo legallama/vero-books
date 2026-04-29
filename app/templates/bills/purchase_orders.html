@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-flex uk-flex-between uk-flex-middle uk-margin-bottom">
+    <div>
+        <h2 class="uk-margin-remove uk-text-bold" style="color: #1e293b;">Purchase Orders</h2>
+        <p class="uk-text-meta uk-margin-remove">Manage orders sent to vendors</p>
+    </div>
+    <div>
+        <button class="uk-button uk-button-primary" style="border-radius: 8px; text-transform: none; font-weight: 600; background: #6366f1;">
+            <span uk-icon="icon: plus; ratio: 0.8" class="uk-margin-small-right"></span> New Purchase Order
+        </button>
+    </div>
+</div>
+
+<div class="uk-card uk-card-default uk-card-body" style="border-radius: 12px; border: 1px solid #e2e8f0; padding: 0; overflow: hidden;">
+    <table class="uk-table uk-table-hover uk-table-middle uk-table-divider uk-margin-remove">
+        <thead>
+            <tr style="background: #f8fafc;">
+                <th class="uk-table-expand uk-text-bold" style="font-size: 11px; color: #64748b; padding-left: 24px;">PO NUMBER & DATE</th>
+                <th class="uk-width-small uk-text-bold" style="font-size: 11px; color: #64748b;">VENDOR</th>
+                <th class="uk-width-small uk-text-bold" style="font-size: 11px; color: #64748b;">STATUS</th>
+                <th class="uk-width-small uk-text-bold uk-text-right" style="font-size: 11px; color: #64748b;">AMOUNT</th>
+                <th class="uk-width-small uk-text-right" style="padding-right: 24px;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for po in purchase_orders %}
+            <tr>
+                <td style="padding-left: 24px;">
+                    <div class="uk-text-bold" style="font-size: 14px; color: #1e293b;">{{ po.po_number }}</div>
+                    <div class="uk-text-meta" style="font-size: 11px;">{{ po.issue_date.strftime('%b %d, %Y') }}</div>
+                </td>
+                <td style="font-size: 13px; color: #1e293b; font-weight: 500;">{{ po.vendor.display_name }}</td>
+                <td>
+                    {% if po.status == 'DRAFT' %}
+                    <span class="uk-label uk-label-muted" style="font-size: 10px; border-radius: 4px;">DRAFT</span>
+                    {% elif po.status == 'SENT' %}
+                    <span class="uk-label uk-label-primary" style="font-size: 10px; border-radius: 4px; background: #3b82f6;">SENT</span>
+                    {% elif po.status == 'RECEIVED' %}
+                    <span class="uk-label uk-label-success" style="font-size: 10px; border-radius: 4px; background: #10b981;">RECEIVED</span>
+                    {% else %}
+                    <span class="uk-label" style="font-size: 10px; border-radius: 4px;">{{ po.status }}</span>
+                    {% endif %}
+                </td>
+                <td class="uk-text-right uk-text-bold" style="font-size: 14px; color: #1e293b;">${{ "{:,.2f}".format(po.total) }}</td>
+                <td class="uk-text-right" style="padding-right: 24px;">
+                    <button class="uk-button uk-button-text" uk-icon="icon: more; ratio: 0.8"></button>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="uk-text-center uk-padding-large">
+                    <div class="uk-padding-large">
+                        <span uk-icon="icon: cart; ratio: 2.5" style="color: #e2e8f0;"></span>
+                        <p class="uk-text-meta uk-margin-small-top">No purchase orders created yet.</p>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

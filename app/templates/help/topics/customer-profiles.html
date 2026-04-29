@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-section uk-section-small uk-padding-remove-top">
+    <div class="uk-container uk-container-small">
+        <a href="{{ url_for('help.index') }}" class="uk-button uk-button-text uk-margin-bottom">
+            <span uk-icon="arrow-left"></span> Back to Help Center
+        </a>
+        
+        <h1 class="uk-text-bold">Customer Profile Management</h1>
+        <p class="uk-text-lead uk-text-muted">Master your client relationships and financial tracking.</p>
+
+        <hr class="uk-margin-medium-bottom">
+
+        <section class="uk-margin-large-bottom">
+            <h2 class="uk-text-bold" style="font-size: 20px;">Overview</h2>
+            <p>VeroBooks provides a comprehensive 360-degree view of every customer. Beyond simple contact storage, the Customer Profile serves as a financial dashboard for your relationship with each client.</p>
+        </section>
+
+        <section class="uk-margin-large-bottom">
+            <h2 class="uk-text-bold" style="font-size: 20px;">The Financial Pulse</h2>
+            <p>Each profile includes three critical KPIs calculated in real-time:</p>
+            <ul>
+                <li><strong>Total Revenue:</strong> The sum of all invoices issued to the client (lifetime).</li>
+                <li><strong>Total Collected:</strong> The total amount of payments received.</li>
+                <li><strong>Outstanding Balance:</strong> The remaining balance across all open and overdue invoices.</li>
+            </ul>
+        </section>
+
+        <section class="uk-margin-large-bottom">
+            <h2 class="uk-text-bold" style="font-size: 20px;">Advanced Profile Data</h2>
+            <p>To take your bookkeeping to the next level, you can configure professional-grade fields for each client:</p>
+            <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-margin-top">
+                <ul class="uk-list uk-list-bullet">
+                    <li><strong>Payment Terms:</strong> Set defaults like <em>Net 30</em> or <em>Due on Receipt</em> so new invoices are automatically calculated correctly.</li>
+                    <li><strong>Credit Limits:</strong> Monitor client exposure and prevent over-extension.</li>
+                    <li><strong>Internal Notes:</strong> Maintain a secure, internal-only log of billing preferences or history.</li>
+                    <li><strong>Default Currency:</strong> Ensure invoices are always generated in the client's preferred currency.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="uk-margin-large-bottom">
+            <h2 class="uk-text-bold" style="font-size: 20px;">Daily Workflows</h2>
+            <p>From the Customer Profile, you can perform high-velocity actions:</p>
+            <div class="uk-grid-small uk-child-width-1-2@s" uk-grid>
+                <div>
+                    <div class="uk-card uk-card-muted uk-card-body uk-border-rounded">
+                        <h4 class="uk-text-bold">Creating Invoices</h4>
+                        <p class="uk-text-small">Click the <strong>"Create Invoice"</strong> button to jump directly to a pre-filled invoice form for that customer.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="uk-card uk-card-muted uk-card-body uk-border-rounded">
+                        <h4 class="uk-text-bold">Viewing Transactions</h4>
+                        <p class="uk-text-small">Use the tabbed interface to filter between <strong>Invoices</strong>, <strong>Payments</strong>, and <strong>Appointments</strong>.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="uk-card uk-card-secondary uk-card-body uk-border-rounded uk-margin-large-top">
+            <h3 class="uk-text-bold">Pro Tip: CRM Integration</h3>
+            <p>If you have the **Appointments** module enabled, you can see all upcoming and past meetings directly on the customer profile tab, ensuring your billing team is always in sync with the service team.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

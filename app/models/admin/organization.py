@@ -18,9 +18,18 @@ class Organization(db.Model):
     stripe_publishable_key = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    memberships = db.relationship('OrganizationMembership', back_populates='organization')
-    accounts = db.relationship('Account', back_populates='organization')
-    journal_entries = db.relationship('JournalEntry', back_populates='organization')
+    memberships = db.relationship('OrganizationMembership', back_populates='organization', cascade='all, delete-orphan')
+    accounts = db.relationship('Account', back_populates='organization', cascade='all, delete-orphan')
+    journal_entries = db.relationship('JournalEntry', back_populates='organization', cascade='all, delete-orphan')
+    
+    # Relationships for cascading delete (matching foreign keys in child models)
+    invoices = db.relationship('Invoice', cascade='all, delete-orphan')
+    bills = db.relationship('Bill', cascade='all, delete-orphan')
+    vendors = db.relationship('Vendor', cascade='all, delete-orphan')
+    customers = db.relationship('Customer', cascade='all, delete-orphan')
+    api_keys = db.relationship('ApiKey', cascade='all, delete-orphan')
+    webhooks = db.relationship('WebhookEndpoint', cascade='all, delete-orphan')
+    qbo_connection = db.relationship('QboConnection', cascade='all, delete-orphan', uselist=False)
 
     def __repr__(self):
         return f'<Organization {self.name}>'

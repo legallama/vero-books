@@ -11,13 +11,13 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     
     # Import models to ensure they are registered
-    from app.models.admin import organization, user, notification, team, payroll
+    from app.models.admin import organization, user, notification, team, payroll, api_key, webhook, qbo_connection
 
-    from app.models.accounting import account, journal, tax, payment, bank_rule, receipt, reconciliation, recurring_journal, tax_nexus
+    from app.models.accounting import account, journal, tax, payment, bank_rule, receipt, reconciliation, recurring_journal, tax_nexus, fixed_asset, budget, currency
 
     from app.models.crm import contact
-    from app.models.sales import invoice, estimate, recurring, product
-    from app.models.purchases import bill
+    from app.models.sales import invoice, estimate, recurring, product, inventory_adjustment, sales_receipt, credit_memo
+    from app.models.purchases import bill, purchase_order, vendor_credit
     from app.models.banking import bank_account, check
     from app.models.audit import log
 
@@ -70,11 +70,21 @@ def create_app(config_class=Config):
     app.register_blueprint(sales_bp, url_prefix='/sales')
     app.register_blueprint(team_bp, url_prefix='/team')
     app.register_blueprint(recurring_journal_bp, url_prefix='/recurring-journal')
+    from app.blueprints.inventory.routes import inventory_bp
+    app.register_blueprint(inventory_bp, url_prefix='/inventory')
+    
+    from app.blueprints.help import help_bp
     app.register_blueprint(help_bp)
+    
     from app.blueprints.payroll import payroll_bp
     app.register_blueprint(payroll_bp)
     from app.blueprints.payments import payments_bp
     app.register_blueprint(payments_bp)
+    
+    from app.blueprints.fixed_assets import fixed_assets_bp
+    app.register_blueprint(fixed_assets_bp, url_prefix='/fixed-assets')
+    from app.blueprints.budgets import budgets_bp
+    app.register_blueprint(budgets_bp, url_prefix='/budgets')
 
 
 
@@ -132,4 +142,10 @@ def create_app(config_class=Config):
     with app.app_context():
         db.create_all()
 
+    from app.blueprints.developer import developer_bp
+    app.register_blueprint(developer_bp)
+    
+    from app.blueprints.migration import migration_bp
+    app.register_blueprint(migration_bp)
+    
     return app

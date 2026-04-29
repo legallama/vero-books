@@ -2,27 +2,27 @@
 
 {% block content %}
 <div id="accounts-app">
-    <div class="uk-flex uk-flex-between uk-flex-bottom uk-margin-large-bottom">
+    <div class="page-header">
         <div>
-            <h1 class="uk-heading-small uk-margin-remove-bottom">Chart of Accounts</h1>
-            <p class="uk-text-meta">Manage your business accounts and financial structure.</p>
+            <h1 class="page-title">Chart of Accounts</h1>
+            <p class="page-subtitle">Manage your business accounts and financial structure.</p>
         </div>
-        <div>
+        <div class="uk-flex uk-flex-middle" style="gap: 10px;">
             <form id="qbImportForm" action="{{ url_for('accounts.import_qb') }}" method="POST" enctype="multipart/form-data" class="uk-inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div uk-form-custom>
                     <input type="file" name="qb_csv" accept=".csv" onchange="document.getElementById('qbImportForm').submit()">
-                    <button class="uk-button uk-button-default uk-margin-small-right" type="button" tabindex="-1"><span uk-icon="upload"></span> Import from QuickBooks</button>
+                    <button class="uk-button uk-button-default" type="button" tabindex="-1"><span uk-icon="upload"></span> Import from QuickBooks</button>
                 </div>
             </form>
-            <button @click="openCreateModal()" class="uk-button uk-button-primary">+ New Account</button>
+            <button @click="openCreateModal()" class="uk-button uk-button-primary elite-button-primary">+ New Account</button>
         </div>
     </div>
 
     <!-- Realistic Grouping -->
     <div class="uk-grid-medium" uk-grid>
         <div class="uk-width-1-1">
-            <div class="uk-card uk-card-default">
+            <div class="uk-card uk-card-default premium-card">
                 <div class="uk-card-header uk-flex uk-flex-between uk-flex-middle">
                     <h3 class="uk-card-title uk-text-bold">Ledger Accounts</h3>
                     <div class="uk-inline">

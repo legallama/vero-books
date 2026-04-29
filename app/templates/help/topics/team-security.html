@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-section uk-section-small uk-padding-remove-top">
+    <div class="uk-container uk-container-small">
+        <a href="{{ url_for('help.index') }}" class="uk-button uk-button-text uk-margin-bottom">
+            <span uk-icon="arrow-left"></span> Back to Help Center
+        </a>
+        
+        <h1 class="uk-text-bold">Team & Security</h1>
+        <p class="uk-text-lead uk-text-muted">Secure your organization and collaborate with your team.</p>
+
+        <hr class="uk-margin-medium-bottom">
+
+        <section class="uk-margin-large-bottom">
+            <h2 class="uk-text-bold" style="font-size: 20px;">User Roles</h2>
+            <p>VeroBooks uses role-based access control (RBAC) to ensure users only see what they need to.</p>
+            <table class="uk-table uk-table-divider uk-table-small">
+                <thead>
+                    <tr>
+                        <th class="uk-text-bold">Role</th>
+                        <th>Permissions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="uk-text-bold">ADMIN</td>
+                        <td>Full access to all settings, financial data, and team management.</td>
+                    </tr>
+                    <tr>
+                        <td class="uk-text-bold">ACCOUNTANT</td>
+                        <td>Full access to ledger and reports. Cannot manage organization settings or users.</td>
+                    </tr>
+                    <tr>
+                        <td class="uk-text-bold">STAFF</td>
+                        <td>Can create invoices and record expenses. Cannot view reports or the General Ledger.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="uk-margin-large-bottom">
+            <h2 class="uk-text-bold" style="font-size: 20px;">Developer & API Access</h2>
+            <p>For advanced integrations, VeroBooks provides a robust REST API. You can generate **API Keys** in the Developer section under your User Profile.</p>
+            <div class="uk-card uk-card-muted uk-card-body uk-border-rounded">
+                <h4 class="uk-text-bold">Webhooks</h4>
+                <p class="uk-text-small">Configure webhooks to receive real-time notifications for events like <code>invoice.paid</code> or <code>customer.created</code>.</p>
+            </div>
+        </section>
+
+        <section class="uk-margin-large-bottom">
+            <h2 class="uk-text-bold" style="font-size: 20px;">Protecting Your Data</h2>
+            <p>Your financial security is our priority. We recommend the following best practices:</p>
+            <ul class="uk-list uk-list-bullet">
+                <li><strong>Rotate API Keys</strong> every 90 days.</li>
+                <li><strong>Review the Audit Log</strong> weekly to monitor for unusual administrative activity.</li>
+                <li><strong>Limit Admin Roles</strong> to only the individuals who absolutely need them.</li>
+            </ul>
+        </section>
+    </div>
+</div>
+{% endblock %}

@@ -1,12 +1,13 @@
 :root {
-    --primary: #6366f1;
-    --primary-hover: #4f46e5;
-    --bg-dark: #020617; /* Deeper slate */
+    --primary: #1e293b;
+    --primary-hover: #1e293b;
+    --bg-dark: #020617;
+    /* Deeper slate */
     --card-bg: #0f172a;
     --card-border: #1e293b;
     --text-main: #f8fafc;
     --text-muted: #64748b;
-    --accent-blue: #0ea5e9;
+    --accent-blue: 1e293b;
     --accent-emerald: #10b981;
     --accent-rose: #f43f5e;
     --glass: rgba(15, 23, 42, 0.6);
@@ -37,7 +38,7 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary), #818cf8);
+    background: linear-gradient(135deg, var(--primary), 1e293b);
     color: white;
     padding: 0.875rem 1.75rem;
     border-radius: 0.75rem;
@@ -75,7 +76,9 @@ body {
     min-height: 100vh;
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
     font-family: 'Outfit', sans-serif;
     font-weight: 700;
     letter-spacing: -0.03em;
@@ -90,9 +93,23 @@ h1, h2, h3 {
     letter-spacing: 0.05em;
 }
 
-.badge-success { background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
-.badge-warning { background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
-.badge-error { background: rgba(244, 63, 94, 0.1); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.2); }
+.badge-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.badge-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.badge-error {
+    background: rgba(244, 63, 94, 0.1);
+    color: #fb7185;
+    border: 1px solid rgba(244, 63, 94, 0.2);
+}
 
 /* Table Enhancements */
 table {
@@ -108,8 +125,13 @@ th {
     z-index: 10;
 }
 
-tr:last-child td:first-child { border-bottom-left-radius: 1.25rem; }
-tr:last-child td:last-child { border-bottom-right-radius: 1.25rem; }
+tr:last-child td:first-child {
+    border-bottom-left-radius: 1.25rem;
+}
+
+tr:last-child td:last-child {
+    border-bottom-right-radius: 1.25rem;
+}
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
