@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'macros/help_tooltips.html' import help %}
 
 {% block content %}
 <div id="journal-app">
@@ -71,8 +72,8 @@
                 <tr>
                     <th class="uk-width-large">Account</th>
                     <th>Description</th>
-                    <th class="uk-width-small uk-text-right">Debit</th>
-                    <th class="uk-width-small uk-text-right">Credit</th>
+                    <th class="uk-width-small uk-text-right">Debit {{ help('debit') }}</th>
+                    <th class="uk-width-small uk-text-right">Credit {{ help('credit') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -123,8 +124,8 @@
                     <tr>
                         <th class="uk-width-large">Account</th>
                         <th>Description</th>
-                        <th class="uk-width-small">Debit</th>
-                        <th class="uk-width-small">Credit</th>
+                        <th class="uk-width-small">Debit {{ help('debit') }}</th>
+                        <th class="uk-width-small">Credit {{ help('credit') }}</th>
                         <th class="uk-table-shrink"></th>
                     </tr>
                 </thead>

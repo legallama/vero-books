@@ -1,15 +1,27 @@
 {% extends "base.html" %}
+{% from 'macros/help_tooltips.html' import help %}
+{% from 'macros/onboarding.html' import guided_action %}
 
 {% block content %}
 <div class="page-header">
     <div>
         <h1 class="page-title">Fixed Assets</h1>
-        <p class="page-subtitle">Manage physical assets and track depreciation schedules</p>
+        <p class="page-subtitle">Manage physical assets and track depreciation {{ help('depreciation') }} schedules</p>
     </div>
     <a href="{{ url_for('fixed_assets.create') }}" class="uk-button uk-button-primary elite-button-primary">
         <span uk-icon="icon: plus; ratio: 0.8" class="uk-margin-small-right"></span>Add Asset
     </a>
 </div>
+
+{% if not assets %}
+{{ guided_action(
+    "Asset Management 101", 
+    "You haven't recorded any fixed assets yet. Tracking your equipment and its value over time is crucial for accurate tax reporting. Want to see how it works?", 
+    "Set Up First Asset", 
+    url_for('fixed_assets.create'),
+    "home"
+) }}
+{% endif %}
 
 <div class="uk-card uk-card-default uk-border-rounded" style="box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
     <div class="uk-overflow-auto">

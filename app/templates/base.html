@@ -656,6 +656,23 @@
             padding: 4px 16px !important;
         }
 
+        .nav-more-items {
+            display: none;
+        }
+        .nav-more-items.show {
+            display: block;
+        }
+        .nav-more-toggle {
+            font-size: 12px !important;
+            padding: 4px 16px !important;
+            color: var(--primary-color) !important;
+            opacity: 0.7;
+            cursor: pointer;
+        }
+        .nav-more-toggle:hover {
+            opacity: 1;
+        }
+
         .collapsible-header {
             cursor: pointer;
             padding: 6px 16px !important;
@@ -792,24 +809,29 @@
                             href="{{ url_for('banking.index') }}"><span uk-icon="icon: receiver; ratio: 0.75" class="uk-margin-small-right"></span>Bank Transactions</a></li>
                     <li class="{{ 'uk-active' if request.endpoint == 'banking.checks' }}"><a
                             href="{{ url_for('banking.checks') }}"><span uk-icon="icon: print; ratio: 0.75" class="uk-margin-small-right"></span>Checks</a></li>
-                    <li class="{{ 'uk-active' if request.blueprint == 'receipts' }}"><a
-                            href="{{ url_for('receipts.index') }}"><span uk-icon="icon: image; ratio: 0.75" class="uk-margin-small-right"></span>Receipts</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'reconciliation' }}"><a
                             href="{{ url_for('reconciliation.index') }}"><span uk-icon="icon: check; ratio: 0.75" class="uk-margin-small-right"></span>Reconcile</a></li>
+                    <li class="{{ 'uk-active' if request.blueprint == 'journal' }}"><a
+                            href="{{ url_for('journal.index') }}"><span uk-icon="icon: file-text; ratio: 0.75" class="uk-margin-small-right"></span>Journal Entries</a></li>
+                    <li><a class="nav-more-toggle" onclick="toggleMore('accounting-more')"><span uk-icon="icon: more; ratio: 0.75" class="uk-margin-small-right"></span>More...</a></li>
+                    </ul>
+                    <div id="accounting-more" class="nav-more-items">
+                    <ul class="uk-nav uk-nav-default">
+                    <li class="{{ 'uk-active' if request.blueprint == 'receipts' }}"><a
+                            href="{{ url_for('receipts.index') }}"><span uk-icon="icon: image; ratio: 0.75" class="uk-margin-small-right"></span>Receipts</a></li>
                     <li><a href="{{ url_for('banking.rules') }}"><span uk-icon="icon: bolt; ratio: 0.75" class="uk-margin-small-right"></span>Rules</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'accounts' }}"><a
                             href="{{ url_for('accounts.index') }}"><span uk-icon="icon: table; ratio: 0.75" class="uk-margin-small-right"></span>Chart of Accounts</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'recurring_journal' }}"><a
                             href="{{ url_for('recurring_journal.index') }}"><span uk-icon="icon: future; ratio: 0.75" class="uk-margin-small-right"></span>Recurring Trans</a></li>
-                    <li class="{{ 'uk-active' if request.blueprint == 'journal' }}"><a
-                            href="{{ url_for('journal.index') }}"><span uk-icon="icon: file-text; ratio: 0.75" class="uk-margin-small-right"></span>Journal Entries</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'budgets' }}"><a
                             href="{{ url_for('budgets.index') }}"><span uk-icon="icon: future; ratio: 0.75" class="uk-margin-small-right"></span>Budgets</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'fixed_assets' }}"><a
                             href="{{ url_for('fixed_assets.index') }}"><span uk-icon="icon: home; ratio: 0.75" class="uk-margin-small-right"></span>Fixed Assets</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'tags' }}"><a
                             href="{{ url_for('tags.index') }}"><span uk-icon="icon: tag; ratio: 0.75" class="uk-margin-small-right"></span>Manage Tags</a></li>
-                        </ul>
+                    </ul>
+                    </div>
                     </div>
                 </li>
 
@@ -825,18 +847,23 @@
                     <li class="{{ 'uk-active' if request.path == url_for('bills.overview') }}"><a
                             href="{{ url_for('bills.overview') }}"><span uk-icon="icon: grid; ratio: 0.75" class="uk-margin-small-right"></span>Overview</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'expenses' }}"><a
-                            href="{{ url_for('expenses.transactions') }}"><span uk-icon="icon: cart; ratio: 0.75" class="uk-margin-small-right"></span>Expense Transactions</a></li>
+                            href="{{ url_for('expenses.transactions') }}"><span uk-icon="icon: cart; ratio: 0.75" class="uk-margin-small-right"></span>Expense Trans</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'vendors' }}"><a
                             href="{{ url_for('vendors.index') }}"><span uk-icon="icon: users; ratio: 0.75" class="uk-margin-small-right"></span>Vendors</a></li>
-                    <li class="{{ 'uk-active' if request.path == url_for('bills.purchase_orders') }}"><a
-                            href="{{ url_for('bills.purchase_orders') }}"><span uk-icon="icon: album; ratio: 0.75" class="uk-margin-small-right"></span>Purchase Orders</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('bills.index') }}"><a
                             href="{{ url_for('bills.index') }}"><span uk-icon="icon: file-pdf; ratio: 0.75" class="uk-margin-small-right"></span>Bills</a></li>
+                    <li><a class="nav-more-toggle" onclick="toggleMore('expenses-more')"><span uk-icon="icon: more; ratio: 0.75" class="uk-margin-small-right"></span>More...</a></li>
+                    </ul>
+                    <div id="expenses-more" class="nav-more-items">
+                    <ul class="uk-nav uk-nav-default">
+                    <li class="{{ 'uk-active' if request.path == url_for('bills.purchase_orders') }}"><a
+                            href="{{ url_for('bills.purchase_orders') }}"><span uk-icon="icon: album; ratio: 0.75" class="uk-margin-small-right"></span>Purchase Orders</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('bills.vendor_credits') }}"><a
                             href="{{ url_for('bills.vendor_credits') }}"><span uk-icon="icon: reply; ratio: 0.75" class="uk-margin-small-right"></span>Vendor Credits</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('bills.payments') }}"><a
                             href="{{ url_for('bills.payments') }}"><span uk-icon="icon: credit-card; ratio: 0.75" class="uk-margin-small-right"></span>Bill Payments</a></li>
-                        </ul>
+                    </ul>
+                    </div>
                     </div>
                 </li>
 
@@ -851,21 +878,26 @@
                         <ul class="uk-nav uk-nav-default">
                     <li class="{{ 'uk-active' if request.path == url_for('sales.overview') }}"><a
                             href="{{ url_for('sales.overview') }}"><span uk-icon="icon: grid; ratio: 0.75" class="uk-margin-small-right"></span>Sales Overview</a></li>
-                    <li class="{{ 'uk-active' if request.path == url_for('sales.transactions') }}"><a
-                            href="{{ url_for('sales.transactions') }}"><span uk-icon="icon: history; ratio: 0.75" class="uk-margin-small-right"></span>Sales Transactions</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'invoices' }}"><a
                             href="{{ url_for('invoices.index') }}"><span uk-icon="icon: file-text; ratio: 0.75" class="uk-margin-small-right"></span>Invoices</a></li>
+                    <li class="{{ 'uk-active' if request.path == url_for('sales.transactions') }}"><a
+                            href="{{ url_for('sales.transactions') }}"><span uk-icon="icon: history; ratio: 0.75" class="uk-margin-small-right"></span>Sales Trans</a></li>
+                    <li class="{{ 'uk-active' if request.path == url_for('sales.products') }}"><a
+                            href="{{ url_for('sales.products') }}"><span uk-icon="icon: play-circle; ratio: 0.75" class="uk-margin-small-right"></span>Products & Services</a></li>
+                    <li><a class="nav-more-toggle" onclick="toggleMore('sales-more')"><span uk-icon="icon: more; ratio: 0.75" class="uk-margin-small-right"></span>More...</a></li>
+                    </ul>
+                    <div id="sales-more" class="nav-more-items">
+                    <ul class="uk-nav uk-nav-default">
                     <li class="{{ 'uk-active' if request.path == url_for('sales.sales_receipts') }}"><a
                             href="{{ url_for('sales.sales_receipts') }}"><span uk-icon="icon: receiver; ratio: 0.75" class="uk-margin-small-right"></span>Sales Receipts</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('sales.credit_memos') }}"><a
                             href="{{ url_for('sales.credit_memos') }}"><span uk-icon="icon: reply; ratio: 0.75" class="uk-margin-small-right"></span>Credit Memos</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('sales.statements') }}"><a
                             href="{{ url_for('sales.statements') }}"><span uk-icon="icon: file-pdf; ratio: 0.75" class="uk-margin-small-right"></span>Statements</a></li>
-                    <li class="{{ 'uk-active' if request.path == url_for('sales.products') }}"><a
-                            href="{{ url_for('sales.products') }}"><span uk-icon="icon: play-circle; ratio: 0.75" class="uk-margin-small-right"></span>Products & Services</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'recurring' }}"><a
                             href="{{ url_for('recurring.index') }}"><span uk-icon="icon: refresh; ratio: 0.75" class="uk-margin-small-right"></span>Recurring Plans</a></li>
-                        </ul>
+                    </ul>
+                    </div>
                     </div>
                 </li>
 
@@ -1222,12 +1254,18 @@
         <div class="uk-width-1-1 uk-padding-small animate-fade-in">
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-            {% for category, message in messages %}
-            <div class="uk-alert-{{ 'danger' if category == 'error' or category == 'danger' else 'primary' }}" uk-alert>
-                <a class="uk-alert-close" uk-close></a>
-                <p>{{ message }}</p>
-            </div>
-            {% endfor %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    {% for category, message in messages %}
+                    UIkit.notification({
+                        message: '<span uk-icon="icon: {{ "check" if category == "success" else "warning" if category == "warning" else "ban" if category in ["error", "danger"] else "info" }}; ratio: 0.8" class="uk-margin-small-right"></span> {{ message|e }}',
+                        status: '{{ "success" if category == "success" else "danger" if category in ["error", "danger"] else "warning" if category == "warning" else "primary" }}',
+                        pos: 'bottom-right',
+                        timeout: 4000
+                    });
+                    {% endfor %}
+                });
+            </script>
             {% endif %}
             {% endwith %}
 
@@ -1548,6 +1586,21 @@
                 pos: 'bottom-center',
                 timeout: 2000
             });
+        }
+
+        // --- Sidebar "More..." Toggle ---
+        function toggleMore(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.toggle('show');
+                // Update the toggle link text
+                const toggle = el.previousElementSibling.querySelector('.nav-more-toggle') 
+                             || el.parentElement.querySelector('.nav-more-toggle');
+                if (toggle) {
+                    const isOpen = el.classList.contains('show');
+                    toggle.innerHTML = '<span uk-icon="icon: ' + (isOpen ? 'minus' : 'more') + '; ratio: 0.75" class="uk-margin-small-right"></span>' + (isOpen ? 'Less' : 'More...');
+                }
+            }
         }
 
         document.addEventListener('DOMContentLoaded', function () {

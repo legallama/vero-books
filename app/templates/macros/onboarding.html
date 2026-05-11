@@ -1,0 +1,23 @@
+{# Guided Action Banner Macro #}
+{% macro guided_action(title, message, action_label, action_url, icon='info') %}
+<div class="uk-alert-primary uk-border-rounded uk-margin-large-bottom animate-fade-in" 
+     style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 24px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);">
+    <div class="uk-flex uk-flex-middle">
+        <div class="uk-margin-medium-right">
+            <div style="background: #3b82f6; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <span uk-icon="icon: {{ icon }}; ratio: 1.2" style="color: white;"></span>
+            </div>
+        </div>
+        <div class="uk-flex-expand">
+            <h4 class="uk-text-bold uk-margin-remove" style="color: #1e3a8a;">{{ title }}</h4>
+            <p class="uk-margin-small-top" style="color: #1e40af; font-size: 15px;">{{ message }}</p>
+        </div>
+        <div class="uk-margin-medium-left">
+            <a href="{{ action_url }}" class="uk-button uk-button-primary" 
+               style="background: #2563eb; border: none; border-radius: 8px; text-transform: none; font-weight: 600; padding: 0 24px;">
+                {{ action_label }}
+            </a>
+        </div>
+    </div>
+</div>
+{% endmacro %}

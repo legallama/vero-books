@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'macros/onboarding.html' import guided_action %}
 
 {% block content %}
 <div class="page-header">
@@ -10,6 +11,16 @@
         <span uk-icon="icon: plus; ratio: 0.8" class="uk-margin-small-right"></span>New Budget
     </button>
 </div>
+
+{% if not budgets %}
+{{ guided_action(
+    "Financial Planning", 
+    "You haven't created any budgets yet. Setting targets helps you control spending and grow your business profitably. Ready to build your first plan?", 
+    "Create First Budget", 
+    "#modal-create-budget",
+    "future"
+) }}
+{% endif %}
 
 <div class="uk-grid-medium" uk-grid>
     {% for budget in budgets %}

@@ -1,0 +1,29 @@
+{# Help Tooltip Macro — renders a small ? icon with a plain-English explanation #}
+{% macro help(term) %}
+{%- set glossary = {
+    'debit': 'Money going INTO an account. Think of it as "this account received value." For assets (like your bank), a debit increases the balance.',
+    'credit': 'Money going OUT of an account. Think of it as "this account gave value." For assets (like your bank), a credit decreases the balance.',
+    'journal_entry': 'A record of a financial transaction. Every entry must have equal debits and credits — this is called "double-entry" bookkeeping.',
+    'posting': 'Making a transaction official. Once posted, an entry is locked and affects your financial reports. Draft entries do not.',
+    'reconciliation': 'Comparing your VeroBooks records against your actual bank statement to make sure every transaction matches.',
+    'chart_of_accounts': 'Your master list of all financial categories (like Rent, Revenue, Bank Accounts). Every transaction gets filed into one of these.',
+    'accrual': 'Recording income when earned and expenses when incurred — even if cash hasn\'t changed hands yet. The alternative is "cash basis."',
+    'nexus': 'A legal connection to a state that requires you to collect and remit sales tax there. Usually triggered by having employees, offices, or significant sales in that state.',
+    'accounts_payable': 'Money your business owes to vendors — bills you\'ve received but haven\'t paid yet.',
+    'accounts_receivable': 'Money owed TO your business — invoices you\'ve sent to clients but haven\'t been paid yet.',
+    'fiscal_year': 'Your business\'s 12-month financial reporting period. It doesn\'t have to match the calendar year.',
+    'depreciation': 'Spreading the cost of a big purchase (like equipment) over its useful life instead of counting it all as one expense.',
+    'general_ledger': 'The complete record of all financial transactions for your business. Think of it as the "master book" everything feeds into.',
+    'trial_balance': 'A report that lists all account balances to verify that total debits equal total credits. Used to catch errors before generating financial statements.',
+    'retained_earnings': 'Accumulated profits that haven\'t been distributed to owners. It\'s what your business has earned and kept over time.',
+    'equity': 'The owner\'s share of the business — total assets minus total liabilities. Also called "net worth" of the business.',
+    'vendor_credit': 'A credit issued by a vendor, reducing what you owe them. Similar to a store credit — it offsets future bills.',
+    'purchase_order': 'A formal document sent to a vendor to order goods or services. It becomes a bill once the vendor delivers.',
+    'credit_memo': 'A document reducing the amount a customer owes you. Used for refunds, discounts, or billing corrections.',
+    'budget': 'A financial plan that sets spending and revenue targets for a period. Helps you track if you\'re over or under your goals.',
+    'payroll': 'The process of calculating and distributing employee wages, including tax withholdings and deductions.'
+} -%}
+<span class="help-tooltip" uk-tooltip="title: {{ glossary.get(term, 'No definition available.') }}; pos: top" style="cursor: help; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: rgba(0,0,0,0.06); margin-left: 4px; vertical-align: middle; font-size: 10px; color: var(--text-muted);">
+    <span uk-icon="icon: question; ratio: 0.55"></span>
+</span>
+{% endmacro %}

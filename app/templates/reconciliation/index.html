@@ -1,9 +1,10 @@
 {% extends "base.html" %}
+{% from 'macros/help_tooltips.html' import help %}
 
 {% block content %}
 <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-bottom">
     <div>
-        <h2 class="uk-margin-remove uk-text-bold" style="color: #1e293b;">Reconcile</h2>
+        <h2 class="uk-margin-remove uk-text-bold" style="color: #1e293b;">Reconcile {{ help('reconciliation') }}</h2>
         <p class="uk-text-meta uk-margin-remove">Match your bank statements to your recorded transactions</p>
     </div>
 </div>

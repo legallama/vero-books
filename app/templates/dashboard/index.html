@@ -9,8 +9,8 @@
     <!-- Dashboard Header -->
     <div class="page-header">
         <div>
-            <h1 class="page-title">Dashboard</h1>
-            <p class="page-subtitle">Welcome to your financial overview.</p>
+            <h1 class="page-title" id="dashboard-greeting">Dashboard</h1>
+            <p class="page-subtitle" id="dashboard-subtitle">Here's your financial snapshot.</p>
         </div>
         <div class="uk-flex uk-flex-middle">
             {% if setup_percent < 100 %}
@@ -502,6 +502,28 @@
         background: var(--card-bg);
     }
 </style>
+
+<script>
+    // Time-aware Dashboard Greeting
+    (function() {
+        const hour = new Date().getHours();
+        const fullName = "{{ current_user.full_name or 'there' }}";
+        const firstName = fullName.split(' ')[0];
+        let greeting;
+
+        if (hour < 12) greeting = 'Good morning';
+        else if (hour < 17) greeting = 'Good afternoon';
+        else greeting = 'Good evening';
+
+        document.getElementById('dashboard-greeting').textContent = greeting + ', ' + firstName + '.';
+
+        // Contextual subtitle based on time
+        const el = document.getElementById('dashboard-subtitle');
+        if (hour < 12) el.textContent = "Here's your financial snapshot for today.";
+        else if (hour < 17) el.textContent = "Here's how your business is tracking.";
+        else el.textContent = "Here's your end-of-day summary.";
+    })();
+</script>
 {% endblock %}
 
 

@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+{% from 'macros/help_tooltips.html' import help %}
 
 {% block content %}
 <div id="accounts-app">
     <div class="page-header">
         <div>
-            <h1 class="page-title">Chart of Accounts</h1>
+            <h1 class="page-title">Chart of Accounts {{ help('chart_of_accounts') }}</h1>
             <p class="page-subtitle">Manage your business accounts and financial structure.</p>
         </div>
         <div class="uk-flex uk-flex-middle" style="gap: 10px;">
