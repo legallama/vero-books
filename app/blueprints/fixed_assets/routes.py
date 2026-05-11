@@ -26,9 +26,9 @@ def create():
             description=request.form.get('description'),
             serial_number=request.form.get('serial_number'),
             purchase_date=datetime.strptime(request.form.get('purchase_date'), '%Y-%m-%d').date(),
-            purchase_price=Decimal(request.form.get('purchase_price')),
-            salvage_value=Decimal(request.form.get('salvage_value', 0)),
-            useful_life_months=int(request.form.get('useful_life_months')),
+            purchase_price=Decimal(request.form.get('purchase_price') or '0'),
+            salvage_value=Decimal(request.form.get('salvage_value') or '0'),
+            useful_life_months=int(request.form.get('useful_life_months') or '0'),
             asset_account_id=request.form.get('asset_account_id'),
             accumulated_depreciation_account_id=request.form.get('accumulated_depreciation_account_id'),
             depreciation_expense_account_id=request.form.get('depreciation_expense_account_id')

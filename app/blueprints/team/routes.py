@@ -44,7 +44,13 @@ def create():
         phone = request.form.get('phone')
         role = request.form.get('role')
         member_type = request.form.get('type')
-        hourly_rate = request.form.get('hourly_rate')
+        hourly_rate_raw = request.form.get('hourly_rate')
+        hourly_rate = None
+        if hourly_rate_raw:
+            try:
+                hourly_rate = float(hourly_rate_raw)
+            except ValueError:
+                hourly_rate = None
         
         from app.extensions import db
         new_member = TeamMember(

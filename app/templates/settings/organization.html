@@ -1,0 +1,78 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="uk-section uk-section-xsmall">
+    <div class="uk-margin-large-bottom">
+        <h1 class="uk-h2 uk-text-bold">Organization Profile</h1>
+        <p class="uk-text-meta">Manage your business details and legal information.</p>
+    </div>
+
+    <div class="uk-grid-medium" uk-grid>
+        <div class="uk-width-2-3@m">
+            <div class="uk-card uk-card-default uk-card-body uk-border-rounded">
+                <form method="POST" class="uk-form-stacked">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="uk-grid-small" uk-grid>
+                        <div class="uk-width-1-2@s">
+                            <label class="uk-form-label uk-text-bold">Display Name</label>
+                            <input class="uk-input" type="text" name="name" value="{{ org.name }}" required>
+                        </div>
+                        <div class="uk-width-1-2@s">
+                            <label class="uk-form-label uk-text-bold">Legal Name</label>
+                            <input class="uk-input" type="text" name="legal_name" value="{{ org.legal_name or '' }}" placeholder="Legal name for documents">
+                        </div>
+                        
+                        <div class="uk-width-1-2@s uk-margin-top">
+                            <label class="uk-form-label uk-text-bold">Business Email</label>
+                            <input class="uk-input" type="email" name="email" value="{{ org.email or '' }}">
+                        </div>
+                        <div class="uk-width-1-2@s uk-margin-top">
+                            <label class="uk-form-label uk-text-bold">Business Phone</label>
+                            <input class="uk-input" type="text" name="phone" value="{{ org.phone or '' }}">
+                        </div>
+
+                        <div class="uk-width-1-2@s uk-margin-top">
+                            <label class="uk-form-label uk-text-bold">Fiscal Year Start</label>
+                            <select class="uk-select" name="fiscal_year_start_month">
+                                {% for m in range(1, 13) %}
+                                <option value="{{ m }}" {{ 'selected' if org.fiscal_year_start_month == m }}>
+                                    {{ ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][m-1] }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="uk-width-1-2@s uk-margin-top">
+                            <label class="uk-form-label uk-text-bold">Timezone</label>
+                            <select class="uk-select" name="timezone">
+                                <option value="UTC" {{ 'selected' if org.timezone == 'UTC' }}>UTC</option>
+                                <option value="US/Eastern" {{ 'selected' if org.timezone == 'US/Eastern' }}>US/Eastern</option>
+                                <option value="US/Central" {{ 'selected' if org.timezone == 'US/Central' }}>US/Central</option>
+                                <option value="US/Mountain" {{ 'selected' if org.timezone == 'US/Mountain' }}>US/Mountain</option>
+                                <option value="US/Pacific" {{ 'selected' if org.timezone == 'US/Pacific' }}>US/Pacific</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="uk-margin-large-top">
+                        <button type="submit" class="uk-button uk-button-primary uk-border-rounded">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="uk-width-1-3@m">
+            <div class="uk-card uk-card-default uk-card-body uk-border-rounded" style="background: #f8fafc;">
+                <h4 class="uk-text-bold">Business Branding</h4>
+                <p class="uk-text-meta">Company logo and branding colors are managed in the theme settings.</p>
+                <hr>
+                <div class="uk-text-center uk-padding-small">
+                    <img src="{{ url_for('static', filename='logo.png') }}" style="max-height: 80px;">
+                    <p class="uk-text-meta uk-margin-small-top">Current Logo</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -2,15 +2,26 @@
 
 {% block content %}
 <div class="uk-section uk-section-xsmall">
-    <div class="uk-margin-large-bottom">
-        <h1 class="uk-h2 uk-text-bold">Settings</h1>
-        <p class="uk-text-meta">Configure your company profile, team, and financial integrations.</p>
+    <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-large-bottom">
+        <div>
+            <h1 class="uk-h2 uk-text-bold uk-margin-remove">Settings</h1>
+            <p class="uk-text-meta">Configure your company profile, team, and financial integrations.</p>
+        </div>
+        <div>
+            <form action="{{ url_for('settings.toggle_tax') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="uk-button {{ 'uk-button-default' if org.sales_tax_enabled else 'uk-button-primary' }} uk-button-small uk-border-rounded" style="text-transform: none;">
+                    <span uk-icon="icon: {{ 'ban' if org.sales_tax_enabled else 'check' }}; ratio: 0.8" class="uk-margin-small-right"></span>
+                    {{ 'Disable Sales Tax' if org.sales_tax_enabled else 'Enable Sales Tax' }}
+                </button>
+            </form>
+        </div>
     </div>
 
     <div class="uk-grid-medium uk-child-width-1-3@m" uk-grid>
         <!-- Company Profile -->
         <div>
-            <a href="{{ url_for('settings.profile') }}" class="uk-link-reset">
+            <a href="{{ url_for('settings.organization') }}" class="uk-link-reset">
                 <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-card-hover">
                     <div class="uk-flex uk-flex-middle">
                         <span uk-icon="icon: home; ratio: 1.5" class="uk-text-primary"></span>
@@ -39,6 +50,7 @@
         </div>
 
         <!-- Tax Rates -->
+        {% if org.sales_tax_enabled %}
         <div>
             <a href="{{ url_for('settings.tax_rates') }}" class="uk-link-reset">
                 <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-card-hover">
@@ -52,6 +64,7 @@
                 </div>
             </a>
         </div>
+        {% endif %}
 
         <!-- Payments (NEW) -->
         <div>
@@ -69,6 +82,7 @@
         </div>
 
         <!-- Tax & Nexus (NEW) -->
+        {% if org.sales_tax_enabled %}
         <div>
             <a href="{{ url_for('settings.tax_nexus') }}" class="uk-link-reset">
                 <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-card-hover" style="border: 1px solid #fde68a; background: #fffbeb;">
@@ -82,6 +96,7 @@
                 </div>
             </a>
         </div>
+        {% endif %}
 
         <!-- Chart of Accounts -->
 

@@ -9,6 +9,9 @@
             <p class="uk-text-meta">Manage your team, taxes, and pay runs in one place.</p>
         </div>
         <div class="uk-flex" style="gap: 12px;">
+            <a href="{{ url_for('payroll.time_tracking') }}" class="uk-button uk-button-default uk-border-rounded">
+                <span uk-icon="icon: clock; ratio: 0.8" class="uk-margin-small-right"></span>Time Tracking
+            </a>
             <a href="{{ url_for('payroll.create_employee') }}" class="uk-button uk-button-default uk-border-rounded">
                 <span uk-icon="icon: plus; ratio: 0.8" class="uk-margin-small-right"></span>Add Employee
             </a>
@@ -123,7 +126,17 @@
                                 </div>
                                 <div class="uk-text-right">
                                     <div class="uk-text-bold" style="font-size: 13px; color: #1e293b;">${{ "{:,.2f}".format(run.total_net) }}</div>
-                                    <span class="uk-text-meta" style="font-size: 10px; color: #10b981;">COMPLETED</span>
+                                    <div class="uk-flex uk-flex-middle uk-flex-right" style="gap: 8px;">
+                                        {% if run.status == 'VOID' %}
+                                            <span class="uk-text-meta" style="font-size: 10px; color: #f43f5e;">VOIDED</span>
+                                        {% else %}
+                                            <span class="uk-text-meta" style="font-size: 10px; color: #10b981;">COMPLETED</span>
+                                            <form action="{{ url_for('payroll.void_payroll_run', run_id=run.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to void this payroll run? This will reverse all ledger entries and reset time tracking.');">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" class="uk-button uk-button-text uk-text-danger" style="font-size: 10px; text-transform: none;">Void</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </li>

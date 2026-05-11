@@ -632,12 +632,12 @@
         }
 
         .nav-section {
-            margin-left: 24px;
-            border-left: 1px solid var(--border-color);
-            padding-left: 8px;
+            margin-left: 4px;
+            padding-left: 4px;
             transition: all 0.3s ease;
             overflow: hidden;
             display: block;
+            white-space: nowrap;
         }
 
         .nav-section.collapsed {
@@ -653,13 +653,13 @@
 
         .nav-section li a {
             font-size: 13px !important;
-            padding: 8px 16px !important;
+            padding: 4px 16px !important;
         }
 
         .collapsible-header {
             cursor: pointer;
-            padding: 12px 16px !important;
-            margin: 12px 0 4px 0 !important;
+            padding: 6px 16px !important;
+            margin: 6px 0 2px 0 !important;
             font-size: 11px !important;
             font-weight: 700 !important;
             text-transform: uppercase;
@@ -789,26 +789,26 @@
                     <div id="accounting-section" class="nav-section">
                         <ul class="uk-nav uk-nav-default">
                     <li class="{{ 'uk-active' if request.blueprint == 'banking' and request.endpoint == 'banking.index' }}"><a
-                            href="{{ url_for('banking.index') }}">Bank Transactions</a></li>
+                            href="{{ url_for('banking.index') }}"><span uk-icon="icon: receiver; ratio: 0.75" class="uk-margin-small-right"></span>Bank Transactions</a></li>
                     <li class="{{ 'uk-active' if request.endpoint == 'banking.checks' }}"><a
-                            href="{{ url_for('banking.checks') }}">Checks</a></li>
+                            href="{{ url_for('banking.checks') }}"><span uk-icon="icon: print; ratio: 0.75" class="uk-margin-small-right"></span>Checks</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'receipts' }}"><a
-                            href="{{ url_for('receipts.index') }}">Receipts</a></li>
+                            href="{{ url_for('receipts.index') }}"><span uk-icon="icon: image; ratio: 0.75" class="uk-margin-small-right"></span>Receipts</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'reconciliation' }}"><a
-                            href="{{ url_for('reconciliation.index') }}">Reconcile</a></li>
-                    <li><a href="{{ url_for('banking.rules') }}">Rules</a></li>
+                            href="{{ url_for('reconciliation.index') }}"><span uk-icon="icon: check; ratio: 0.75" class="uk-margin-small-right"></span>Reconcile</a></li>
+                    <li><a href="{{ url_for('banking.rules') }}"><span uk-icon="icon: bolt; ratio: 0.75" class="uk-margin-small-right"></span>Rules</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'accounts' }}"><a
-                            href="{{ url_for('accounts.index') }}">Chart of Accounts</a></li>
+                            href="{{ url_for('accounts.index') }}"><span uk-icon="icon: table; ratio: 0.75" class="uk-margin-small-right"></span>Chart of Accounts</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'recurring_journal' }}"><a
-                            href="{{ url_for('recurring_journal.index') }}">Recurring Transactions</a></li>
+                            href="{{ url_for('recurring_journal.index') }}"><span uk-icon="icon: future; ratio: 0.75" class="uk-margin-small-right"></span>Recurring Trans</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'journal' }}"><a
-                            href="{{ url_for('journal.index') }}">Journal Entries</a></li>
+                            href="{{ url_for('journal.index') }}"><span uk-icon="icon: file-text; ratio: 0.75" class="uk-margin-small-right"></span>Journal Entries</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'budgets' }}"><a
-                            href="{{ url_for('budgets.index') }}">Budgets</a></li>
+                            href="{{ url_for('budgets.index') }}"><span uk-icon="icon: future; ratio: 0.75" class="uk-margin-small-right"></span>Budgets</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'fixed_assets' }}"><a
-                            href="{{ url_for('fixed_assets.index') }}">Fixed Assets</a></li>
+                            href="{{ url_for('fixed_assets.index') }}"><span uk-icon="icon: home; ratio: 0.75" class="uk-margin-small-right"></span>Fixed Assets</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'tags' }}"><a
-                            href="{{ url_for('tags.index') }}">Manage Tags</a></li>
+                            href="{{ url_for('tags.index') }}"><span uk-icon="icon: tag; ratio: 0.75" class="uk-margin-small-right"></span>Manage Tags</a></li>
                         </ul>
                     </div>
                 </li>
@@ -823,19 +823,19 @@
                     <div id="expenses-section" class="nav-section">
                         <ul class="uk-nav uk-nav-default">
                     <li class="{{ 'uk-active' if request.path == url_for('bills.overview') }}"><a
-                            href="{{ url_for('bills.overview') }}">Overview</a></li>
+                            href="{{ url_for('bills.overview') }}"><span uk-icon="icon: grid; ratio: 0.75" class="uk-margin-small-right"></span>Overview</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'expenses' }}"><a
-                            href="{{ url_for('expenses.transactions') }}">Expense Transactions</a></li>
+                            href="{{ url_for('expenses.transactions') }}"><span uk-icon="icon: cart; ratio: 0.75" class="uk-margin-small-right"></span>Expense Transactions</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'vendors' }}"><a
-                            href="{{ url_for('vendors.index') }}">Vendors</a></li>
+                            href="{{ url_for('vendors.index') }}"><span uk-icon="icon: users; ratio: 0.75" class="uk-margin-small-right"></span>Vendors</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('bills.purchase_orders') }}"><a
-                            href="{{ url_for('bills.purchase_orders') }}">Purchase Orders</a></li>
+                            href="{{ url_for('bills.purchase_orders') }}"><span uk-icon="icon: album; ratio: 0.75" class="uk-margin-small-right"></span>Purchase Orders</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('bills.index') }}"><a
-                            href="{{ url_for('bills.index') }}">Bills</a></li>
+                            href="{{ url_for('bills.index') }}"><span uk-icon="icon: file-pdf; ratio: 0.75" class="uk-margin-small-right"></span>Bills</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('bills.vendor_credits') }}"><a
-                            href="{{ url_for('bills.vendor_credits') }}">Vendor Credits</a></li>
+                            href="{{ url_for('bills.vendor_credits') }}"><span uk-icon="icon: reply; ratio: 0.75" class="uk-margin-small-right"></span>Vendor Credits</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('bills.payments') }}"><a
-                            href="{{ url_for('bills.payments') }}">Bill Payments</a></li>
+                            href="{{ url_for('bills.payments') }}"><span uk-icon="icon: credit-card; ratio: 0.75" class="uk-margin-small-right"></span>Bill Payments</a></li>
                         </ul>
                     </div>
                 </li>
@@ -850,21 +850,21 @@
                     <div id="sales-section" class="nav-section">
                         <ul class="uk-nav uk-nav-default">
                     <li class="{{ 'uk-active' if request.path == url_for('sales.overview') }}"><a
-                            href="{{ url_for('sales.overview') }}">Sales Overview</a></li>
+                            href="{{ url_for('sales.overview') }}"><span uk-icon="icon: grid; ratio: 0.75" class="uk-margin-small-right"></span>Sales Overview</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('sales.transactions') }}"><a
-                            href="{{ url_for('sales.transactions') }}">Sales Transactions</a></li>
+                            href="{{ url_for('sales.transactions') }}"><span uk-icon="icon: history; ratio: 0.75" class="uk-margin-small-right"></span>Sales Transactions</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'invoices' }}"><a
-                            href="{{ url_for('invoices.index') }}">Invoices</a></li>
+                            href="{{ url_for('invoices.index') }}"><span uk-icon="icon: file-text; ratio: 0.75" class="uk-margin-small-right"></span>Invoices</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('sales.sales_receipts') }}"><a
-                            href="{{ url_for('sales.sales_receipts') }}">Sales Receipts</a></li>
+                            href="{{ url_for('sales.sales_receipts') }}"><span uk-icon="icon: receiver; ratio: 0.75" class="uk-margin-small-right"></span>Sales Receipts</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('sales.credit_memos') }}"><a
-                            href="{{ url_for('sales.credit_memos') }}">Credit Memos</a></li>
+                            href="{{ url_for('sales.credit_memos') }}"><span uk-icon="icon: reply; ratio: 0.75" class="uk-margin-small-right"></span>Credit Memos</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('sales.statements') }}"><a
-                            href="{{ url_for('sales.statements') }}">Statements</a></li>
+                            href="{{ url_for('sales.statements') }}"><span uk-icon="icon: file-pdf; ratio: 0.75" class="uk-margin-small-right"></span>Statements</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('sales.products') }}"><a
-                            href="{{ url_for('sales.products') }}">Products and Services</a></li>
+                            href="{{ url_for('sales.products') }}"><span uk-icon="icon: play-circle; ratio: 0.75" class="uk-margin-small-right"></span>Products & Services</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'recurring' }}"><a
-                            href="{{ url_for('recurring.index') }}">Recurring Plans</a></li>
+                            href="{{ url_for('recurring.index') }}"><span uk-icon="icon: refresh; ratio: 0.75" class="uk-margin-small-right"></span>Recurring Plans</a></li>
                         </ul>
                     </div>
                 </li>
@@ -878,9 +878,9 @@
                     <div id="inventory-section" class="nav-section">
                         <ul class="uk-nav uk-nav-default">
                     <li class="{{ 'uk-active' if request.blueprint == 'inventory' and request.endpoint == 'inventory.dashboard' }}"><a
-                            href="{{ url_for('inventory.dashboard') }}">Dashboard</a></li>
+                            href="{{ url_for('inventory.dashboard') }}"><span uk-icon="icon: grid; ratio: 0.75" class="uk-margin-small-right"></span>Dashboard</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'inventory' and request.endpoint == 'inventory.adjustments' }}"><a
-                            href="{{ url_for('inventory.adjustments') }}">Adjustments</a></li>
+                            href="{{ url_for('inventory.adjustments') }}"><span uk-icon="icon: settings; ratio: 0.75" class="uk-margin-small-right"></span>Adjustments</a></li>
                         </ul>
                     </div>
                 </li>
@@ -895,13 +895,13 @@
                     <div id="crm-section" class="nav-section">
                         <ul class="uk-nav uk-nav-default">
                     <li class="{{ 'uk-active' if request.path == url_for('customers.overview') }}"><a
-                            href="{{ url_for('customers.overview') }}">Overview</a></li>
+                            href="{{ url_for('customers.overview') }}"><span uk-icon="icon: grid; ratio: 0.75" class="uk-margin-small-right"></span>Overview</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('customers.index') }}"><a
-                            href="{{ url_for('customers.index') }}">Customers & Leads</a></li>
+                            href="{{ url_for('customers.index') }}"><span uk-icon="icon: users; ratio: 0.75" class="uk-margin-small-right"></span>Customers & Leads</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'estimates' }}"><a
-                            href="{{ url_for('estimates.index') }}">Estimates</a></li>
+                            href="{{ url_for('estimates.index') }}"><span uk-icon="icon: file-edit; ratio: 0.75" class="uk-margin-small-right"></span>Estimates</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('customers.appointments') }}"><a
-                            href="{{ url_for('customers.appointments') }}">Appointments</a></li>
+                            href="{{ url_for('customers.appointments') }}"><span uk-icon="icon: calendar; ratio: 0.75" class="uk-margin-small-right"></span>Appointments</a></li>
                         </ul>
                     </div>
                 </li>
@@ -916,13 +916,13 @@
                     <div id="team-section" class="nav-section">
                         <ul class="uk-nav uk-nav-default">
                     <li class="{{ 'uk-active' if request.path == url_for('team.overview') }}"><a
-                            href="{{ url_for('team.overview') }}">Overview</a></li>
+                            href="{{ url_for('team.overview') }}"><span uk-icon="icon: grid; ratio: 0.75" class="uk-margin-small-right"></span>Overview</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('team.employees') }}"><a
-                            href="{{ url_for('team.employees') }}">Employees</a></li>
+                            href="{{ url_for('team.employees') }}"><span uk-icon="icon: user; ratio: 0.75" class="uk-margin-small-right"></span>Employees</a></li>
                     <li class="{{ 'uk-active' if request.path == url_for('team.contractors') }}"><a
-                            href="{{ url_for('team.contractors') }}">Contractors</a></li>
+                            href="{{ url_for('team.contractors') }}"><span uk-icon="icon: users; ratio: 0.75" class="uk-margin-small-right"></span>Contractors</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'payroll' }}"><a
-                            href="{{ url_for('payroll.index') }}" style="color: #4338ca !important; font-weight: 700;">
+                            href="{{ url_for('payroll.index') }}">
                             <span uk-icon="icon: credit-card; ratio: 0.8" class="uk-margin-small-right"></span>Payroll Center</a></li>
                         </ul>
                     </div>
@@ -939,9 +939,9 @@
                     <div id="reports-section" class="nav-section">
                         <ul class="uk-nav uk-nav-default">
                     <li class="{{ 'uk-active' if request.blueprint == 'reports' }}"><a
-                            href="{{ url_for('reports.index') }}">Financial Statements</a></li>
+                            href="{{ url_for('reports.index') }}"><span uk-icon="icon: file-pdf; ratio: 0.75" class="uk-margin-small-right"></span>Financial Statements</a></li>
                     <li class="{{ 'uk-active' if request.blueprint == 'audit' }}"><a
-                            href="{{ url_for('audit.history') }}">Audit Trail</a></li>
+                            href="{{ url_for('audit.history') }}"><span uk-icon="icon: history; ratio: 0.75" class="uk-margin-small-right"></span>Audit Trail</a></li>
                         </ul>
                     </div>
                 </li>
@@ -999,6 +999,7 @@
 
             <div class="uk-flex uk-flex-middle">
                 <!-- Workflow Checklist -->
+                {% if setup_percent < 100 %}
                 <div class="uk-margin-medium-right">
                     <a href="#" class="uk-link-reset uk-flex uk-flex-middle" uk-toggle="target: #setup-tasks-modal" style="gap: 10px;">
                         <div class="uk-flex uk-flex-middle uk-flex-center" style="width: 32px; height: 32px; background: var(--sidebar-header-bg); border: 1px solid var(--border-color); border-radius: 10px; color: var(--primary-color);">
@@ -1007,6 +1008,7 @@
                         <span class="uk-visible@m" style="font-size: 13px; font-weight: 600; color: var(--text-color);">Workflow</span>
                     </a>
                 </div>
+                {% endif %}
 
                 <!-- Quick Create Button -->
                 <div class="uk-margin-medium-right">
@@ -1279,7 +1281,7 @@
                     </div>
                     {% if not step.completed %}
                     <div>
-                        <a href="#" class="uk-button uk-button-text uk-text-primary" style="font-size: 12px;">Complete</a>
+                        <a href="{{ step.url }}" class="uk-button uk-button-text uk-text-primary" style="font-size: 12px;">Complete</a>
                     </div>
                     {% endif %}
                 </li>

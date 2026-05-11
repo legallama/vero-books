@@ -13,6 +13,13 @@
             <p class="page-subtitle">Welcome to your financial overview.</p>
         </div>
         <div class="uk-flex uk-flex-middle">
+            {% if setup_percent < 100 %}
+            <button class="uk-button uk-button-primary uk-button-small uk-border-rounded uk-margin-medium-right" 
+                    style="background: #4338ca; border: none; box-shadow: 0 4px 12px rgba(67, 56, 202, 0.2); text-transform: none; font-weight: 600;" 
+                    uk-toggle="target: #setup-tasks-modal">
+                <span uk-icon="icon: check; ratio: 0.8" class="uk-margin-small-right"></span>Complete Setup
+            </button>
+            {% endif %}
             <div class="uk-inline">
                 <span class="uk-form-icon" uk-icon="icon: calendar; ratio: 0.8"></span>
                 <input id="date-range-picker" class="uk-input uk-form-small uk-width-medium" type="text" placeholder="Select date range" style="cursor: pointer;">
@@ -21,6 +28,7 @@
     </div>
 
     <!-- Onboarding Progress (Dynamic & Interactive) -->
+    {% if setup_percent < 100 %}
     <div class="onboarding-card uk-card uk-card-default uk-padding-small uk-margin-large-bottom" style="border-radius: 12px; border: 1px solid var(--border-color);">
         <div class="uk-grid-small uk-flex-middle" uk-grid>
             <div class="uk-width-expand">
@@ -37,11 +45,12 @@
                         <span uk-icon="icon: clock; ratio: 0.7" class="uk-margin-small-right"></span>Process Recurring
                     </button>
                 </form>
-                <button class="uk-button uk-button-primary uk-button-small uk-border-rounded" style="text-transform: none; font-size: 11px;" uk-toggle="target: #setup-tasks-modal">View Tasks</button>
+                <button class="uk-button uk-button-primary uk-button-small uk-border-rounded" style="text-transform: none; font-size: 11px;" uk-toggle="target: #setup-tasks-modal">Complete Setup</button>
             </div>
 
         </div>
     </div>
+    {% endif %}
 
 
 

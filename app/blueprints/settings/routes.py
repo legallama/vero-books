@@ -11,6 +11,32 @@ def index():
     org = get_current_org()
     return render_template('settings/index.html', org=org)
 
+@settings_bp.route('/organization', methods=['GET', 'POST'])
+@login_required
+def organization():
+    org = get_current_org()
+    if request.method == 'POST':
+        org.name = request.form.get('name')
+        org.legal_name = request.form.get('legal_name')
+        org.email = request.form.get('email')
+        org.phone = request.form.get('phone')
+        org.fiscal_year_start_month = int(request.form.get('fiscal_year_start_month'))
+        org.timezone = request.form.get('timezone')
+        db.session.commit()
+        flash("Organization profile updated.", "success")
+        return redirect(url_for('settings.organization'))
+    return render_template('settings/organization.html', org=org)
+
+@settings_bp.route('/toggle-tax', methods=['POST'])
+@login_required
+def toggle_tax():
+    org = get_current_org()
+    org.sales_tax_enabled = not org.sales_tax_enabled
+    db.session.commit()
+    status = "enabled" if org.sales_tax_enabled else "disabled"
+    flash(f"Sales tax tracking has been {status}.", "success")
+    return redirect(url_for('settings.index'))
+
 import os
 from werkzeug.utils import secure_filename
 from flask import current_app

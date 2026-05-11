@@ -28,6 +28,7 @@ class TaxService:
             ('60601', 'IL', Decimal('0.1025')), # Chicago
             ('77001', 'TX', Decimal('0.0825')), # Houston
             ('85001', 'AZ', Decimal('0.0860')), # Phoenix
+            ('29401', 'SC', Decimal('0.0900')), # Charleston, SC
         ]
         
         for zip_code, state, rate in mock_data:

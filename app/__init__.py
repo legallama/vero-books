@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, url_for
 from .config import Config
 from .extensions import db, migrate, login_manager, csrf
 
@@ -119,12 +119,13 @@ def create_app(config_class=Config):
             ).order_by(Notification.created_at.desc()).limit(5).all()
 
             # Global Setup Progress
+            from app.models.admin.team import TeamMember
             setup_steps = [
-                {'id': 'org', 'title': 'Complete Company Profile', 'completed': bool(org.legal_name or org.phone)},
-                {'id': 'accounts', 'title': 'Review Chart of Accounts', 'completed': Account.query.filter_by(organization_id=org.id).count() > 10},
-                {'id': 'bank', 'title': 'Set Up Bank Account', 'completed': Account.query.filter_by(organization_id=org.id).filter(Account.subtype == 'Bank').count() > 0},
-                {'id': 'team', 'title': 'Invite Team Members', 'completed': len(org.memberships) > 1},
-                {'id': 'trans', 'title': 'Record First Transaction', 'completed': JournalEntry.query.filter_by(organization_id=org.id).count() > 0}
+                {'id': 'org', 'title': 'Complete Company Profile', 'completed': bool(org.legal_name or org.phone), 'url': url_for('settings.organization')},
+                {'id': 'accounts', 'title': 'Review Chart of Accounts', 'completed': Account.query.filter_by(organization_id=org.id).count() > 10, 'url': url_for('accounts.index')},
+                {'id': 'bank', 'title': 'Set Up Bank Account', 'completed': Account.query.filter_by(organization_id=org.id).filter(Account.subtype == 'Bank').count() > 0, 'url': url_for('banking.index')},
+                {'id': 'team', 'title': 'Invite Team Members', 'completed': len(org.memberships) > 1 or TeamMember.query.filter_by(organization_id=org.id).count() > 0, 'url': url_for('settings.users')},
+                {'id': 'trans', 'title': 'Record First Transaction', 'completed': JournalEntry.query.filter_by(organization_id=org.id).count() > 0, 'url': url_for('journal.create')}
             ]
             data['setup_steps'] = setup_steps
             data['completed_steps'] = len([s for s in setup_steps if s['completed']])

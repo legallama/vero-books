@@ -67,7 +67,7 @@
                                         <div class="uk-text-meta" style="font-size: 10px;">{{ emp.pay_type }}</div>
                                         <div style="font-size: 13px;">
                                             {% if emp.pay_type == 'SALARY' %}
-                                                ${{ "{:,.2f}".format(emp.pay_rate / 26) }} <span class="uk-text-muted" style="font-size: 10px;">(Bi-Weekly)</span>
+                                                ${{ "{:,.2f}".format(emp.pay_rate|float / 26) }} <span class="uk-text-muted" style="font-size: 10px;">(Bi-Weekly)</span>
                                             {% else %}
                                                 ${{ "{:,.2f}".format(emp.pay_rate) }} <span class="uk-text-muted" style="font-size: 10px;">(Hourly)</span>
                                             {% endif %}
@@ -75,16 +75,16 @@
                                     </td>
                                     <td class="uk-text-danger" style="font-size: 13px;">
                                         {% if emp.pay_type == 'SALARY' %}
-                                            -${{ "{:,.2f}".format((emp.pay_rate / 26) * 0.2265) }}
+                                            -${{ "{:,.2f}".format((emp.pay_rate|float / 26) * 0.2265) }}
                                         {% else %}
-                                            -${{ "{:,.2f}".format(emp.pay_rate * 0.2265) }}
+                                            -${{ "{:,.2f}".format(emp.pay_rate|float * 0.2265) }}
                                         {% endif %}
                                     </td>
                                     <td class="uk-text-bold uk-text-success" style="font-size: 14px;">
                                         {% if emp.pay_type == 'SALARY' %}
-                                            ${{ "{:,.2f}".format((emp.pay_rate / 26) * 0.7735) }}
+                                            ${{ "{:,.2f}".format((emp.pay_rate|float / 26) * 0.7735) }}
                                         {% else %}
-                                            ${{ "{:,.2f}".format(emp.pay_rate * 0.7735) }}
+                                            ${{ "{:,.2f}".format(emp.pay_rate|float * 0.7735) }}
                                         {% endif %}
                                     </td>
                                 </tr>

@@ -61,6 +61,7 @@ class Paycheck(db.Model):
     payroll_run_id = db.Column(db.String(36), db.ForeignKey('payroll_runs.id'), nullable=False)
     employee_id = db.Column(db.String(36), db.ForeignKey('employees.id'), nullable=False)
     
+    hours_worked = db.Column(db.Numeric(10, 2), default=0.00)
     gross_pay = db.Column(db.Numeric(15, 2), default=0.00)
     federal_tax = db.Column(db.Numeric(15, 2), default=0.00)
     state_tax = db.Column(db.Numeric(15, 2), default=0.00)
@@ -73,3 +74,20 @@ class Paycheck(db.Model):
     
     employee = db.relationship('Employee', back_populates='paychecks')
     payroll_run = db.relationship('PayrollRun', back_populates='paychecks')
+
+class TimeEntry(db.Model):
+    __tablename__ = 'time_entries'
+    
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    organization_id = db.Column(db.String(36), db.ForeignKey('organizations.id'), nullable=False)
+    employee_id = db.Column(db.String(36), db.ForeignKey('employees.id'), nullable=False)
+    
+    date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date)
+    hours = db.Column(db.Numeric(5, 2), nullable=False)
+    description = db.Column(db.String(255))
+    
+    status = db.Column(db.String(20), default='PENDING') # PENDING, PROCESSED
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    employee = db.relationship('Employee', backref=db.backref('time_entries', lazy=True))
