@@ -103,7 +103,6 @@
 
         .premium-card:hover {
             box-shadow: var(--card-shadow-hover) !important;
-            transform: translateY(-4px) scale(1.01);
         }
 
         .elite-button {
@@ -571,7 +570,6 @@
             position: relative;
             background: var(--bg-color);
             transition: all 0.3s ease;
-            overflow-x: hidden;
         }
 
         .dark-mode .main-content {
@@ -1247,9 +1245,76 @@
                     </div>
                 </div>
             </div>
+
+
+            <!-- Privacy Tab -->
+            <div class="privacy-tab-container" style="position: absolute; bottom: -24px; left: 50%; transform: translateX(-50%); z-index: 1001;">
+                <button id="privacy-toggle" style="background: var(--topbar-bg, #fff); border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 8px 8px; padding: 4px 16px; font-size: 10px; font-weight: 700; color: var(--text-muted); cursor: pointer; text-transform: uppercase; letter-spacing: 0.1em; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; align-items: center;">
+                    <span id="privacy-tab-icon" uk-icon="icon: lock; ratio: 0.6" class="uk-margin-small-right"></span>
+                    <span id="privacy-tab-text">Hide</span>
+                </button>
+            </div>
+            
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const toggle = document.getElementById('privacy-toggle');
+                    const cover = document.getElementById('privacy-cover');
+                    const text = document.getElementById('privacy-tab-text');
+                    const icon = document.getElementById('privacy-tab-icon');
+                    let isHidden = false;
+
+                    toggle.addEventListener('click', () => {
+                        isHidden = !isHidden;
+                        if (isHidden) {
+                            cover.style.opacity = '1';
+                            cover.style.pointerEvents = 'all';
+                            text.textContent = 'Show';
+                            icon.setAttribute('uk-icon', 'icon: unlock; ratio: 0.6');
+                        } else {
+                            cover.style.opacity = '0';
+                            cover.style.pointerEvents = 'none';
+                            text.textContent = 'Hide';
+                            icon.setAttribute('uk-icon', 'icon: lock; ratio: 0.6');
+                        }
+                    });
+                });
+            </script>
         </div>
     </div>
     {% endif %}
+
+    <!-- Privacy Cover (Outside of top-bar to break out of its backdrop-filter containing block) -->
+    <style>
+        #privacy-cover {
+            position: fixed;
+            top: 70px;
+            left: var(--sidebar-width, 260px);
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(20px) grayscale(20%);
+            -webkit-backdrop-filter: blur(20px) grayscale(20%);
+            z-index: 980;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        @media (max-width: 960px) {
+            #privacy-cover {
+                left: 0 !important;
+            }
+        }
+    </style>
+    <div id="privacy-cover">
+        <div style="text-align: center; background: var(--card-bg, #fff); padding: 32px 48px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+            <span uk-icon="icon: lock; ratio: 3" style="color: var(--text-muted); margin-bottom: 16px;"></span>
+            <h2 style="margin: 0 0 8px 0; font-size: 24px; color: var(--text-color);">Screen Hidden</h2>
+            <p style="margin: 0; color: var(--text-muted); font-size: 14px;">Click the "Show" tab above to resume working.</p>
+        </div>
+    </div>
 
         <div class="uk-width-1-1 uk-padding-small animate-fade-in">
             {% with messages = get_flashed_messages(with_categories=true) %}

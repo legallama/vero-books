@@ -8,11 +8,63 @@ import time
 
 class BankingService:
     @staticmethod
+    def get_suggestion(transaction, organization_id):
+        """
+        Returns a suggested GL account for a transaction based on rules or history.
+        """
+        from app.models.accounting.bank_rule import BankRule
+        from app.models.accounting.account import Account
+        from app.models.accounting.journal import JournalEntry
+        
+        # 1. Check Rules
+        active_rules = BankRule.query.filter_by(
+            organization_id=organization_id, 
+            is_active=True
+        ).order_by(BankRule.priority.desc()).all()
+
+        for rule in active_rules:
+            match = False
+            if rule.field_to_match == 'DESCRIPTION':
+                if rule.match_type == 'CONTAINS' and rule.match_value.lower() in transaction.description.lower():
+                    match = True
+                elif rule.match_type == 'EXACT' and rule.match_value.lower() == transaction.description.lower():
+                    match = True
+            elif rule.field_to_match == 'AMOUNT':
+                try:
+                    val = float(rule.match_value)
+                    if rule.match_type == 'EXACT' and float(transaction.amount) == val:
+                        match = True
+                    elif rule.match_type == 'GREATER_THAN' and float(transaction.amount) > val:
+                        match = True
+                except: pass
+            
+            if match:
+                return rule.target_account, rule.name
+
+        # 2. Heuristic: History-based matching
+        last_match = BankTransaction.query.filter(
+            BankTransaction.organization_id == organization_id,
+            BankTransaction.description == transaction.description,
+            BankTransaction.status == 'MATCHED',
+            BankTransaction.id != transaction.id
+        ).order_by(BankTransaction.date.desc()).first()
+        
+        if last_match and last_match.matched_source_id:
+            je = JournalEntry.query.get(last_match.matched_source_id)
+            if je:
+                for line in je.lines:
+                    if line.account_id != transaction.bank_account.account_id:
+                        return line.account, "Based on your history"
+                        
+        return None, None
+
+    @staticmethod
     def apply_rules_to_transaction(transaction, organization_id, user_id=None):
         """
         Matches a transaction against active rules.
         If auto_post is True, it creates and posts a journal entry immediately.
         """
+        from app.models.accounting.bank_rule import BankRule
         active_rules = BankRule.query.filter_by(
             organization_id=organization_id, 
             is_active=True
@@ -38,10 +90,7 @@ class BankingService:
                 if rule.auto_post and user_id:
                     # Execute Auto-Post
                     BankingService.post_transaction_to_ledger(transaction, rule.target_account_id, user_id, organization_id)
-                    return rule
-                else:
-                    # Just a suggestion for UI
-                    return rule
+                return rule
         return None
 
     @staticmethod

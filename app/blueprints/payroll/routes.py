@@ -276,3 +276,51 @@ def void_payroll_run(run_id):
     
     flash("Payroll run has been voided. Journal entries reversed and time entries reset.", "success")
     return redirect(url_for('payroll.index'))
+
+@payroll_bp.route('/employees/<employee_id>/delete', methods=['POST'])
+@login_required
+@require_role(['ADMIN', 'ACCOUNTANT'])
+def delete_employee(employee_id):
+    org = get_current_org()
+    employee = Employee.query.filter_by(id=employee_id, organization_id=org.id).first_or_404()
+    
+    # Check if employee has paychecks
+    if employee.paychecks:
+        flash(f"Cannot delete {employee.full_name} because they have paycheck history. Set their status to 'INACTIVE' instead.", "warning")
+        return redirect(url_for('payroll.index'))
+        
+    db.session.delete(employee)
+    db.session.commit()
+    flash(f"Employee {employee.full_name} has been deleted.", "info")
+    return redirect(url_for('payroll.index'))
+
+@payroll_bp.route('/employees/<employee_id>/edit', methods=['GET', 'POST'])
+@login_required
+@require_role(['ADMIN', 'ACCOUNTANT'])
+def edit_employee(employee_id):
+    org = get_current_org()
+    employee = Employee.query.filter_by(id=employee_id, organization_id=org.id).first_or_404()
+    
+    if request.method == 'POST':
+        employee.first_name = request.form.get('first_name')
+        employee.last_name = request.form.get('last_name')
+        employee.email = request.form.get('email')
+        employee.ssn_last4 = request.form.get('ssn_last4')
+        employee.pay_type = request.form.get('pay_type')
+        employee.pay_rate = Decimal(request.form.get('pay_rate') or '0')
+        employee.pay_frequency = request.form.get('pay_frequency')
+        employee.filing_status = request.form.get('filing_status')
+        employee.federal_allowances = int(request.form.get('federal_allowances', 0))
+        employee.status = request.form.get('status', employee.status)
+        
+        if request.form.get('hired_at'):
+            try:
+                employee.hired_at = datetime.strptime(request.form.get('hired_at'), '%Y-%m-%d').date()
+            except ValueError:
+                pass
+            
+        db.session.commit()
+        flash(f"Employee {employee.full_name} updated successfully.", "success")
+        return redirect(url_for('payroll.index'))
+    
+    return render_template('payroll/employee_form.html', employee=employee)

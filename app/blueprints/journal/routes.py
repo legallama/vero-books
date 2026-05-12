@@ -108,3 +108,35 @@ def post_entry(entry_id):
     else:
         flash(message, 'error')
     return redirect(url_for('journal.index'))
+
+@journal_bp.route('/<entry_id>/delete', methods=['POST'])
+@login_required
+def delete(entry_id):
+    org = get_current_org()
+    entry = JournalEntry.query.filter_by(id=entry_id, organization_id=org.id).first_or_404()
+    
+    # Optional: Prevent deleting POSTED entries if you want more control
+    # if entry.status == 'POSTED':
+    #     flash("Cannot delete a posted journal entry. You must reverse it instead.", "danger")
+    #     return redirect(url_for('journal.index'))
+    
+    db.session.delete(entry)
+    db.session.commit()
+    flash(f"Journal Entry {entry.entry_number} has been deleted.", "info")
+    return redirect(url_for('journal.index'))
+
+@journal_bp.route('/delete-all', methods=['POST'])
+@login_required
+def delete_all():
+    org = get_current_org()
+    # Confirming the intention
+    if request.form.get('confirm') != 'YES':
+        flash("Bulk deletion requires confirmation.", "warning")
+        return redirect(url_for('journal.index'))
+        
+    # Delete all journal entries for the current organization
+    JournalEntry.query.filter_by(organization_id=org.id).delete()
+    db.session.commit()
+    
+    flash("All journal entries for this organization have been deleted.", "success")
+    return redirect(url_for('journal.index'))

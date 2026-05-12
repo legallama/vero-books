@@ -114,6 +114,40 @@
             </a>
         </div>
     </div>
+
+    <!-- Danger Zone -->
+    <div class="uk-margin-large-top">
+        <h4 class="uk-text-bold uk-text-danger uk-heading-divider">Danger Zone</h4>
+        <div class="uk-card uk-card-default uk-card-body uk-border-rounded" style="border: 1px solid #fee2e2; background: #fff5f5;">
+            <div class="uk-flex uk-flex-between uk-flex-middle">
+                <div>
+                    <h4 class="uk-text-bold uk-margin-remove">System Reset</h4>
+                    <p class="uk-text-meta uk-margin-remove">Permanently delete ALL data (invoices, customers, employees, etc.) and reset your business to a blank state. This cannot be undone.</p>
+                </div>
+                <button class="uk-button uk-button-danger uk-border-rounded" uk-toggle="target: #reset-modal" style="text-transform: none;">Reset Everything</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Modal -->
+    <div id="reset-modal" uk-modal>
+        <div class="uk-modal-dialog uk-modal-body uk-border-rounded">
+            <h2 class="uk-modal-title uk-text-bold uk-text-danger">SYSTEM RESET</h2>
+            <p>This action is <strong>PERMANENT</strong> and will delete every transaction, customer, employee, and record in this business. You will be starting from absolute zero.</p>
+            
+            <form action="{{ url_for('settings.reset_system') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="uk-margin">
+                    <label class="uk-form-label uk-text-bold">To confirm, type <span class="uk-text-danger">RESET EVERYTHING</span> below:</label>
+                    <input class="uk-input uk-border-rounded uk-margin-small-top" type="text" name="confirm_text" required autocomplete="off" placeholder="Type here...">
+                </div>
+                <div class="uk-text-right">
+                    <button class="uk-button uk-button-default uk-modal-close uk-border-rounded" type="button">Cancel</button>
+                    <button class="uk-button uk-button-danger uk-border-rounded" type="submit">I understand, delete everything</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <style>

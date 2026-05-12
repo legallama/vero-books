@@ -4,8 +4,8 @@
 <div class="uk-section uk-section-xsmall">
     <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-large-bottom">
         <div>
-            <h1 class="uk-h2 uk-text-bold">Add New Employee</h1>
-            <p class="uk-text-meta">Set up personal details and tax settings for your new team member.</p>
+            <h1 class="uk-h2 uk-text-bold">{{ 'Edit Employee Profile' if employee else 'Add New Employee' }}</h1>
+            <p class="uk-text-meta">{{ 'Update personal details and tax settings for ' + employee.full_name if employee else 'Set up personal details and tax settings for your new team member.' }}</p>
         </div>
         <a href="{{ url_for('payroll.index') }}" class="uk-button uk-button-default uk-border-rounded">Cancel</a>
     </div>
@@ -18,25 +18,34 @@
                 <!-- Personal Info -->
                 <div class="uk-width-1-2@m">
                     <label class="uk-form-label uk-text-bold">First Name</label>
-                    <input class="uk-input uk-border-rounded" type="text" name="first_name" required placeholder="e.g. John">
+                    <input class="uk-input uk-border-rounded" type="text" name="first_name" value="{{ employee.first_name if employee else '' }}" required placeholder="e.g. John">
                 </div>
                 <div class="uk-width-1-2@m">
                     <label class="uk-form-label uk-text-bold">Last Name</label>
-                    <input class="uk-input uk-border-rounded" type="text" name="last_name" required placeholder="e.g. Doe">
+                    <input class="uk-input uk-border-rounded" type="text" name="last_name" value="{{ employee.last_name if employee else '' }}" required placeholder="e.g. Doe">
                 </div>
                 
-                <div class="uk-width-1-1">
+                <div class="uk-width-1-2@m">
                     <label class="uk-form-label uk-text-bold">Email Address</label>
-                    <input class="uk-input uk-border-rounded" type="email" name="email" placeholder="john.doe@example.com">
+                    <input class="uk-input uk-border-rounded" type="email" name="email" value="{{ employee.email if employee else '' }}" placeholder="john.doe@example.com">
+                </div>
+
+                <div class="uk-width-1-2@m">
+                    <label class="uk-form-label uk-text-bold">Status</label>
+                    <select class="uk-select uk-border-rounded" name="status">
+                        <option value="ACTIVE" {{ 'selected' if employee and employee.status == 'ACTIVE' else '' }}>Active</option>
+                        <option value="INACTIVE" {{ 'selected' if employee and employee.status == 'INACTIVE' else '' }}>Inactive</option>
+                        <option value="TERMINATED" {{ 'selected' if employee and employee.status == 'TERMINATED' else '' }}>Terminated</option>
+                    </select>
                 </div>
 
                 <div class="uk-width-1-2@m">
                     <label class="uk-form-label uk-text-bold">SSN (Last 4)</label>
-                    <input class="uk-input uk-border-rounded" type="text" name="ssn_last4" maxlength="4" placeholder="0000">
+                    <input class="uk-input uk-border-rounded" type="text" name="ssn_last4" maxlength="4" value="{{ employee.ssn_last4 if employee else '' }}" placeholder="0000">
                 </div>
                 <div class="uk-width-1-2@m">
                     <label class="uk-form-label uk-text-bold">Hire Date</label>
-                    <input class="uk-input uk-border-rounded" type="date" name="hired_at">
+                    <input class="uk-input uk-border-rounded" type="date" name="hired_at" value="{{ employee.hired_at.strftime('%Y-%m-%d') if employee and employee.hired_at else '' }}">
                 </div>
 
                 <!-- Pay Settings -->
@@ -47,23 +56,23 @@
                 <div class="uk-width-1-3@m">
                     <label class="uk-form-label uk-text-bold">Pay Type</label>
                     <select class="uk-select uk-border-rounded" name="pay_type">
-                        <option value="SALARY">Salary</option>
-                        <option value="HOURLY">Hourly</option>
+                        <option value="SALARY" {{ 'selected' if employee and employee.pay_type == 'SALARY' else '' }}>Salary</option>
+                        <option value="HOURLY" {{ 'selected' if employee and employee.pay_type == 'HOURLY' else '' }}>Hourly</option>
                     </select>
                 </div>
                 <div class="uk-width-1-3@m">
                     <label class="uk-form-label uk-text-bold">Rate (Annual/Hourly)</label>
                     <div class="uk-inline uk-width-1-1">
                         <span class="uk-form-icon" uk-icon="icon: sign-out; ratio: 0.8" style="transform: rotate(90deg);"></span>
-                        <input class="uk-input uk-border-rounded" type="number" name="pay_rate" step="0.01" required placeholder="50000.00">
+                        <input class="uk-input uk-border-rounded" type="number" name="pay_rate" step="0.01" value="{{ employee.pay_rate if employee else '' }}" required placeholder="50000.00">
                     </div>
                 </div>
                 <div class="uk-width-1-3@m">
                     <label class="uk-form-label uk-text-bold">Frequency</label>
                     <select class="uk-select uk-border-rounded" name="pay_frequency">
-                        <option value="WEEKLY">Weekly</option>
-                        <option value="BIWEEKLY" selected>Bi-Weekly</option>
-                        <option value="MONTHLY">Monthly</option>
+                        <option value="WEEKLY" {{ 'selected' if employee and employee.pay_frequency == 'WEEKLY' else '' }}>Weekly</option>
+                        <option value="BIWEEKLY" {{ 'selected' if not employee or employee.pay_frequency == 'BIWEEKLY' else '' }}>Bi-Weekly</option>
+                        <option value="MONTHLY" {{ 'selected' if employee and employee.pay_frequency == 'MONTHLY' else '' }}>Monthly</option>
                     </select>
                 </div>
 
@@ -75,19 +84,21 @@
                 <div class="uk-width-1-2@m">
                     <label class="uk-form-label uk-text-bold">Filing Status</label>
                     <select class="uk-select uk-border-rounded" name="filing_status">
-                        <option value="SINGLE">Single</option>
-                        <option value="MARRIED_JOINT">Married Filing Jointly</option>
-                        <option value="HEAD_OF_HOUSE">Head of Household</option>
+                        <option value="SINGLE" {{ 'selected' if employee and employee.filing_status == 'SINGLE' else '' }}>Single</option>
+                        <option value="MARRIED_JOINT" {{ 'selected' if employee and employee.filing_status == 'MARRIED_JOINT' else '' }}>Married Filing Jointly</option>
+                        <option value="HEAD_OF_HOUSE" {{ 'selected' if employee and employee.filing_status == 'HEAD_OF_HOUSE' else '' }}>Head of Household</option>
                     </select>
                 </div>
                 <div class="uk-width-1-2@m">
                     <label class="uk-form-label uk-text-bold">Federal Allowances</label>
-                    <input class="uk-input uk-border-rounded" type="number" name="federal_allowances" value="0">
+                    <input class="uk-input uk-border-rounded" type="number" name="federal_allowances" value="{{ employee.federal_allowances if employee else '0' }}">
                 </div>
             </div>
 
             <div class="uk-margin-large-top uk-text-right">
-                <button type="submit" class="uk-button uk-button-primary uk-border-rounded" style="background: #4338ca; min-width: 150px;">Save Employee</button>
+                <button type="submit" class="uk-button uk-button-primary uk-border-rounded" style="background: #4338ca; min-width: 150px;">
+                    {{ 'Update Employee' if employee else 'Save Employee' }}
+                </button>
             </div>
         </form>
     </div>

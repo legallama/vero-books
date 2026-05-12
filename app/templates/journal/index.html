@@ -7,10 +7,19 @@
             <h1 class="uk-heading-small uk-margin-remove-bottom">Journal Entries</h1>
             <p class="uk-text-meta">Record and review manual ledger adjustments</p>
         </div>
-        <a href="{{ url_for('journal.create') }}" class="uk-button uk-button-primary">+ New Journal Entry</a>
+        <div class="uk-flex uk-flex-middle">
+            {% if entries %}
+            <form method="POST" action="{{ url_for('journal.delete_all') }}" class="uk-margin-right" onsubmit="return confirm('ARE YOU SURE? This will permanently delete ALL journal entries for this organization. Type YES to confirm.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="confirm" value="YES">
+                <button type="submit" class="uk-button uk-button-danger uk-button-small" style="border-radius: 8px;">Clear All Entries</button>
+            </form>
+            {% endif %}
+            <a href="{{ url_for('journal.create') }}" class="uk-button uk-button-primary" style="border-radius: 8px;">+ New Journal Entry</a>
+        </div>
     </div>
 
-    <div class="uk-card uk-card-default">
+    <div class="uk-card uk-card-default" style="border-radius: 12px; border: 1px solid #e2e8f0;">
         <div class="uk-overflow-auto">
             <table class="uk-table uk-table-divider uk-table-hover uk-table-middle">
                 <thead>
@@ -30,23 +39,28 @@
                         <td>{{ entry.memo or '-' }}</td>
                         <td class="uk-text-center">
                             {% if entry.status == 'POSTED' %}
-                            <span class="uk-label uk-label-success">Posted</span>
+                            <span class="uk-label uk-label-success" style="border-radius: 4px;">Posted</span>
                             {% elif entry.status == 'DRAFT' %}
-                            <span class="uk-label uk-label-warning">Draft</span>
+                            <span class="uk-label uk-label-warning" style="border-radius: 4px;">Draft</span>
                             {% else %}
-                            <span class="uk-label">{{ entry.status }}</span>
+                            <span class="uk-label" style="border-radius: 4px;">{{ entry.status }}</span>
                             {% endif %}
                         </td>
-                        <td class="uk-text-right">
+                        <td class="uk-text-right uk-flex uk-flex-right uk-flex-middle">
+                            <a href="{{ url_for('journal.view', entry_id=entry.id) }}" class="uk-icon-button uk-margin-small-right" uk-icon="info" uk-tooltip="View Details"></a>
+                            
                             {% if entry.status == 'DRAFT' %}
                             <a href="{{ url_for('journal.edit', entry_id=entry.id) }}" class="uk-icon-button uk-margin-small-right" uk-icon="pencil" uk-tooltip="Edit Entry"></a>
-                            <form method="POST" action="{{ url_for('journal.post_entry', entry_id=entry.id) }}" class="uk-inline">
+                            <form method="POST" action="{{ url_for('journal.post_entry', entry_id=entry.id) }}" class="uk-inline uk-margin-small-right">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="uk-button uk-button-primary uk-button-small">Post</button>
+                                <button type="submit" class="uk-button uk-button-primary uk-button-small" style="border-radius: 6px;">Post</button>
                             </form>
-                            {% else %}
-                            <a href="{{ url_for('journal.view', entry_id=entry.id) }}" class="uk-icon-button" uk-icon="info" uk-tooltip="View Details"></a>
                             {% endif %}
+
+                            <form method="POST" action="{{ url_for('journal.delete', entry_id=entry.id) }}" class="uk-inline" onsubmit="return confirm('Delete this journal entry?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="uk-icon-button uk-button-danger" uk-icon="trash" uk-tooltip="Delete Entry" style="background: #fee2e2; color: #ef4444; border: none;"></button>
+                            </form>
                         </td>
                     </tr>
                     {% else %}

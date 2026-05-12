@@ -9,6 +9,13 @@
             <p class="page-subtitle">Manage your business accounts and financial structure.</p>
         </div>
         <div class="uk-flex uk-flex-middle" style="gap: 10px;">
+            <form id="excelImportForm" action="{{ url_for('accounts.import_excel') }}" method="POST" enctype="multipart/form-data" class="uk-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div uk-form-custom>
+                    <input type="file" name="excel_file" accept=".xlsx, .xls" onchange="document.getElementById('excelImportForm').submit()">
+                    <button class="uk-button uk-button-default" type="button" tabindex="-1"><span uk-icon="table"></span> Import Excel</button>
+                </div>
+            </form>
             <form id="qbImportForm" action="{{ url_for('accounts.import_qb') }}" method="POST" enctype="multipart/form-data" class="uk-inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div uk-form-custom>
@@ -59,11 +66,12 @@
                                         <span class="uk-label uk-label-muted">[[ acc.type ]]</span>
                                     </td>
                                     <td class="uk-text-right uk-text-bold">
-                                        [[ formatCurrency(0) ]]
+                                        [[ formatCurrency(acc.balance) ]]
                                     </td>
                                     <td class="uk-text-right">
                                         <div class="uk-invisible-hover" style="display: flex; gap: 4px; justify-content: flex-end;">
-                                            <a :href="'/accounts/' + acc.id + '/register'" class="uk-icon-button uk-button-text" uk-icon="file-text" uk-tooltip="View Register"></a>
+                                            <a v-if="acc.subtype === 'Bank' || acc.subtype === 'Credit Card'" :href="'/banking/?bank_account_id=' + acc.bank_account_id" class="uk-icon-button uk-button-text" uk-icon="file-text" uk-tooltip="View Banking Register"></a>
+                                            <a v-else :href="'/accounts/' + acc.id + '/register'" class="uk-icon-button uk-button-text" uk-icon="file-text" uk-tooltip="View Register"></a>
                                             <button class="uk-icon-button uk-button-text" uk-icon="pencil" @click="editAccount(acc)" uk-tooltip="Edit Account"></button>
                                         </div>
                                     </td>
@@ -127,7 +135,7 @@
         setup() {
             const accounts = ref([
                 {% for acc in accounts %}
-                { id: '{{ acc.id }}', code: '{{ acc.code }}', name: '{{ acc.name }}', type: '{{ acc.type }}', subtype: '{{ acc.subtype or "" }}' },
+                { id: '{{ acc.id }}', code: '{{ acc.code }}', name: '{{ acc.name }}', type: '{{ acc.type }}', subtype: '{{ acc.subtype or "" }}', bank_account_id: '{{ acc.bank_accounts[0].id if acc.bank_accounts else "" }}', balance: {{ acc.balance|default(0) }} },
                 {% endfor %}
             ]);
             

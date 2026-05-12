@@ -15,8 +15,36 @@ def index():
         flash("No active organization found.", "error")
         return redirect(url_for('dashboard.index'))
         
+    from ...models.accounting.journal import JournalLine, JournalEntry
+    from sqlalchemy import func
+    
+    # Get all accounts
     accounts = Account.query.filter_by(organization_id=org.id).order_by(Account.code).all()
-    return render_template('accounts/index.html', accounts=accounts, types=[t.value for t in AccountType])
+    
+    # Calculate balances for each account
+    for acc in accounts:
+        # Sum debits and credits for posted entries
+        totals = db.session.query(
+            func.sum(JournalLine.debit).label('debits'),
+            func.sum(JournalLine.credit).label('credits')
+        ).join(JournalEntry).filter(
+            JournalEntry.organization_id == org.id,
+            JournalEntry.status == 'POSTED',
+            JournalLine.account_id == acc.id
+        ).first()
+        
+        debits = totals.debits or 0
+        credits = totals.credits or 0
+        
+        if acc.type in ('Asset', 'Expense'):
+            acc.balance = debits - credits
+        else:
+            acc.balance = credits - debits
+            
+    return render_template('accounts/index.html', 
+        accounts=accounts, 
+        types=[t.value for t in AccountType]
+    )
 
 @accounts_bp.route('/create', methods=['POST'])
 @login_required
@@ -112,7 +140,147 @@ def import_qb():
         
     except Exception as e:
         db.session.rollback()
-        flash(f"Error parsing QuickBooks Data: {str(e)}", "danger")
+    return redirect(url_for('accounts.index'))
+
+@accounts_bp.route('/import-excel', methods=['POST'])
+@login_required
+def import_excel():
+    import pandas as pd
+    import io
+    
+    org = get_current_org()
+    if 'excel_file' not in request.files:
+        flash("No Excel file provided.", "error")
+        return redirect(url_for('accounts.index'))
+        
+    file = request.files['excel_file']
+    if file.filename == '':
+        flash("No file selected.", "error")
+        return redirect(url_for('accounts.index'))
+        
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        flash("Invalid file format. Please upload an Excel file (.xlsx or .xls).", "error")
+        return redirect(url_for('accounts.index'))
+        
+    try:
+        # Read the Excel file without assuming headers initially to find the real header row
+        temp_df = pd.read_excel(file, header=None, nrows=15)
+        
+        header_row_index = 0
+        possible_name_cols = {'account', 'name', 'account name', 'title', 'account title', 'description', 'coa'}
+        
+        # Look for a row that contains any of our target keywords
+        for i, row in temp_df.iterrows():
+            row_values = [str(val).lower().strip() for val in row if not pd.isna(val)]
+            if any(kw in row_values for kw in possible_name_cols):
+                header_row_index = i
+                break
+        
+        # Re-read with the correct header row
+        file.seek(0)
+        df = pd.read_excel(file, header=header_row_index)
+        
+        # Normalize column names to lowercase and strip whitespace
+        original_columns = df.columns.tolist()
+        df.columns = [str(c).lower().strip() for c in df.columns]
+        
+        # Check if we have any recognizable columns
+        possible_type_cols = {'type', 'account type', 'category', 'group', 'class'}
+        possible_code_cols = {'code', 'account code', 'number', 'account number', 'id', 'acct #'}
+        
+        has_name = any(col in df.columns for col in possible_name_cols)
+        if not has_name:
+            # Fallback: if there's only one or two columns, maybe the first one is the name?
+            if len(df.columns) > 0:
+                name_col = df.columns[0]
+                has_name = True
+            else:
+                flash(f"Could not find an 'Account' or 'Name' column. Found columns: {', '.join(original_columns)}", "warning")
+                return redirect(url_for('accounts.index'))
+
+        imported_count = 0
+        for _, row in df.iterrows():
+            # Try various common column names
+            name = None
+            if 'name_col' in locals():
+                name = row[name_col]
+            else:
+                for col in possible_name_cols:
+                    if col in df.columns:
+                        name = row[col]
+                        break
+            
+            acc_type = 'Expense'
+            for col in possible_type_cols:
+                if col in df.columns:
+                    acc_type = row[col]
+                    break
+                    
+            code = ""
+            for col in possible_code_cols:
+                if col in df.columns:
+                    code = str(row[col])
+                    break
+            
+            subtype = row.get('subtype') or row.get('detail type') or ''
+            
+            # Clean up the name if it's NaN or empty
+            if pd.isna(name) or not str(name).strip():
+                continue
+            
+            name = str(name).strip()
+            acc_type = str(acc_type).strip().capitalize() if not pd.isna(acc_type) else 'Expense'
+            subtype = str(subtype).strip() if not pd.isna(subtype) else ''
+            
+            # If code is missing, try to extract from name like "1010 - Cash"
+            if not code or code.lower() == 'nan':
+                code = ""
+                if " - " in name:
+                    parts = name.split(" - ")
+                    if parts[0].strip().isdigit():
+                        code = parts[0].strip()
+                        name = " - ".join(parts[1:]).strip()
+            
+            # Basic validation of account type against our Enum if possible
+            valid_types = [t.value for t in AccountType]
+            if acc_type not in valid_types:
+                # Try to map it to the closest match if it's common (e.g., 'Expenses' -> 'Expense')
+                if acc_type.endswith('s') and acc_type[:-1] in valid_types:
+                    acc_type = acc_type[:-1]
+                elif 'asset' in acc_type.lower(): acc_type = 'Asset'
+                elif 'liability' in acc_type.lower(): acc_type = 'Liability'
+                elif 'equity' in acc_type.lower(): acc_type = 'Equity'
+                elif 'income' in acc_type.lower(): acc_type = 'Income'
+                elif 'expense' in acc_type.lower(): acc_type = 'Expense'
+                elif 'revenue' in acc_type.lower(): acc_type = 'Income'
+                elif 'bank' in acc_type.lower(): acc_type = 'Asset'
+                else:
+                    acc_type = 'Expense' # Default fallback
+            
+            # Check if exists to avoid duplicates (by name and organization)
+            existing = Account.query.filter_by(organization_id=org.id, name=name).first()
+            if not existing:
+                new_acc = Account(
+                    organization_id=org.id,
+                    code=code if code.lower() != 'nan' else '',
+                    name=name,
+                    type=acc_type,
+                    subtype=subtype
+                )
+                db.session.add(new_acc)
+                imported_count += 1
+                
+        db.session.commit()
+        if imported_count > 0:
+            flash(f"Successfully imported {imported_count} accounts from Excel.", "success")
+        else:
+            flash("No new accounts were imported. They might already exist.", "info")
+        
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        print(traceback.format_exc())
+        flash(f"Error parsing Excel Data: {str(e)}", "danger")
         
     return redirect(url_for('accounts.index'))
 

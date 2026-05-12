@@ -7,6 +7,7 @@ from app.services.auth_service import get_current_org
 import requests
 import base64
 import urllib.parse
+import secrets
 from datetime import datetime, timedelta
 
 # Constants for QBO OAuth
@@ -22,6 +23,14 @@ QBO_API_BASE = {
     'sandbox': 'https://sandbox-quickbooks.api.intuit.com/v3/company',
     'production': 'https://quickbooks.api.intuit.com/v3/company'
 }
+
+# Default scopes required for QuickBooks Online and Identity
+QBO_SCOPES = [
+    'com.intuit.quickbooks.accounting',
+    'openid',
+    'profile',
+    'email'
+]
 
 @migration_bp.route('/')
 @login_required
@@ -58,14 +67,21 @@ def connect():
         flash("Please save your Client ID and Secret first.", "warning")
         return redirect(url_for('migration.index'))
         
-    # Explicitly hardcode redirect_uri to avoid 127.0.0.1 vs localhost mismatches
-    redirect_uri = "http://localhost:5000/migration/callback"
-    scopes = 'com.intuit.quickbooks.accounting'
-    state = 'migration_state_qbo'
+    # Explicitly use localhost for local development as required by Intuit for non-HTTPS URIs
+    # We prefer url_for but must ensure it matches the registered URI in the Intuit portal
+    redirect_uri = url_for('migration.callback', _external=True)
+    if 'localhost' not in redirect_uri and '127.0.0.1' in redirect_uri:
+        redirect_uri = redirect_uri.replace('127.0.0.1', 'localhost')
+    
+    # Ensure redirect_uri is exactly what's registered (no trailing slashes if not expected)
+    redirect_uri = redirect_uri.rstrip('/')
+    
+    scopes = ' '.join(QBO_SCOPES)
+    state = secrets.token_urlsafe(16) if hasattr(secrets, 'token_urlsafe') else 'migration_state_qbo'
     session['qbo_state'] = state
     
     params = {
-        'client_id': qbo.client_id,
+        'client_id': qbo.client_id.strip(),
         'response_type': 'code',
         'scope': scopes,
         'redirect_uri': redirect_uri,
@@ -93,7 +109,10 @@ def callback():
         flash("Invalid state token. Possible CSRF attack.", "danger")
         return redirect(url_for('migration.index'))
         
-    redirect_uri = "http://localhost:5000/migration/callback"
+    redirect_uri = url_for('migration.callback', _external=True)
+    if 'localhost' not in redirect_uri and '127.0.0.1' in redirect_uri:
+        redirect_uri = redirect_uri.replace('127.0.0.1', 'localhost')
+    redirect_uri = redirect_uri.rstrip('/')
     
     # Exchange code for tokens
     client_id = qbo.client_id.strip() if qbo.client_id else ''
@@ -126,6 +145,36 @@ def callback():
         flash(f"Failed to get tokens: {response.text}", "danger")
         
     return redirect(url_for('migration.index'))
+    
+def refresh_qbo_token(qbo):
+    """Refreshes the QBO access token using the refresh token."""
+    client_id = qbo.client_id.strip() if qbo.client_id else ''
+    client_secret = qbo.client_secret.strip() if qbo.client_secret else ''
+    auth_header = base64.b64encode(f"{client_id}:{client_secret}".encode('utf-8')).decode('utf-8')
+    headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': f'Basic {auth_header}'
+    }
+    data = {
+        'grant_type': 'refresh_token',
+        'refresh_token': qbo.refresh_token
+    }
+    
+    token_url = QBO_TOKEN_URL[qbo.environment]
+    try:
+        response = requests.post(token_url, headers=headers, data=data)
+        if response.status_code == 200:
+            json_resp = response.json()
+            qbo.access_token = json_resp.get('access_token')
+            qbo.refresh_token = json_resp.get('refresh_token')
+            qbo.access_token_expires_at = datetime.utcnow() + timedelta(seconds=json_resp.get('expires_in', 3600))
+            qbo.refresh_token_expires_at = datetime.utcnow() + timedelta(seconds=json_resp.get('x_refresh_token_expires_in', 8726400))
+            db.session.commit()
+            return True
+    except Exception as e:
+        print(f"Error refreshing QBO token: {e}")
+    return False
 
 @migration_bp.route('/disconnect')
 @login_required
@@ -149,6 +198,13 @@ def sync(entity):
     if not qbo or not qbo.access_token:
         flash("Not connected to QuickBooks.", "warning")
         return redirect(url_for('migration.index'))
+        
+    # Proactively refresh token if it's expired or about to expire (within 5 mins)
+    is_expired = qbo.access_token_expires_at and qbo.access_token_expires_at < (datetime.utcnow() + timedelta(minutes=5))
+    if is_expired:
+        if not refresh_qbo_token(qbo):
+            flash("QuickBooks session expired and could not be refreshed. Please reconnect.", "danger")
+            return redirect(url_for('migration.index'))
         
     # Example logic for syncing accounts
     if entity == 'accounts':
@@ -252,6 +308,7 @@ def sync(entity):
             flash(f"Failed to fetch accounts: {resp.text}", "danger")
             
     elif entity == 'history':
+        # Refresh is already handled at the top of the sync function
         headers = {
             'Authorization': f'Bearer {qbo.access_token}',
             'Accept': 'application/json'

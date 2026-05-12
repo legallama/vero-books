@@ -229,3 +229,72 @@ def delete_organization():
     else:
         flash(f"Business '{org_name}' has been deleted. Please create a new business to continue.", "info")
         return redirect(url_for('settings.create_organization'))
+
+@settings_bp.route('/reset-system', methods=['POST'])
+@login_required
+def reset_system():
+    org = get_current_org()
+    confirm_text = request.form.get('confirm_text')
+    
+    if confirm_text != "RESET EVERYTHING":
+        flash("You must type 'RESET EVERYTHING' to confirm system reset.", "danger")
+        return redirect(url_for('settings.index'))
+    
+    try:
+        # Import models locally to avoid circular imports and ensure clarity
+        from app.models.accounting.journal import JournalEntry, JournalLine
+        from app.models.sales.invoice import Invoice, InvoiceLine
+        from app.models.bills.bill import Bill, BillLine
+        from app.models.crm.contact import Contact
+        from app.models.admin.payroll import Employee, PayrollRun, Paycheck, TimeEntry
+        from app.models.banking.bank_account import BankAccount
+        from app.models.banking.check import Check
+        from app.models.accounting.account import Account
+        from app.models.accounting.payment import Payment
+        from app.models.accounting.receipt import Receipt
+        from app.models.sales.estimate import Estimate
+        from app.models.sales.product import Product
+        
+        # 1. Clear Transactions (Order matters for FK constraints if not using cascade)
+        # Note: We filter by organization_id to ensure we only reset the current business
+        JournalLine.query.join(JournalEntry).filter(JournalEntry.organization_id == org.id).delete(synchronize_session=False)
+        JournalEntry.query.filter_by(organization_id=org.id).delete()
+        
+        InvoiceLine.query.join(Invoice).filter(Invoice.organization_id == org.id).delete(synchronize_session=False)
+        Invoice.query.filter_by(organization_id=org.id).delete()
+        
+        BillLine.query.join(Bill).filter(Bill.organization_id == org.id).delete(synchronize_session=False)
+        Bill.query.filter_by(organization_id=org.id).delete()
+        
+        Paycheck.query.join(PayrollRun).filter(PayrollRun.organization_id == org.id).delete(synchronize_session=False)
+        PayrollRun.query.filter_by(organization_id=org.id).delete()
+        
+        Check.query.filter_by(organization_id=org.id).delete()
+        Payment.query.filter_by(organization_id=org.id).delete()
+        Receipt.query.filter_by(organization_id=org.id).delete()
+        Estimate.query.filter_by(organization_id=org.id).delete()
+        
+        # 2. Clear Master Data
+        TimeEntry.query.filter_by(organization_id=org.id).delete()
+        Employee.query.filter_by(organization_id=org.id).delete()
+        Contact.query.filter_by(organization_id=org.id).delete()
+        Product.query.filter_by(organization_id=org.id).delete()
+        BankAccount.query.filter_by(organization_id=org.id).delete()
+        
+        # 3. Reset Chart of Accounts
+        # We delete all accounts and then re-seed
+        Account.query.filter_by(organization_id=org.id).delete()
+        
+        db.session.commit()
+        
+        # 4. Re-seed standard accounts
+        from app.services.account_service import seed_standard_accounts
+        seed_standard_accounts(org.id)
+        
+        flash("System has been successfully reset. All data has been cleared and default accounts restored.", "success")
+        return redirect(url_for('dashboard.index'))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f"An error occurred during reset: {str(e)}", "danger")
+        return redirect(url_for('settings.index'))

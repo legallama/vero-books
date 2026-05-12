@@ -15,8 +15,17 @@
             <button @click="txType = 'withdrawal'; showTxModal = true" class="uk-button uk-button-default uk-button-small">
                 <span uk-icon="icon: minus-circle; ratio: 0.75" class="uk-margin-small-right"></span>Withdrawal
             </button>
-            <button @click="showModal = true" class="uk-button uk-button-primary uk-button-small elite-button-primary">
-                <span uk-icon="icon: link; ratio: 0.75" class="uk-margin-small-right"></span>Link Account
+            <form id="qboImportFormHeader" action="{{ url_for('banking.import_statements') }}" method="POST" enctype="multipart/form-data" class="uk-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div uk-form-custom>
+                    <input type="file" name="statement_file" accept=".qbo,.ofx,.qfx,.obx,.csv,.xlsx,.xls" onchange="document.getElementById('qboImportFormHeader').submit()">
+                    <button class="uk-button uk-button-default uk-border-rounded" type="button" tabindex="-1">
+                        <span uk-icon="icon: upload; ratio: 0.8" class="uk-margin-small-right"></span>Import QBO / OFX
+                    </button>
+                </div>
+            </form>
+            <button @click="showModal = true" class="uk-button uk-button-primary uk-border-rounded" style="background: #4338ca;">
+                <span uk-icon="icon: link; ratio: 0.8" class="uk-margin-small-right"></span>Link Account
             </button>
         </div>
     </div>
@@ -73,7 +82,9 @@
     <div class="uk-grid-small uk-margin-bottom" uk-grid>
         {% for acc in accounts %}
         <div class="uk-width-1-2@s uk-width-1-3@l">
-            <div class="account-card">
+            <div class="account-card {{ 'active-account-card' if selected_account and selected_account.id == acc.id }}" 
+                 @click="navigateToRegister('{{ acc.id }}')"
+                 style="cursor: pointer;">
                 <div class="account-card-header">
                     <div class="uk-flex uk-flex-between uk-flex-middle">
                         <div class="uk-flex uk-flex-middle" style="gap: 10px;">
@@ -93,20 +104,23 @@
                         </div>
                         <div class="account-balance {{ 'balance-negative' if (acc.balance|float) < 0 }}">
                             <div class="uk-flex uk-flex-column uk-flex-right">
-                                    <div class="uk-flex uk-flex-right" style="gap: 8px;">
-                                        <form action="{{ url_for('banking.sync_account', bank_acc_id=acc.id) }}" method="POST">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <button type="submit" class="uk-button uk-button-link" style="color: #cbd5e1; transition: color 0.2s;" onmouseover="this.style.color='#3b82f6'" onmouseout="this.style.color='#cbd5e1'" uk-tooltip="Sync Live Feed">
-                                                <span uk-icon="icon: refresh; ratio: 0.7"></span>
+                                        <div class="uk-flex uk-flex-right" style="gap: 8px;" @click.stop>
+                                            <button type="button" class="uk-button uk-button-link" style="color: #cbd5e1; transition: color 0.2s;" onmouseover="this.style.color='#3b82f6'" onmouseout="this.style.color='#cbd5e1'" uk-tooltip="Edit Account" @click="openEditModal('{{ acc.id }}', `{{ acc.name }}`, '{{ acc.account_type }}')">
+                                                <span uk-icon="icon: pencil; ratio: 0.7"></span>
                                             </button>
-                                        </form>
-                                        <form action="{{ url_for('banking.delete_account', bank_acc_id=acc.id) }}" method="POST" onsubmit="return confirm('Permanently remove this account?');">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <button type="submit" class="uk-button uk-button-link" style="color: #cbd5e1; transition: color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#cbd5e1'" uk-tooltip="Remove Account">
-                                                <span uk-icon="icon: trash; ratio: 0.7"></span>
-                                            </button>
-                                        </form>
-                                    </div>
+                                            <form action="{{ url_for('banking.sync_account', bank_acc_id=acc.id) }}" method="POST">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" class="uk-button uk-button-link" style="color: #cbd5e1; transition: color 0.2s;" onmouseover="this.style.color='#3b82f6'" onmouseout="this.style.color='#cbd5e1'" uk-tooltip="Sync Live Feed">
+                                                    <span uk-icon="icon: refresh; ratio: 0.7"></span>
+                                                </button>
+                                            </form>
+                                            <form action="{{ url_for('banking.delete_account', bank_acc_id=acc.id) }}" method="POST" onsubmit="return confirm('Permanently remove this account?');">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" class="uk-button uk-button-link" style="color: #cbd5e1; transition: color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#cbd5e1'" uk-tooltip="Remove Account">
+                                                    <span uk-icon="icon: trash; ratio: 0.7"></span>
+                                                </button>
+                                            </form>
+                                        </div>
                                 <div class="uk-margin-small-top">
                                     ${{ "{:,.2f}".format(acc.balance|abs) }}
                                 </div>
@@ -140,25 +154,25 @@
                             <span class="all-clear-badge">All clear</span>
                             {% endif %}
                         </div>
-                        <div class="uk-flex uk-flex-middle" style="gap: 8px;">
-                            {% if acc.account_id %}
-                            <div class="uk-flex uk-flex-middle" uk-tooltip="Linked to: {{ acc.gl_account.name }}">
-                                <span uk-icon="icon: link; ratio: 0.6" style="color: #10b981;"></span>
-                                <form action="{{ url_for('banking.unlink_gl', bank_acc_id=acc.id) }}" method="POST" style="margin-left: 4px;">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="uk-button uk-button-link uk-text-meta" style="font-size: 10px; text-transform: none; color: #ef4444;">Unlink</button>
-                                </form>
+                            <div class="uk-flex uk-flex-middle" style="gap: 8px;" @click.stop>
+                                {% if acc.account_id %}
+                                <div class="uk-flex uk-flex-middle" uk-tooltip="Linked to: {{ acc.gl_account.name }}">
+                                    <span uk-icon="icon: link; ratio: 0.6" style="color: #10b981;"></span>
+                                    <form action="{{ url_for('banking.unlink_gl', bank_acc_id=acc.id) }}" method="POST" style="margin-left: 4px;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="uk-button uk-button-link uk-text-meta" style="font-size: 10px; text-transform: none; color: #ef4444;">Unlink</button>
+                                    </form>
+                                </div>
+                                {% else %}
+                                <button @click="openLinkModal('{{ acc.id }}', '{{ acc.name }}')" class="uk-button uk-button-text uk-text-meta" style="font-size: 10px; text-transform: none; color: #3b82f6;">
+                                    <span uk-icon="icon: link; ratio: 0.5" class="uk-margin-small-right"></span>Link GL
+                                </button>
+                                {% endif %}
                             </div>
-                            {% else %}
-                            <button @click="openLinkModal('{{ acc.id }}', '{{ acc.name }}')" class="uk-button uk-button-text uk-text-meta" style="font-size: 10px; text-transform: none; color: #3b82f6;">
-                                <span uk-icon="icon: link; ratio: 0.5" class="uk-margin-small-right"></span>Link GL
-                            </button>
-                            {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
         {% endfor %}
     </div>
     {% else %}
@@ -173,10 +187,18 @@
     {% endif %}
 
     <!-- ═══ Transaction Feed ═══ -->
+    {% set bank_arg = selected_account.id if selected_account else None %}
     <div class="uk-card uk-card-default" style="border-radius: 12px;">
         <div class="uk-card-header uk-flex uk-flex-between uk-flex-middle" style="padding: 16px 24px;">
             <div class="uk-flex uk-flex-middle" style="gap: 12px;">
-                <h3 class="uk-card-title uk-text-bold uk-margin-remove" style="font-size: 16px;">Live Transaction Feed</h3>
+                <h3 class="uk-card-title uk-text-bold uk-margin-remove" style="font-size: 16px;">
+                    {% if selected_account %}
+                    <span class="uk-text-primary">{{ selected_account.name }}</span> Register
+                    <a href="{{ url_for('banking.index') }}" class="uk-text-meta uk-margin-small-left" style="font-weight: 400; text-transform: none; color: #3b82f6;">(View All)</a>
+                    {% else %}
+                    Live Transaction Feed
+                    {% endif %}
+                </h3>
                 {% if total_uncategorized > 0 %}
                 <span class="uk-label" style="background: #fef3c7; color: #92400e; font-size: 10px; font-weight: 700; border-radius: 10px; padding: 2px 10px;">{{ total_uncategorized }} to review</span>
                 {% elif total_transactions > 0 %}
@@ -184,6 +206,35 @@
                 {% endif %}
             </div>
             <div class="uk-flex uk-flex-middle" style="gap: 8px;">
+                <div v-show="selectedTxs.length > 0" class="uk-flex uk-flex-middle uk-animation-slide-right-small" style="gap: 8px; background: #f8fafc; padding: 4px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <span class="uk-text-meta uk-text-bold" style="font-size: 11px; color: #64748b;">BATCH ACTIONS:</span>
+                    <select class="uk-select uk-form-small" v-model="batchAccountId" style="width: 160px; height: 28px; font-size: 11px; border-radius: 6px;">
+                        <option value="">Select Account...</option>
+                        {% for acc in gl_accounts %}
+                        <option value="{{ acc.id }}">{{ acc.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button @click="batchMatch" class="uk-button uk-button-primary uk-button-small" style="border-radius: 6px; font-size: 11px; height: 28px; background: #059669; text-transform: none;">
+                        Match Selected ([[ selectedTxs.length ]])
+                    </button>
+                    <button @click="deleteSelected" class="uk-button uk-button-danger uk-button-small" style="border-radius: 6px; font-size: 11px; height: 28px; text-transform: none;">
+                        Delete
+                    </button>
+                </div>
+
+                {% set suggestion_txs = transactions | selectattr('suggested_account') | selectattr('status', 'ne', 'MATCHED') | list %}
+                {% if suggestion_txs %}
+                <form action="{{ url_for('banking.accept_all_suggestions', page=pagination.page, bank_account_id=bank_arg) }}" method="POST" class="uk-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% for tx in suggestion_txs %}
+                    <input type="hidden" name="tx_ids" value="{{ tx.id }}">
+                    {% endfor %}
+                    <button type="submit" class="uk-button uk-button-primary uk-button-small" style="background: #059669; border-radius: 6px; font-size: 11px; height: 28px; text-transform: none;">
+                        <span uk-icon="icon: check; ratio: 0.7" class="uk-margin-small-right"></span>Match All on Page ({{ suggestion_txs|length }})
+                    </button>
+                </form>
+                {% endif %}
+
                 <form id="qboImportForm" action="{{ url_for('banking.import_statements') }}" method="POST" enctype="multipart/form-data" class="uk-inline">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div uk-form-custom>
@@ -196,9 +247,6 @@
                 <a href="{{ url_for('banking.rules') }}" class="uk-button uk-button-default uk-button-small" style="border-radius: 6px; font-size: 12px;">
                     <span uk-icon="icon: settings; ratio: 0.7" class="uk-margin-small-right"></span>Rules
                 </a>
-                <button v-show="selectedTxs.length > 0" @click="deleteSelected" class="uk-button uk-button-danger uk-button-small" style="border-radius: 6px; font-size: 12px;">
-                    Batch Delete ([[ selectedTxs.length ]])
-                </button>
             </div>
         </div>
         <div class="uk-overflow-auto">
@@ -236,12 +284,12 @@
                         <td class="uk-text-center">
                             {% if tx.status != 'MATCHED' %}
                                 {% if tx.suggested_account %}
-                                <form action="{{ url_for('banking.accept_match', tx_id=tx.id, account_id=tx.suggested_account.id) }}" method="POST" class="uk-inline">
+                                <form action="{{ url_for('banking.accept_match', tx_id=tx.id, account_id=tx.suggested_account.id, page=pagination.page, bank_account_id=bank_arg) }}" method="POST" class="uk-inline">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="uk-button uk-button-primary uk-button-small" style="font-size: 11px; border-radius: 6px; padding: 0 12px; height: 28px;">Accept Match</button>
                                 </form>
                                 {% else %}
-                                <form action="{{ url_for('banking.accept_match', tx_id=tx.id) }}" method="POST" class="uk-flex uk-flex-middle" style="gap: 4px;">
+                                <form action="{{ url_for('banking.accept_match', tx_id=tx.id, page=pagination.page, bank_account_id=bank_arg) }}" method="POST" class="uk-flex uk-flex-middle" style="gap: 4px;">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <select class="uk-select uk-form-small" name="account_id" required style="font-size: 11px; height: 28px; border-radius: 6px; min-width: 100px;">
                                         <option value="">Categorize...</option>
@@ -253,9 +301,15 @@
                                 </form>
                                 {% endif %}
                             {% else %}
-                                <span class="matched-badge">
-                                    <span uk-icon="icon: check; ratio: 0.6"></span> Matched
-                                </span>
+                                <div class="uk-flex uk-flex-middle uk-flex-center" style="gap: 8px;">
+                                    <span class="matched-badge">
+                                        <span uk-icon="icon: check; ratio: 0.6"></span> Matched
+                                    </span>
+                                    <form action="{{ url_for('banking.unmatch_transaction', tx_id=tx.id, page=pagination.page, bank_account_id=bank_arg) }}" method="POST" class="uk-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="uk-icon-button" uk-icon="icon: history; ratio: 0.7" uk-tooltip="Unmatch / Change Category" style="width: 24px; height: 24px; background: #f1f5f9; color: #64748b; border: none;"></button>
+                                    </form>
+                                </div>
                             {% endif %}
                         </td>
                         <td class="uk-text-right">
@@ -264,7 +318,7 @@
                             </span>
                         </td>
                         <td class="uk-text-right" style="padding-right: 16px;">
-                            <form action="{{ url_for('banking.delete_transaction', tx_id=tx.id) }}" method="POST" class="uk-inline" onsubmit="return confirm('Remove this transaction from the feed?');">
+                            <form action="{{ url_for('banking.delete_transaction', tx_id=tx.id, page=pagination.page, bank_account_id=bank_arg) }}" method="POST" class="uk-inline" onsubmit="return confirm('Remove this transaction from the feed?');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="uk-icon-button" uk-icon="icon: trash; ratio: 0.7" uk-tooltip="Remove" style="width: 28px; height: 28px; color: #94a3b8;"></button>
                             </form>
@@ -282,6 +336,50 @@
                 </tbody>
             </table>
         </div>
+        
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <div class="uk-card-footer uk-padding-small">
+            <div class="uk-flex uk-flex-between uk-flex-middle">
+                <div class="uk-text-meta" style="font-size: 12px;">
+                    Showing <strong>{{ (pagination.page - 1) * pagination.per_page + 1 }}</strong> - 
+                    <strong>{{ [pagination.page * pagination.per_page, pagination.total]|min }}</strong> 
+                    of <strong>{{ pagination.total }}</strong> transactions
+                </div>
+                <ul class="uk-pagination uk-margin-remove">
+                    {% if pagination.has_prev %}
+                    <li><a href="{{ url_for('banking.index', page=pagination.prev_num, bank_account_id=bank_arg) }}"><span uk-pagination-previous></span> Previous</a></li>
+                    {% else %}
+                    <li class="uk-disabled"><span><span uk-pagination-previous></span> Previous</span></li>
+                    {% endif %}
+                    
+                    {% for p in pagination.iter_pages(left_edge=1, left_current=1, right_current=2, right_edge=1) %}
+                        {% if p %}
+                            {% if p == pagination.page %}
+                            <li class="uk-active"><span>{{ p }}</span></li>
+                            {% else %}
+                            <li><a href="{{ url_for('banking.index', page=p, bank_account_id=bank_arg) }}">{{ p }}</a></li>
+                            {% endif %}
+                        {% else %}
+                            <li class="uk-disabled"><span>...</span></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if pagination.has_next %}
+                    <li><a href="{{ url_for('banking.index', page=pagination.next_num, bank_account_id=bank_arg) }}">Next <span uk-pagination-next></span></a></li>
+                    {% else %}
+                    <li class="uk-disabled"><span>Next <span uk-pagination-next></span></span></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+        {% elif total_transactions > 0 %}
+        <div class="uk-card-footer uk-padding-small uk-text-center">
+            <div class="uk-text-meta" style="font-size: 12px;">
+                Showing all <strong>{{ total_transactions }}</strong> transactions
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- ═══ Link Account Modal ═══ -->
@@ -324,6 +422,33 @@
                 <div class="uk-margin-large-top uk-text-right">
                     <button type="button" @click="showModal = false" class="uk-button uk-button-text uk-margin-right" style="font-size: 13px;">Cancel</button>
                     <button type="submit" class="uk-button uk-button-primary" style="border-radius: 6px;">Link Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══ Edit Account Modal ═══ -->
+    <div v-if="showEditModal" class="uk-flex uk-flex-top uk-flex-center uk-position-fixed uk-position-z-index uk-height-viewport uk-width-1-1" style="background: rgba(0,0,0,0.5); top:0; left:0; padding-top: 80px; backdrop-filter: blur(4px);">
+        <div class="uk-card uk-card-default uk-card-body uk-width-large uk-animation-scale-up uk-animation-fast" style="border-radius: 14px;" @click.stop>
+            <h3 class="uk-card-title uk-text-bold" style="font-size: 18px;">Edit Bank Account</h3>
+            <form :action="'/banking/accounts/' + editBankAccId + '/edit'" method="POST" class="uk-form-stacked uk-margin-top">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="uk-margin">
+                    <label class="uk-form-label uk-text-bold" style="font-size: 12px;">Account Name</label>
+                    <input class="uk-input" type="text" name="name" v-model="editBankAccName" required style="border-radius: 6px;">
+                </div>
+                <div class="uk-margin">
+                    <label class="uk-form-label uk-text-bold" style="font-size: 12px;">Account Type</label>
+                    <select class="uk-select" name="type" v-model="editBankAccType" style="border-radius: 6px;">
+                        <option value="Checking">Checking</option>
+                        <option value="Savings">Savings</option>
+                        <option value="Credit Card">Credit Card</option>
+                        <option value="Line of Credit">Line of Credit</option>
+                    </select>
+                </div>
+                <div class="uk-margin-large-top uk-text-right">
+                    <button type="button" @click="showEditModal = false" class="uk-button uk-button-text uk-margin-right" style="font-size: 13px;">Cancel</button>
+                    <button type="submit" class="uk-button uk-button-primary" style="border-radius: 6px;">Save Changes</button>
                 </div>
             </form>
         </div>
@@ -458,16 +583,34 @@
 
     /* ── Account Cards ── */
     .account-card {
-        background: #fff;
+        background: var(--card-bg);
         border-radius: 12px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--border-color);
         overflow: hidden;
-        transition: all 0.2s;
+        transition: all 0.2s ease;
+        position: relative;
     }
+
     .account-card:hover {
-        border-color: #cbd5e1;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        border-color: #3b82f6;
+        box-shadow: var(--card-shadow-hover);
     }
+
+    .active-account-card {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+        background: rgba(59, 130, 246, 0.05) !important;
+    }
+
+    .dark-mode .active-account-card {
+        background: rgba(56, 189, 248, 0.1) !important;
+        border-color: #38bdf8 !important;
+    }
+
+    .active-account-card .account-name {
+        color: var(--primary-color) !important;
+    }
+
     .account-card-header { padding: 16px 18px; }
     .account-icon {
         width: 36px; height: 36px;
@@ -475,12 +618,13 @@
         display: flex; align-items: center; justify-content: center;
         flex-shrink: 0;
     }
-    .icon-checking { background: #eff6ff; color: #3b82f6; }
-    .icon-savings { background: #f0fdf4; color: #16a34a; }
-    .icon-credit { background: #faf5ff; color: #9333ea; }
-    .account-name { font-weight: 700; font-size: 14px; color: #1e293b; }
-    .account-meta { font-size: 11px; color: #94a3b8; margin-top: 1px; }
-    .account-balance { font-size: 20px; font-weight: 800; color: #0f172a; font-variant-numeric: tabular-nums; }
+    .icon-checking { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+    .icon-savings { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
+    .icon-credit { background: rgba(147, 51, 234, 0.1); color: #9333ea; }
+    
+    .account-name { font-weight: 700; font-size: 14px; color: var(--text-color); }
+    .account-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+    .account-balance { font-size: 20px; font-weight: 800; color: var(--text-color); font-variant-numeric: tabular-nums; }
     .account-balance.balance-negative { color: #dc2626; }
 
     .account-card-body { padding: 0 18px 14px; }
@@ -495,8 +639,8 @@
     .dot-green { background: #22c55e; }
     .dot-red { background: #ef4444; }
     .dot-blue { background: #3b82f6; }
-    .stat-label { font-size: 12px; color: #64748b; flex: 1; }
-    .stat-value { font-size: 12px; font-weight: 700; color: #1e293b; font-variant-numeric: tabular-nums; }
+    .stat-label { font-size: 12px; color: var(--text-muted); flex: 1; }
+    .stat-value { font-size: 12px; font-weight: 700; color: var(--text-color); font-variant-numeric: tabular-nums; }
 
     .account-card-footer {
         display: flex;
@@ -555,6 +699,7 @@
             const showTxModal = ref(false);
             const showLinkModal = ref(false);
             const showReceiptModal = ref(false);
+            const showEditModal = ref(false);
             const txType = ref('deposit');
             const today = ref(new Date().toISOString().split('T')[0]);
             
@@ -563,6 +708,18 @@
             const selectedTxs = ref([]);
             const selectedTxId = ref('');
             const selectedTxDescription = ref('');
+            const batchAccountId = ref('');
+            
+            const editBankAccId = ref('');
+            const editBankAccName = ref('');
+            const editBankAccType = ref('Checking');
+
+            const openEditModal = (id, name, type) => {
+                editBankAccId.value = id;
+                editBankAccName.value = name;
+                editBankAccType.value = type;
+                showEditModal.value = true;
+            };
 
             const openLinkModal = (id, name) => {
                 selectedBankAccId.value = id;
@@ -584,13 +741,48 @@
                     selectedTxs.value = [];
                 }
             };
+
+            const batchMatch = () => {
+                if (!batchAccountId.value) {
+                    UIkit.notification({ message: "Please select a target account first.", status: 'warning' });
+                    return;
+                }
+                if (!confirm(`Categorize and match ${selectedTxs.value.length} selected transactions?`)) return;
+                
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "{{ url_for('banking.batch_match', page=pagination.page, bank_account_id=bank_arg) }}";
+                
+                const csrf = document.createElement('input');
+                csrf.type = 'hidden';
+                csrf.name = 'csrf_token';
+                csrf.value = "{{ csrf_token() }}";
+                form.appendChild(csrf);
+
+                const accId = document.createElement('input');
+                accId.type = 'hidden';
+                accId.name = 'account_id';
+                accId.value = batchAccountId.value;
+                form.appendChild(accId);
+                
+                selectedTxs.value.forEach(id => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'tx_ids';
+                    input.value = id;
+                    form.appendChild(input);
+                });
+                
+                document.body.appendChild(form);
+                form.submit();
+            };
             
             const deleteSelected = () => {
                 if (!confirm(`Delete ${selectedTxs.value.length} selected transactions?`)) return;
                 
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = "{{ url_for('banking.delete_batch') }}";
+                form.action = "{{ url_for('banking.delete_batch', page=pagination.page, bank_account_id=bank_arg) }}";
                 
                 const csrf = document.createElement('input');
                 csrf.type = 'hidden';
@@ -614,12 +806,18 @@
                 window.initializePlaid(this);
             };
 
+            const navigateToRegister = (id) => {
+                window.location.href = `/banking/?bank_account_id=${id}`;
+            };
+
             return { 
-                showModal, showTxModal, showLinkModal, showReceiptModal,
+                showModal, showTxModal, showLinkModal, showReceiptModal, showEditModal,
                 txType, today, 
                 selectedBankAccId, selectedBankAccName, selectedTxs,
-                selectedTxId, selectedTxDescription,
-                openLinkModal, openReceiptModal, toggleAll, deleteSelected, openPlaid
+                selectedTxId, selectedTxDescription, batchAccountId,
+                editBankAccId, editBankAccName, editBankAccType,
+                openLinkModal, openReceiptModal, openEditModal, toggleAll, deleteSelected, batchMatch, openPlaid,
+                navigateToRegister
             };
         }
 

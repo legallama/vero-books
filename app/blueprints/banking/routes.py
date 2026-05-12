@@ -17,79 +17,66 @@ def index():
     from decimal import Decimal
     from datetime import datetime, timedelta
     
+    page = request.args.get('page', 1, type=int)
+    per_page = 50
+    bank_account_id = request.args.get('bank_account_id')
+    
     accounts = BankAccount.query.filter_by(organization_id=org.id).all()
-    transactions = BankTransaction.query.filter_by(organization_id=org.id).order_by(BankTransaction.date.desc()).limit(50).all()
+    
+    # Base query
+    query = BankTransaction.query.filter_by(organization_id=org.id)
+    if bank_account_id:
+        query = query.filter_by(bank_account_id=bank_account_id)
+        selected_account = BankAccount.query.get(bank_account_id)
+    else:
+        selected_account = None
+
+    pagination = query.order_by(BankTransaction.date.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    transactions = pagination.items
     active_rules = BankRule.query.filter_by(organization_id=org.id, is_active=True).order_by(BankRule.priority.desc()).all()
     
     # ── Dashboard stats ──
-    all_txs = BankTransaction.query.filter_by(organization_id=org.id).all()
+    if bank_account_id and selected_account:
+        total_balance = float(selected_account.balance or 0)
+        total_uncategorized = BankTransaction.query.filter_by(bank_account_id=bank_account_id, status='UNCATEGORIZED').count()
+        total_matched = BankTransaction.query.filter_by(bank_account_id=bank_account_id, status='MATCHED').count()
+    else:
+        total_balance = sum(float(a.balance or 0) for a in accounts)
+        total_uncategorized = BankTransaction.query.filter_by(organization_id=org.id, status='UNCATEGORIZED').count()
+        total_matched = BankTransaction.query.filter_by(organization_id=org.id, status='MATCHED').count()
     
-    total_balance = sum(float(a.balance or 0) for a in accounts)
-    total_uncategorized = sum(1 for t in all_txs if t.status == 'UNCATEGORIZED')
-    total_matched = sum(1 for t in all_txs if t.status == 'MATCHED')
-    
-    # Per-account enrichment
+    # Per-account enrichment (Always calculate for cards)
     for acc in accounts:
-        acc_txs = [t for t in all_txs if t.bank_account_id == acc.id]
-        acc.tx_count = len(acc_txs)
-        acc.uncategorized_count = sum(1 for t in acc_txs if t.status == 'UNCATEGORIZED')
-        acc.matched_count = sum(1 for t in acc_txs if t.status == 'MATCHED')
-        acc.total_deposits = sum(float(t.amount) for t in acc_txs if float(t.amount) > 0)
-        acc.total_withdrawals = sum(abs(float(t.amount)) for t in acc_txs if float(t.amount) < 0)
-        acc.last_tx = max((t.date for t in acc_txs), default=None)
+        acc.tx_count = BankTransaction.query.filter_by(bank_account_id=acc.id).count()
+        acc.uncategorized_count = BankTransaction.query.filter_by(bank_account_id=acc.id, status='UNCATEGORIZED').count()
+        acc.matched_count = BankTransaction.query.filter_by(bank_account_id=acc.id, status='MATCHED').count()
+        
+        # Aggregates for account card
+        acc.total_deposits = db.session.query(db.func.sum(BankTransaction.amount)).filter(BankTransaction.bank_account_id == acc.id, BankTransaction.amount > 0).scalar() or 0
+        acc.total_withdrawals = abs(db.session.query(db.func.sum(BankTransaction.amount)).filter(BankTransaction.bank_account_id == acc.id, BankTransaction.amount < 0).scalar() or 0)
+        acc.last_tx = db.session.query(db.func.max(BankTransaction.date)).filter(BankTransaction.bank_account_id == acc.id).scalar()
     
     # Last 30 days flow
     thirty_days_ago = datetime.utcnow().date() - timedelta(days=30)
-    recent_txs = [t for t in all_txs if t.date and t.date >= thirty_days_ago]
-    money_in_30d = sum(float(t.amount) for t in recent_txs if float(t.amount) > 0)
-    money_out_30d = sum(abs(float(t.amount)) for t in recent_txs if float(t.amount) < 0)
     
-    # Apply rules to transaction list for display
+    def get_flow(acc_id=None):
+        base = db.session.query(db.func.sum(BankTransaction.amount)).filter(
+            BankTransaction.organization_id == org.id, 
+            BankTransaction.date >= thirty_days_ago
+        )
+        if acc_id:
+            base = base.filter(BankTransaction.bank_account_id == acc_id)
+        
+        m_in = base.filter(BankTransaction.amount > 0).scalar() or 0
+        m_out = abs(base.filter(BankTransaction.amount < 0).scalar() or 0)
+        return m_in, m_out
+
+    money_in_30d, money_out_30d = get_flow(bank_account_id)
+    
+    # Apply suggestions to transaction list for display
+    from app.services.banking_service import BankingService
     for tx in transactions:
-        tx.suggested_account = None
-        tx.rule_name = None
-        
-        for rule in active_rules:
-            match = False
-            if rule.field_to_match == 'DESCRIPTION':
-                if rule.match_type == 'CONTAINS' and rule.match_value.lower() in tx.description.lower():
-                    match = True
-                elif rule.match_type == 'EXACT' and rule.match_value.lower() == tx.description.lower():
-                    match = True
-            elif rule.field_to_match == 'AMOUNT':
-                try:
-                    val = float(rule.match_value)
-                    if rule.match_type == 'EXACT' and float(tx.amount) == val:
-                        match = True
-                    elif rule.match_type == 'GREATER_THAN' and float(tx.amount) > val:
-                        match = True
-                except: pass
-            
-            if match:
-                tx.suggested_account = rule.target_account
-                tx.rule_name = rule.name
-                tx.auto_post_enabled = rule.auto_post
-                break # First match wins based on priority
-        
-        # Heuristic Magic Suggestion (If no rule matched)
-        if not tx.suggested_account and tx.status == 'UNCATEGORIZED':
-            last_match = BankTransaction.query.filter(
-                BankTransaction.organization_id == org.id,
-                BankTransaction.description == tx.description,
-                BankTransaction.status == 'MATCHED',
-                BankTransaction.id != tx.id
-            ).order_by(BankTransaction.date.desc()).first()
-            
-            if last_match and last_match.matched_source_id:
-                from app.models.accounting.journal import JournalEntry
-                je = JournalEntry.query.get(last_match.matched_source_id)
-                if je:
-                    # Find the 'offset' account (not the bank account)
-                    for line in je.lines:
-                        if line.account_id != tx.bank_account.account_id:
-                            tx.suggested_account = line.account
-                            tx.rule_name = "Based on your history"
-                            break
+        tx.suggested_account, tx.rule_name = BankingService.get_suggestion(tx, org.id)
 
 
                 
@@ -97,12 +84,14 @@ def index():
     
     return render_template('banking/index.html',
         accounts=accounts,
+        selected_account=selected_account,
         transactions=transactions,
+        pagination=pagination,
         gl_accounts=gl_accounts,
         total_balance=total_balance,
         total_uncategorized=total_uncategorized,
         total_matched=total_matched,
-        total_transactions=len(all_txs),
+        total_transactions=pagination.total,
         money_in_30d=money_in_30d,
         money_out_30d=money_out_30d,
         rules_count=len(active_rules),
@@ -123,6 +112,26 @@ def create_account():
     db.session.add(new_acc)
     db.session.commit()
     flash("Bank account linked.", "success")
+    return redirect(url_for('banking.index'))
+
+@banking_bp.route('/accounts/<bank_acc_id>/edit', methods=['POST'])
+@login_required
+def edit_account(bank_acc_id):
+    org = get_current_org()
+    from app.models.banking.bank_account import BankAccount
+    
+    bank_acc = BankAccount.query.filter_by(id=bank_acc_id, organization_id=org.id).first_or_404()
+    
+    name = request.form.get('name')
+    acc_type = request.form.get('type')
+    
+    if name:
+        bank_acc.name = name
+    if acc_type:
+        bank_acc.account_type = acc_type
+        
+    db.session.commit()
+    flash(f"Bank account '{bank_acc.name}' has been updated.", "success")
     return redirect(url_for('banking.index'))
 
 @banking_bp.route('/accounts/<bank_acc_id>/link-gl', methods=['POST'])
@@ -494,13 +503,14 @@ def manual_transaction():
 def accept_match(tx_id):
     org = get_current_org()
     account_id = request.args.get('account_id') or request.form.get('account_id')
+    bank_account_id = request.args.get('bank_account_id')
     
     # Get Transaction
     tx = BankTransaction.query.filter_by(id=tx_id, organization_id=org.id).first_or_404()
     
     if tx.status == 'MATCHED':
         flash('Transaction already matched.', 'warning')
-        return redirect(url_for('banking.index'))
+        return redirect(url_for('banking.index', bank_account_id=bank_account_id))
         
     from app.models.accounting.account import Account
     target_account = Account.query.filter_by(id=account_id, organization_id=org.id).first_or_404()
@@ -547,7 +557,9 @@ def accept_match(tx_id):
     success, msg = LedgerService.post_journal_entry(je.id, current_user.id, org.id)
     if not success:
         flash(f"Error posting match to ledger: {msg}", "danger")
-        return redirect(url_for('banking.index'))
+        page = request.args.get('page', 1, type=int)
+        bank_account_id = request.args.get('bank_account_id')
+        return redirect(url_for('banking.index', page=page, bank_account_id=bank_account_id))
         
     # Mark Match
     tx.status = 'MATCHED'
@@ -556,7 +568,100 @@ def accept_match(tx_id):
     
     db.session.commit()
     flash('Transaction mathematically categorized and added to the General Ledger.', 'success')
-    return redirect(url_for('banking.index'))
+    page = request.args.get('page', 1, type=int)
+    bank_account_id = request.args.get('bank_account_id')
+    return redirect(url_for('banking.index', page=page, bank_account_id=bank_account_id))
+
+@banking_bp.route('/unmatch-transaction/<tx_id>', methods=['POST'])
+@login_required
+def unmatch_transaction(tx_id):
+    org = get_current_org()
+    from app.models.banking.bank_account import BankTransaction
+    from app.services.ledger_service import LedgerService
+    
+    # Get Transaction
+    tx = BankTransaction.query.filter_by(id=tx_id, organization_id=org.id).first_or_404()
+    
+    bank_account_id = request.args.get('bank_account_id')
+    
+    if tx.status != 'MATCHED':
+        flash('Transaction is not matched.', 'warning')
+        return redirect(url_for('banking.index', bank_account_id=bank_account_id))
+    
+    try:
+        # 1. Reverse or Delete the Journal Entry
+        if tx.matched_source_type == 'JOURNAL_ENTRY' and tx.matched_source_id:
+            from app.models.accounting.journal import JournalEntry
+            je = JournalEntry.query.get(tx.matched_source_id)
+            if je:
+                if je.status == 'POSTED':
+                    # Reverse it to maintain audit trail
+                    LedgerService.reverse_journal_entry(je.id, current_user.id, org.id, f"Unmatched from bank feed: {tx.description}")
+                else:
+                    # Just delete the draft
+                    db.session.delete(je)
+        
+        # 2. Reset Transaction Status
+        tx.status = 'UNCATEGORIZED'
+        tx.matched_source_type = None
+        tx.matched_source_id = None
+        
+        db.session.commit()
+        flash('Transaction unmatched successfully. It is now back in your review feed.', 'info')
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error unmatching transaction: {str(e)}", "danger")
+        
+    page = request.args.get('page', 1, type=int)
+    return redirect(url_for('banking.index', page=page, bank_account_id=bank_account_id))
+
+@banking_bp.route('/batch-match', methods=['POST'])
+@login_required
+def batch_match():
+    org = get_current_org()
+    from app.models.banking.bank_account import BankTransaction
+    from app.models.accounting.account import Account
+    from app.services.banking_service import BankingService
+    
+    tx_ids = request.form.getlist('tx_ids')
+    account_id = request.form.get('account_id')
+    
+    bank_account_id = request.args.get('bank_account_id')
+    
+    if not tx_ids:
+        flash('No transactions selected.', 'warning')
+        return redirect(url_for('banking.index', bank_account_id=bank_account_id))
+    
+    if not account_id:
+        flash('No target account selected for batch match.', 'warning')
+        return redirect(url_for('banking.index', bank_account_id=bank_account_id))
+        
+    target_account = Account.query.filter_by(id=account_id, organization_id=org.id).first_or_404()
+    
+    match_count = 0
+    error_count = 0
+    
+    for tx_id in tx_ids:
+        tx = BankTransaction.query.filter_by(id=tx_id, organization_id=org.id).first()
+        if tx and tx.status != 'MATCHED':
+            # Use BankingService to post
+            # We need to map Bank Account to GL first if not already linked
+            # The post_transaction_to_ledger logic handles this
+            success = BankingService.post_transaction_to_ledger(tx, target_account.id, current_user.id, org.id)
+            if success:
+                match_count += 1
+            else:
+                error_count += 1
+                
+    db.session.commit()
+    
+    if error_count > 0:
+        flash(f"Batch complete. {match_count} transactions matched, but {error_count} failed to post.", "warning")
+    else:
+        flash(f"Successfully matched {match_count} transactions to {target_account.name}.", "success")
+        
+    page = request.args.get('page', 1, type=int)
+    return redirect(url_for('banking.index', page=page, bank_account_id=bank_account_id))
 
 @banking_bp.route('/delete-transaction/<tx_id>', methods=['POST'])
 @login_required
@@ -572,17 +677,51 @@ def delete_transaction(tx_id):
     db.session.commit()
     
     flash('Transaction removed from bank feed.', 'success')
-    return redirect(url_for('banking.index'))
+    page = request.args.get('page', 1, type=int)
+    bank_account_id = request.args.get('bank_account_id')
+    return redirect(url_for('banking.index', page=page, bank_account_id=bank_account_id))
+
+@banking_bp.route('/accept-all-suggestions', methods=['POST'])
+@login_required
+def accept_all_suggestions():
+    org = get_current_org()
+    from app.models.banking.bank_account import BankTransaction
+    from app.services.banking_service import BankingService
+    from app.models.accounting.bank_rule import BankRule
+    
+    bank_account_id = request.args.get('bank_account_id')
+    if not tx_ids:
+        flash('No suggestions to accept.', 'warning')
+        return redirect(url_for('banking.index', bank_account_id=bank_account_id))
+    
+    match_count = 0
+    active_rules = BankRule.query.filter_by(organization_id=org.id, is_active=True).order_by(BankRule.priority.desc()).all()
+    
+    for tx_id in tx_ids:
+        tx = BankTransaction.query.filter_by(id=tx_id, organization_id=org.id).first()
+        if tx and tx.status != 'MATCHED':
+            # Use the same logic as the index route to find the target account
+            suggested_acc, rule_name = BankingService.get_suggestion(tx, org.id)
+            if suggested_acc:
+                success = BankingService.post_transaction_to_ledger(tx, suggested_acc.id, current_user.id, org.id)
+                if success:
+                    match_count += 1
+                
+    db.session.commit()
+    flash(f"Successfully matched {match_count} transactions based on rules.", "success")
+    
+    page = request.args.get('page', 1, type=int)
+    return redirect(url_for('banking.index', page=page, bank_account_id=bank_account_id))
 
 @banking_bp.route('/delete-transactions-batch', methods=['POST'])
 @login_required
 def delete_batch():
     org = get_current_org()
     
-    tx_ids = request.form.getlist('tx_ids')
+    bank_account_id = request.args.get('bank_account_id')
     if not tx_ids:
         flash('No transactions selected.', 'warning')
-        return redirect(url_for('banking.index'))
+        return redirect(url_for('banking.index', bank_account_id=bank_account_id))
         
     deleted_count = 0
     for tx_id in tx_ids:
@@ -593,7 +732,7 @@ def delete_batch():
             
     db.session.commit()
     flash(f'{deleted_count} transactions permanently removed from bank feed.', 'success')
-    return redirect(url_for('banking.index'))
+    return redirect(url_for('banking.index', bank_account_id=bank_account_id))
 
 @banking_bp.route('/import-statements', methods=['POST'])
 @login_required
@@ -613,8 +752,8 @@ def import_statements():
     from app.models.banking.bank_account import BankAccount, BankTransaction
     
     try:
-        # ---- OFX / QBO PARSING ----
-        if filename.endswith('.qbo') or filename.endswith('.ofx') or filename.endswith('.qfx'):
+        # ---- OFX / QBO / OBX PARSING ----
+        if filename.endswith('.qbo') or filename.endswith('.ofx') or filename.endswith('.qfx') or filename.endswith('.obx'):
             from ofxparse import OfxParser
             ofx = OfxParser.parse(file.stream)
             
@@ -657,7 +796,7 @@ def import_statements():
 
                         
             db.session.commit()
-            flash(f"Successfully imported {imported_txs} transactions from QBO/OFX.", "success")
+            flash(f"Successfully imported {imported_txs} transactions from QuickBooks/Bank file.", "success")
             
         # ---- EXCEL / CSV PARSING ----
         elif filename.endswith('.xlsx') or filename.endswith('.xls') or filename.endswith('.csv'):
