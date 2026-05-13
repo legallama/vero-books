@@ -13,8 +13,16 @@ from datetime import datetime, timedelta
 class PlaidService:
     @staticmethod
     def get_client():
+        env = current_app.config.get('PLAID_ENV', 'sandbox').lower()
+        if env == 'production':
+            plaid_host = plaid.Environment.Production
+        elif env == 'development':
+            plaid_host = plaid.Environment.Development
+        else:
+            plaid_host = plaid.Environment.Sandbox
+
         configuration = plaid.Configuration(
-            host=plaid.Environment.Sandbox if current_app.config['PLAID_ENV'] == 'sandbox' else plaid.Environment.Development,
+            host=plaid_host,
             api_key={
                 'clientId': current_app.config['PLAID_CLIENT_ID'],
                 'secret': current_app.config['PLAID_SECRET'],

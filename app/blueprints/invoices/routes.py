@@ -15,6 +15,57 @@ def index():
     invoices = Invoice.query.filter_by(organization_id=org.id).order_by(Invoice.issue_date.desc()).all()
     return render_template('invoices/index.html', invoices=invoices)
 
+
+@invoices_bp.route('/preview', methods=['POST'])
+@login_required
+def preview():
+    """Render a print-ready preview of the invoice from the current form state."""
+    org = get_current_org()
+    from datetime import datetime
+
+    customer_id = request.form.get('customer_id')
+    customer = Customer.query.filter_by(id=customer_id, organization_id=org.id).first() if customer_id else None
+
+    # Parse line items from form data
+    line_count = int(request.form.get('line_count', 0))
+    lines = []
+    for i in range(line_count):
+        desc = request.form.get(f'lines[{i}][description]', '')
+        qty_str = request.form.get(f'lines[{i}][quantity]', '0')
+        price_str = request.form.get(f'lines[{i}][unit_price]', '0')
+        try:
+            qty = float(qty_str)
+            price = float(price_str)
+        except ValueError:
+            qty, price = 0, 0
+        if desc or qty or price:
+            lines.append({'description': desc, 'quantity': qty, 'unit_price': price})
+
+    subtotal = sum(l['quantity'] * l['unit_price'] for l in lines)
+    try:
+        tax_total = float(request.form.get('tax_total', 0))
+    except (ValueError, TypeError):
+        tax_total = 0.0
+    total = subtotal + tax_total
+
+    invoice_number = f"INV-{datetime.utcnow().strftime('%Y%m%d%H%M')}-PREVIEW"
+    is_credit_memo = request.form.get('is_credit_memo') == '1'
+
+    return render_template(
+        'invoices/preview.html',
+        current_org=org,
+        customer=customer,
+        lines=lines,
+        subtotal=subtotal,
+        tax_total=tax_total,
+        total=total,
+        invoice_number=invoice_number,
+        issue_date=request.form.get('issue_date', ''),
+        due_date=request.form.get('due_date', ''),
+        notes=request.form.get('notes', ''),
+        is_credit_memo=is_credit_memo
+    )
+
 @invoices_bp.route('/create', methods=['GET', 'POST'])
 @login_required
 def create():
@@ -133,6 +184,14 @@ def create():
         if success:
             AuditService.log_action(org.id, current_user.id, 'CREATE', 'INVOICE', invoice.id, reason=f"New Invoice {invoice.invoice_number}")
             db.session.commit()
+            from app.services.notification_service import NotificationService
+            NotificationService.create_notification(
+                user_id=current_user.id,
+                organization_id=org.id,
+                title='Invoice Created',
+                message=f"Invoice {invoice.invoice_number} created and posted to ledger.",
+                type='SUCCESS'
+            )
             flash(f"Invoice {invoice.invoice_number} created and posted to ledger.", "success")
 
         else:
@@ -281,6 +340,14 @@ def create_credit_memo():
         LedgerService.post_journal_entry(je.id, current_user.id, org.id)
         
         db.session.commit()
+        from app.services.notification_service import NotificationService
+        NotificationService.create_notification(
+            user_id=current_user.id,
+            organization_id=org.id,
+            title='Credit Memo Created',
+            message=f"Credit Memo {memo.invoice_number} created.",
+            type='SUCCESS'
+        )
         flash(f"Credit Memo {memo.invoice_number} created.", "success")
         return redirect(url_for('invoices.index'))
         

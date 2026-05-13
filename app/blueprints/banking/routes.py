@@ -690,6 +690,7 @@ def accept_all_suggestions():
     from app.models.accounting.bank_rule import BankRule
     
     bank_account_id = request.args.get('bank_account_id')
+    tx_ids = request.form.getlist('tx_ids')
     if not tx_ids:
         flash('No suggestions to accept.', 'warning')
         return redirect(url_for('banking.index', bank_account_id=bank_account_id))
@@ -708,6 +709,14 @@ def accept_all_suggestions():
                     match_count += 1
                 
     db.session.commit()
+    from app.services.notification_service import NotificationService
+    NotificationService.create_notification(
+        user_id=current_user.id,
+        organization_id=org.id,
+        title='Auto Match',
+        message=f"Successfully matched {match_count} transactions based on rules.",
+        type='SUCCESS'
+    )
     flash(f"Successfully matched {match_count} transactions based on rules.", "success")
     
     page = request.args.get('page', 1, type=int)
@@ -719,6 +728,7 @@ def delete_batch():
     org = get_current_org()
     
     bank_account_id = request.args.get('bank_account_id')
+    tx_ids = request.form.getlist('tx_ids')
     if not tx_ids:
         flash('No transactions selected.', 'warning')
         return redirect(url_for('banking.index', bank_account_id=bank_account_id))
@@ -731,6 +741,14 @@ def delete_batch():
             deleted_count += 1
             
     db.session.commit()
+    from app.services.notification_service import NotificationService
+    NotificationService.create_notification(
+        user_id=current_user.id,
+        organization_id=org.id,
+        title='Batch Deletion',
+        message=f'{deleted_count} transactions permanently removed from bank feed.',
+        type='SUCCESS'
+    )
     flash(f'{deleted_count} transactions permanently removed from bank feed.', 'success')
     return redirect(url_for('banking.index', bank_account_id=bank_account_id))
 

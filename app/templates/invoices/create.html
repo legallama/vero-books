@@ -169,7 +169,9 @@
                     </ul>
 
                     <div class="uk-margin-top">
-                        <button type="button" class="uk-button uk-button-default uk-button-small uk-width-1-1 uk-border-rounded">Preview PDF</button>
+                        <button type="button" id="preview-btn" class="uk-button uk-button-default uk-button-small uk-width-1-1 uk-border-rounded">
+                            <span uk-icon="icon: file-pdf; ratio: 0.8" class="uk-margin-small-right"></span>Preview PDF
+                        </button>
                     </div>
                 </div>
             </div>
@@ -249,6 +251,32 @@
             return { lines, customerId, taxRate, taxTotal, addLine, removeLine, subtotal, total, fetchTaxRate };
         }
     }).mount('#invoice-app');
+
+    // --- Preview PDF ---
+    document.getElementById('preview-btn').addEventListener('click', function () {
+        // Build a hidden form pointing to /invoices/preview, targeting a new tab
+        const sourceForm = document.querySelector('#invoice-app form');
+        const previewForm = document.createElement('form');
+        previewForm.method = 'POST';
+        previewForm.action = "{{ url_for('invoices.preview') }}";
+        previewForm.target = '_blank';
+        previewForm.style.display = 'none';
+
+        // Copy all named inputs from the source form
+        const inputs = sourceForm.querySelectorAll('input, select, textarea');
+        inputs.forEach(el => {
+            if (!el.name) return;
+            const clone = document.createElement('input');
+            clone.type = 'hidden';
+            clone.name = el.name;
+            clone.value = el.value;
+            previewForm.appendChild(clone);
+        });
+
+        document.body.appendChild(previewForm);
+        previewForm.submit();
+        document.body.removeChild(previewForm);
+    });
 
 </script>
 {% endblock %}
